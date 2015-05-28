@@ -1444,26 +1444,26 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
 			NewStorage = reinterpret_cast <Storage *> ( NewStorageRange -> Length );
 			
-			NewStorage -> Bitmap [ 0 ] = 0x00000001;
-			NewStorage -> Bitmap [ 1 ] = 0x00000000;
-			NewStorage -> Bitmap [ 2 ] = 0x00000000;
-			NewStorage -> Bitmap [ 3 ] = 0x00000000;
-			NewStorage -> FreeCount = 112;
-			
-			FreeStorageHead -> Previous = NewStorage;
-			NewStorage -> Next = FreeStorageHead;
-			NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
-			FreeStorageHead = NewStorage;
-			
-			FreeStorageSlotCount += 112;
-			
 		}
 		else
 		{
 			
-			// TODO: rely on kernel pmalloc
+			NewStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
 			
 		}
+		
+		NewStorage -> Bitmap [ 0 ] = 0x00000001;
+		NewStorage -> Bitmap [ 1 ] = 0x00000000;
+		NewStorage -> Bitmap [ 2 ] = 0x00000000;
+		NewStorage -> Bitmap [ 3 ] = 0x00000000;
+		NewStorage -> FreeCount = 112;
+		
+		FreeStorageHead -> Previous = NewStorage;
+		NewStorage -> Next = FreeStorageHead;
+		NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+		FreeStorageHead = NewStorage;
+		
+		FreeStorageSlotCount += 112;
 		
 	}
 	
