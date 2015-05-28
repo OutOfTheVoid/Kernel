@@ -5,6 +5,7 @@
 
 #include <system/func/panic.h>
 #include <system/func/kprintf.h>
+#include <system/func/pmalloc.h>
 
 #include <cpputil/Unused.h>
 
@@ -15,7 +16,9 @@ const char * MM::Paging::AddressSpace :: ErrorStrings [] = {
 	"Failed to find free kernel virtual zone.",
 	"Ran out of space.",
 	"Allocation is unimplemented for non-kernel address spaces.",
-	"The memory freed was not allocated."
+	"The memory freed was not allocated.",
+	"The memory referenced was not allocated.",
+	"system_func_pmalloc failed to allocate a kernel page."
 };
 
 char MM::Paging::AddressSpace :: KernelAddressSpaceMem [ sizeof ( AddressSpace ) + 4 ];
@@ -96,7 +99,16 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	else
 	{
 		
-		// TODO: Rely on kernel pmalloc for this.
+		InitialStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
+		
+		if ( InitialStorage == NULL )
+		{
+			
+			* Error = kCreateAddressSpace_Error_FailedPMalloc;
+			
+			return;
+			
+		}
 		
 	}
 	
@@ -200,26 +212,35 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
 			NewStorage = reinterpret_cast <Storage *> ( NewStorageRange -> Length );
 			
-			NewStorage -> Bitmap [ 0 ] = 0x00000001;
-			NewStorage -> Bitmap [ 1 ] = 0x00000000;
-			NewStorage -> Bitmap [ 2 ] = 0x00000000;
-			NewStorage -> Bitmap [ 3 ] = 0x00000000;
-			NewStorage -> FreeCount = 112;
-			
-			FreeStorageHead -> Previous = NewStorage;
-			NewStorage -> Next = FreeStorageHead;
-			NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
-			FreeStorageHead = NewStorage;
-			
-			FreeStorageSlotCount += 112;
-			
 		}
 		else
 		{
 			
-			// TODO: rely on kernel pmalloc for this.
+			NewStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
+			
+			if ( NewStorage == NULL )
+			{
+				
+				* Error = kAlloc_Error_FailedPMalloc;
+				
+				return;
+				
+			}
 			
 		}
+		
+		NewStorage -> Bitmap [ 0 ] = 0x00000001;
+		NewStorage -> Bitmap [ 1 ] = 0x00000000;
+		NewStorage -> Bitmap [ 2 ] = 0x00000000;
+		NewStorage -> Bitmap [ 3 ] = 0x00000000;
+		NewStorage -> FreeCount = 112;
+		
+		FreeStorageHead -> Previous = NewStorage;
+		NewStorage -> Next = FreeStorageHead;
+		NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+		FreeStorageHead = NewStorage;
+		
+		FreeStorageSlotCount += 112;
 		
 	}
 	
@@ -299,6 +320,39 @@ void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 	InsertFreeNode ( AllocRange );
 	
 	* Error = kFree_Error_None;
+	
+};
+
+void MM::Paging::AddressSpace :: GetAllocationSize ( void * Base, uint32_t * RecordedSize, uint32_t * Error )
+{
+	
+	AddressRange * AllocRange = FindAllocatedNode ( reinterpret_cast <uint32_t> ( Base ) );
+	
+	if ( AllocRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		* Error = kGetAllocationSize_Error_NotAllocated;
+		
+		return;
+		
+	}
+	
+	* RecordedSize = AllocRange -> Length;
+	* Error = kGetAllocationSize_Error_None;
+	
+};
+
+uint32_t MM::Paging::AddressSpace :: GetFreePages ()
+{
+	
+	return FreePageCount;
+	
+};
+
+uint32_t MM::Paging::AddressSpace :: GetTotalPages ()
+{
+	
+	return TotalPageCount;
 	
 };
 
@@ -476,7 +530,7 @@ void MM::Paging::AddressSpace :: FreeOldRange ( AddressRange * Range )
 		FreeStorageHead = ContainerStorage;
 		
 	}
-	else if ( ( ContainerStorage -> FreeCount == 127 ) && ( FreeStorageHighWatermark < ( FreeStorageSlotCount * 4096 ) / 112 ) )
+	else if ( ( ContainerStorage -> FreeCount == 112 ) && ( FreeStorageHighWatermark < ( FreeStorageSlotCount * 4096 ) / 112 ) )
 	{
 		
 		FreeStorageSlotCount -= 112;
@@ -518,7 +572,7 @@ void MM::Paging::AddressSpace :: FreeOldRange ( AddressRange * Range )
 		else
 		{
 			
-				// TODO: Rely on kernel pfree here.
+			system_func_pfree ( reinterpret_cast <void *> ( ContainerStorage ) );
 			
 			return;
 			
@@ -1316,7 +1370,7 @@ MM::Paging::AddressSpace :: ~AddressSpace ()
 		Storage * PendingFreeStorage = FreeStorageHead;
 		FreeStorageHead = PendingFreeStorage -> Next;
 		
-		// TODO: Rely on kernel pfree for deallocation
+		system_func_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
 		
 	}
 	
@@ -1326,7 +1380,7 @@ MM::Paging::AddressSpace :: ~AddressSpace ()
 		Storage * PendingFreeStorage = FreeStorageHead;
 		FreeStorageHead = PendingFreeStorage -> Next;
 		
-		// TODO: Rely on kernel pfree for deallocation
+		system_func_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
 		
 	}
 	

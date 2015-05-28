@@ -24,6 +24,7 @@ namespace MM
 		public:
 			
 			static const uint32_t kCreateAddressSpace_Error_None = 0;
+			static const uint32_t kCreateAddressSpace_Error_FailedPMalloc = 8;
 			static const uint32_t kCreateAddressSpace_Error_InitialZoneSize = 1;
 			static const uint32_t kCreateAddressSpace_Error_FailedPhysicalAllocation = 2;
 			
@@ -32,6 +33,7 @@ namespace MM
 			static const uint32_t kAlloc_Error_OutOfKVirtualSpace = 3;
 			static const uint32_t kAlloc_Error_OutOfVirtualSpace = 4;
 			static const uint32_t kAlloc_Error_NonKernelAllocUnimplemented = 5;
+			static const uint32_t kAlloc_Error_FailedPMalloc = 8;
 			
 			static const uint32_t kError_Free_NotAllocated = 6;
 			static const uint32_t kFree_Error_None = 0;
@@ -39,7 +41,10 @@ namespace MM
 			static const uint32_t kAddFreeRange_Error_OutOfKVirtualSpace = 3;
 			static const uint32_t kAddFreeRange_Error_None = 0;
 			
-			static const uint32_t kMaxErrorNumber = 6;
+			static const uint32_t kGetAllocationSize_Error_NotAllocated = 7;
+			static const uint32_t kGetAllocationSize_Error_None = 0;
+			
+			static const uint32_t kMaxErrorNumber = 8;
 			
 			static void KInit ( uint32_t KernelBase, uint32_t KernelMemSize );
 			
@@ -50,12 +55,17 @@ namespace MM
 			
 			~AddressSpace ();
 			
-			void AddFreeRange ( uint32_t Base, uint32_t Length );
+			void AddFreeRange ( uint32_t Base, uint32_t Length, uint32_t * Error );
 			
 			static AddressSpace * ReteriveKernelSpace ();
 			
 			void Alloc ( uint32_t Length, void ** Base, uint32_t * Error );
 			void Free ( void * Base, uint32_t * Error );
+			
+			void GetAllocationSize ( void * Base, uint32_t * RecordedSize, uint32_t * Error );
+			
+			uint32_t GetFreePages ();
+			uint32_t GetTotalPages ();
 			
 			void DebugPrint ();
 			

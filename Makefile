@@ -25,7 +25,7 @@ build: bin/Kernel.bin
 	
 test: img/grubhd.vdmk vm_start
 
-KERNELBIN_OBJS= $(KOBJ)/boot/multiboot/boot.o $(KOBJ)/init/kinit/kinit.o $(KOBJ)/hw/cpu/hang.o $(KOBJ)/hw/video/VText.o $(KOBJ)/util/string/string.o $(KOBJ)/system/func/panic.o $(KOBJ)/system/func/kprintf.o $(KOBJ)/mm/paging/PFA.o $(KOBJ)/hw/cpu/GDT.o $(KOBJ)/hw/cpu/GDT.asm.o $(KOBJ)/mm/paging/PageTable.o $(KOBJ)/mm/paging/PageTable.asm.o $(KOBJ)/mm/paging/kernelpt.asm.o $(KOBJ)/interrupt/IState.o $(KOBJ)/mm/paging/AddressSpace.o $(KOBJ)/hw/cpu/IDT.o $(KOBJ)/hw/cpu/IDT.asm.o $(KOBJ)/interrupt/InterruptHandlers.o $(KOBJ)/interrupt/InterruptHandlers.asm.o $(KOBJ)/interrupt/APIC.o $(KOBJ)/interrupt/PIC.o $(KOBJ)/interrupt/IRQ.o $(KOBJ)/hw/acpi/ACPITable.o
+KERNELBIN_OBJS= $(KOBJ)/boot/multiboot/boot.o $(KOBJ)/init/kinit/kinit.o $(KOBJ)/hw/cpu/hang.o $(KOBJ)/hw/video/VText.o $(KOBJ)/util/string/string.o $(KOBJ)/system/func/panic.o $(KOBJ)/system/func/kprintf.o $(KOBJ)/mm/paging/PFA.o $(KOBJ)/hw/cpu/GDT.o $(KOBJ)/hw/cpu/GDT.asm.o $(KOBJ)/mm/paging/PageTable.o $(KOBJ)/mm/paging/PageTable.asm.o $(KOBJ)/mm/paging/kernelpt.asm.o $(KOBJ)/interrupt/IState.o $(KOBJ)/mm/paging/AddressSpace.o $(KOBJ)/hw/cpu/IDT.o $(KOBJ)/hw/cpu/IDT.asm.o $(KOBJ)/interrupt/InterruptHandlers.o $(KOBJ)/interrupt/InterruptHandlers.asm.o $(KOBJ)/interrupt/APIC.o $(KOBJ)/interrupt/PIC.o $(KOBJ)/interrupt/IRQ.o $(KOBJ)/hw/acpi/ACPITable.o $(KOBJ)/system/func/pmalloc.o
 
 $(KBIN)/Kernel.bin: $(KSOURCE)/Link.ld $(KERNELBIN_OBJS)
 	$(LD) $(KERNELBIN_OBJS) $(LINK_FLAGS) -o $(KBIN)/kimg.elf -T $(KSOURCE)/Link.ld
@@ -98,6 +98,9 @@ $(KOBJ)/mm/paging/AddressSpace.o: $(KINCLUDE)/mm/paging/AddressSpace.h $(KSOURCE
 	
 $(KOBJ)/hw/acpi/ACPITable.o: $(KINCLUDE)/hw/acpi/ACPITable.h $(KSOURCE)/hw/acpi/ACPITable.cpp
 	$(CXX) $(KSOURCE)/hw/acpi/ACPITable.cpp $(CPP_FLAGS) -I$(KINCLUDE) -o $(KOBJ)/hw/acpi/ACPITable.o
+	
+$(KOBJ)/system/func/pmalloc.o: $(KINCLUDE)/system/func/pmalloc.h $(KINCLUDE)/math/bitmath.h $(KSOURCE)/system/func/pmalloc.cpp 
+	$(CXX) $(KSOURCE)/system/func/pmalloc.cpp $(CPP_FLAGS) -I$(KINCLUDE) -o $(KOBJ)/system/func/pmalloc.o
 
 $(KIMG)/grubhd.vdmk: bin/kimg.elf img/grubdisk.img
 	hdiutil attach $(KIMG)/grubdisk.img > /dev/null
