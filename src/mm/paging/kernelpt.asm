@@ -4,13 +4,11 @@ global mm_paging_kernelpd
 
 section .page_table
 
-%define PD
-
 align 4096
 
 mm_paging_kernelpd:
 
-	times 4096 db 0
+	times 0x1000 db 0
 
 align 4096
 	

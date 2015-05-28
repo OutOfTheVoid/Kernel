@@ -6,7 +6,7 @@
 #include <mm/MM.h>
 #include <mm/paging/Paging.h>
 
-#include <math/bitmath.h>
+#include <math/Bitmath.h>
 
 #include <stdint.h>
 #include <stddef.h>

@@ -181,6 +181,8 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 	if ( FreeStorageSlotCount <= 2 )
 	{
 		
+		Storage * NewStorage;
+		
 		if ( Kernel )
 		{
 			
@@ -196,7 +198,6 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 			}
 			
 			AddressRange * NewStorageRange = DoAlloc ( 0x1000 );
-			Storage * NewStorage;
 			
 			if ( NewStorageRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 			{
@@ -1401,6 +1402,8 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 	if ( FreeStorageSlotCount <= 2 )
 	{
 		
+		Storage * NewStorage;
+		
 		if ( Kernel )
 		{
 			
@@ -1416,7 +1419,6 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 			}
 			
 			AddressRange * NewStorageRange = DoAlloc ( 0x1000 );
-			Storage * NewStorage;
 			
 			if ( NewStorageRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 			{

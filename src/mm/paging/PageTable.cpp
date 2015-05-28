@@ -16,7 +16,7 @@ MM::Paging::PageTable :: PDirectory Kernel_PDirectory = 0;
 C_LINKAGE uint32_t mm_paging_kernelpt;
 C_LINKAGE uint32_t mm_paging_kernelpd;
 
-C_LINKAGE void mm_paging_loadPageDirectory ( MM::Paging::PageTable :: PDirectory Directory );
+C_LINKAGE void mm_paging_loadPageDirectory ( MM::Paging::PageTable :: PDirectory );
 C_LINKAGE void mm_paging_enable ();
 C_LINKAGE void mm_paging_disable ();
 C_LINKAGE void mm_paging_flushCR3 ();
@@ -41,7 +41,7 @@ void MM::Paging::PageTable :: KInit ( multiboot_info_t * MultibootInfo )
 	}
 	
 	// Identitiy map kernel && loaded modules
-	for ( i = reinterpret_cast <uint32_t> ( & __kbegin ) & 0xFFFFF000; i < reinterpret_cast <uint32_t> ( __kend ); i += 0x1000 )
+	for ( i = 0; i < reinterpret_cast <uint32_t> ( __kend ); i += 0x1000 )
 		SetKernelMapping ( i, i, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
 	
 	for ( i = reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ); i < reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) + MM::Paging::PFA :: TableSize * sizeof ( MM::Paging::PFA :: Entry ); i += 0x1000 )
@@ -198,7 +198,7 @@ uint32_t MM::Paging::PageTable :: KernelVirtualToPhysical ( uint32_t Virtual )
 void MM::Paging::PageTable :: SetDirectoryEntry ( uint32_t * DirectoryEntry, uint32_t TableAddress, uint32_t Flags )
 {
 	
-	* DirectoryEntry = ( TableAddress & 0xFFFFF000 ) | Flags;
+	* DirectoryEntry = ( TableAddress & 0xFFFFF000 ) | ( Flags & 0xFFF );
 	
 };
 
