@@ -394,7 +394,6 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: DoAlloc (
 	AllocRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	AllocRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	AllocRange -> PrevInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	AllocRange -> Height = 0;
 	
 	InsertAllocatedNode ( AllocRange );
 	
@@ -741,7 +740,7 @@ void MM::Paging::AddressSpace :: RemoveFreeNode ( AddressRange * Node )
 						UnbalancedNode -> Right = SuccessorNode -> Right;
 					else
 						UnbalancedNode -> Left = SuccessorNode -> Right;
-						
+					
 					SuccessorNode -> Right -> Parent = UnbalancedNode;
 					
 				}
@@ -968,7 +967,7 @@ void MM::Paging::AddressSpace :: RemoveAllocatedNode ( AddressRange * Node )
 						UnbalancedNode -> Right = SuccessorNode -> Right;
 					else
 						UnbalancedNode -> Left = SuccessorNode -> Right;
-						
+					
 					SuccessorNode -> Right -> Parent = UnbalancedNode;
 					
 				}
@@ -1311,11 +1310,30 @@ void * MM::Paging::AddressSpace :: operator new ( size_t, void * Address )
 MM::Paging::AddressSpace :: ~AddressSpace ()
 {
 	
+	while ( FreeStorageHead != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+	{
+		
+		Storage * PendingFreeStorage = FreeStorageHead;
+		FreeStorageHead = PendingFreeStorage -> Next;
+		
+		// TODO: Rely on kernel pfree for deallocation
+		
+	}
+	
+	while ( FreeStorageHead != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+	{
+		
+		Storage * PendingFreeStorage = FreeStorageHead;
+		FreeStorageHead = PendingFreeStorage -> Next;
+		
+		// TODO: Rely on kernel pfree for deallocation
+		
+	}
 	
 	
 };
 
-void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length )
+void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, uint32_t * Error )
 {
 	
 	uint32_t NewBase = 0xFFF + Base;
@@ -1323,22 +1341,93 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length )
 	Length -= NewBase - Base;
 	Length &= ~ 0xFFF;
 	
+	if ( Length == 0 )
+		return;
+	
 	if ( FreeStorageSlotCount <= 2 )
 	{
 		
 		if ( Kernel )
 		{
 			
+			void * NewStoragePhysical;
 			
+			if ( ! MM::Paging::PFA :: Alloc ( 0x1000, & NewStoragePhysical ) )
+			{
+				
+				* Error = kAlloc_Error_FailedPhysicalAllocation;
+				
+				return;
+				
+			}
+			
+			AddressRange * NewStorageRange = DoAlloc ( 0x1000 );
+			Storage * NewStorage;
+			
+			if ( NewStorageRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+			{
+				
+				if ( Length > 0x1000 )
+				{
+					
+					Length -= 0x1000;
+					NewStorageRange = reinterpret_cast <AddressRange *> ( NewBase + Length );
+					
+				}
+				else
+				{
+					
+					MM::Paging::PFA :: Free ( NewStoragePhysical );
+					
+					* Error = kAddFreeRange_Error_OutOfKVirtualSpace;
+					
+					return;
+					
+				}
+				
+			}
+			
+			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+			NewStorage = reinterpret_cast <Storage *> ( NewStorageRange -> Length );
+			
+			NewStorage -> Bitmap [ 0 ] = 0x00000001;
+			NewStorage -> Bitmap [ 1 ] = 0x00000000;
+			NewStorage -> Bitmap [ 2 ] = 0x00000000;
+			NewStorage -> Bitmap [ 3 ] = 0x00000000;
+			NewStorage -> FreeCount = 112;
+			
+			FreeStorageHead -> Previous = NewStorage;
+			NewStorage -> Next = FreeStorageHead;
+			NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+			FreeStorageHead = NewStorage;
+			
+			FreeStorageSlotCount += 112;
 			
 		}
 		else
 		{
 			
-			// TODO
+			// TODO: rely on kernel pmalloc
 			
 		}
 		
 	}
+	
+	AddressRange * NewRange = GetNewRange ();
+	
+	NewRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewRange -> PrevInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewRange -> Base = NewBase;
+	NewRange -> Length = Length;
+	
+	TotalPageCount += Length >> 12;
+	FreePageCount += Length >> 12;
+	
+	InsertFreeNode ( NewRange );
+	
+	* Error = kAddFreeRange_Error_None;
 	
 };

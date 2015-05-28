@@ -36,6 +36,9 @@ namespace MM
 			static const uint32_t kError_Free_NotAllocated = 6;
 			static const uint32_t kFree_Error_None = 0;
 			
+			static const uint32_t kAddFreeRange_Error_OutOfKVirtualSpace = 3;
+			static const uint32_t kAddFreeRange_Error_None = 0;
+			
 			static const uint32_t kMaxErrorNumber = 6;
 			
 			static void KInit ( uint32_t KernelBase, uint32_t KernelMemSize );
