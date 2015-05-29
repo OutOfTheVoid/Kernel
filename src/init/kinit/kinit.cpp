@@ -9,10 +9,8 @@
 #include <system/func/kprintf.h>
 #include <system/func/panic.h>
 
-#include <mm/paging/PageTable.h>
-#include <mm/paging/PFA.h>
-#include <mm/paging/AddressSpace.h>
 #include <mm/MM.h>
+#include <mm/KMalloc.h>
 
 #include <interrupt/InterruptHandlers.h>
 
@@ -45,8 +43,7 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	HW::CPU::GDT :: Init ( 3 );
 	HW::CPU::GDT :: Swap ();
 	
-	system_func_kprintf ( "Initialized!\n\n" );
-	
+	system_func_kprintf ( "Initialized!\n" );
 	
 	hw_cpu_hang ();
 	

@@ -170,7 +170,7 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 	
 };
 
-multiboot_info_t * MM::Paging::PFA :: RetreiveMultibootInfoCopy ()
+multiboot_info_t * MM::Paging::PFA :: RetrieveMultibootInfoCopy ()
 {
 	
 	return MBICopy;

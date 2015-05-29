@@ -47,7 +47,7 @@ const char * MM::Paging::AddressSpace :: GetErrorString ( uint32_t Error )
 	
 };
 
-MM::Paging::AddressSpace * MM::Paging::AddressSpace :: ReteriveKernelSpace ()
+MM::Paging::AddressSpace * MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ()
 {
 	
 	return KernelAddressSpace;

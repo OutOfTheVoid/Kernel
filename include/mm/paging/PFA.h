@@ -27,7 +27,7 @@ namespace MM
 		public:
 			
 			static void Init ( multiboot_info_t * MultibootInfo );
-			static multiboot_info_t * RetreiveMultibootInfoCopy ();
+			static multiboot_info_t * RetrieveMultibootInfoCopy ();
 			
 			static bool Alloc ( uint32_t Length, void ** Address );
 			static void Free ( void * Address );

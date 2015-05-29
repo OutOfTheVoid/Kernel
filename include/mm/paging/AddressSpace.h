@@ -7,6 +7,7 @@
 #include <mm/paging/Paging.h>
 
 #include <math/Bitmath.h>
+#include <math/IntMath.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -57,7 +58,7 @@ namespace MM
 			
 			void AddFreeRange ( uint32_t Base, uint32_t Length, uint32_t * Error );
 			
-			static AddressSpace * ReteriveKernelSpace ();
+			static AddressSpace * RetrieveKernelAddressSpace ();
 			
 			void Alloc ( uint32_t Length, void ** Base, uint32_t * Error );
 			void Free ( void * Base, uint32_t * Error );
@@ -165,22 +166,15 @@ namespace MM
 					return;
 				
 				__TreePrint ( Node -> Left );
-				system_func_kprintf ( "%h, ", Node -> Base );
+				system_func_kprintf ( "[%h, %h], ", Node -> Base, Node -> Length );
 				__TreePrint ( Node -> Right );
-				
-			};
-			
-			static inline int32_t __max ( int32_t A, int32_t B )
-			{
-				
-				return ( A > B ) ? A : B;
 				
 			};
 			
 			static inline void __CalcHeight ( AddressRange * Node )
 			{
 				
-				Node -> Height = __max ( ( Node -> Left != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) ) ? Node -> Left -> Height : - 1, ( Node -> Right != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) ) ? Node -> Right -> Height : - 1 ) + 1;
+				Node -> Height = math_max ( ( Node -> Left != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) ) ? Node -> Left -> Height : - 1, ( Node -> Right != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) ) ? Node -> Right -> Height : - 1 ) + 1;
 				
 			};
 			

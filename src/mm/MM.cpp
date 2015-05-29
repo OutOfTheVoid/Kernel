@@ -12,12 +12,12 @@ void MM :: Init ( multiboot_info_t * MultibootInfo )
 {
 	
 	Paging::PFA :: Init ( MultibootInfo );
-	MultibootInfo = Paging::PFA :: RetreiveMultibootInfoCopy ();
+	MultibootInfo = Paging::PFA :: RetrieveMultibootInfoCopy ();
 	
 	Paging::PageTable :: KInit ( MultibootInfo );
 	Paging::PageTable :: EnableKPaging ();
 	
-	uint32_t KAddStart = Max ( reinterpret_cast <uint32_t> ( & __kend ), KernelVMStart );
+	uint32_t KAddStart = math_max ( reinterpret_cast <uint32_t> ( & __kend ), KernelVMStart );
 	Paging::AddressSpace :: KInit ( KAddStart, KernelVMLength - KAddStart );
 	
 };

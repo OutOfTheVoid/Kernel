@@ -14,4 +14,6 @@
 void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags = 0, uint32_t Hint = PMALLOC_PHSCHEME_DEFAULT );
 void system_func_pfree ( void * Base );
 
+uint32_t system_func_psize ( void * Base );
+
 #endif

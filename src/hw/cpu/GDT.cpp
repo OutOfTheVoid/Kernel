@@ -2,8 +2,7 @@
 
 #include <cpputil/linkage.h>
 
-#include <mm/paging/PFA.h>
-#include <mm/paging/PageTable.h>
+#include <mm/KMalloc.h>
 
 #include <system/func/panic.h>
 
@@ -16,8 +15,8 @@ HW::CPU::GDT :: GDTR Kernel_GDTR = HW::CPU::GDT :: GDTR ();
 HW::CPU::GDT :: GDTR Kernel_OLD_GDTR = HW::CPU::GDT :: GDTR ();
 
 bool HW::CPU::GDT :: OwnsCurrent = false;
-uint32_t HW::CPU::GDT :: EntryCount;
 
+uint32_t HW::CPU::GDT :: EntryCount;
 HW::CPU::GDT :: GDTEntry * HW::CPU::GDT :: Entries;
 
 void HW::CPU::GDT :: Init ( uint8_t EntryCount )
@@ -28,13 +27,9 @@ void HW::CPU::GDT :: Init ( uint8_t EntryCount )
 	if ( EntryCount < 3 )
 		EntryCount = 3;
 	
+	Entries = reinterpret_cast <GDTEntry *> ( mm_kmalloc ( sizeof ( GDTEntry ) * EntryCount ) );
+	
 	HW::CPU::GDT :: EntryCount = EntryCount;
-	
-	if ( ! MM::Paging::PFA :: Alloc ( sizeof ( GDTEntry ) * EntryCount, reinterpret_cast <void **> ( & Entries ) ) )
-		KPANIC ( "Failed to allocate page for GDT!" );
-	
-	MM::Paging::PageTable :: SetKernelRegionMapping ( reinterpret_cast <uint32_t> ( Entries ), reinterpret_cast <uint32_t> ( Entries ), sizeof ( GDTEntry ) * EntryCount, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
-	
 	HW::CPU::GDT :: Entries = Entries;
 	
 	DefineEntry ( & Entries [ 0 ], 0, 0, kAccessType_None, kFlags_None );
@@ -149,16 +144,9 @@ void HW::CPU::GDT :: Swap ()
 	hw_cpu_gdtLoad ();
 	
 	GDTEntry * OldEntries = reinterpret_cast <GDTEntry *> ( Kernel_OLD_GDTR.Base );
-	uint32_t OldLength = Kernel_OLD_GDTR.Limit + 1;
 	
 	if ( OwnsCurrent )
-	{
-		
-		MM::Paging::PFA :: Free ( OldEntries );
-		
-		MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Entries ), OldLength );
-		
-	}
+		mm_kfree ( OldEntries );
 	
 	OwnsCurrent = true;
 	
