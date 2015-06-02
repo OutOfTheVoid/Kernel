@@ -34,8 +34,6 @@ namespace HW
 				uint32_t LAPICAddress;
 				uint32_t Flags;
 				
-				void * RecordsBase;
-				
 			} __attribute__ (( packed )) MADTable;
 			
 			typedef struct

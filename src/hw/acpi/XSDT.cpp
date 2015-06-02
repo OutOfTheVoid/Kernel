@@ -101,12 +101,12 @@ void * HW::ACPI::XSDT :: FindTable ( const char * Name )
 			
 		}
 		
-		if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
+		if ( ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 ) && ( SearchTable -> Length > sizeof ( HW::ACPI::ACPITable :: ACPITableHeader ) ) )
 		{
 			
 			mm_kvunmap ( SearchTable );
 			
-			return SearchTable;
+			return reinterpret_cast <void *> ( Table -> SDTableBase [ I ] );
 			
 		}
 		

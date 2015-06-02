@@ -54,6 +54,9 @@ void HW::ACPI::MADT :: Init ()
 	
 	Table = reinterpret_cast <MADTable *> ( mm_kvmap ( PhysAddr, 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
 	
+	if ( Table == NULL )
+		return;
+	
 	uint32_t TableLength = ( reinterpret_cast <uint32_t> ( PhysAddr ) + Table -> Header.Length ) - ( reinterpret_cast <uint32_t> ( PhysAddr ) & 0xFFFFF000 );
 	
 	if ( TableLength > 0x2000 )
@@ -80,11 +83,11 @@ void HW::ACPI::MADT :: Init ()
 		system_func_kprintf ( "MADT checksum ok!\n" );
 	#endif
 	
-	RecordLength = static_cast <uint32_t> ( sizeof ( MADTable ) - sizeof ( void * ) );
-	RecordBase = reinterpret_cast <RecordHeader *> ( & Table -> RecordsBase );
+	RecordLength = 28;
+	RecordBase = reinterpret_cast <RecordHeader *> ( reinterpret_cast <uint32_t> ( Table ) + 28 );
 	
 	#ifdef KSTARTUP_DEBUG
-		system_func_kprintf ( "MADT report:\n" );
+		system_func_kprintf ( "MADT length:%u\nMADT report:\n", Table -> Header.Length );
 	#endif
 	
 	ProcessorLAPICRecord * PLRRecord;
