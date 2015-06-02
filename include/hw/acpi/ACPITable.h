@@ -28,7 +28,7 @@ namespace HW
 				uint8_t Checksum;
 				
 				char OEMID [ 6 ];
-				char OEMTableID [ 9 ];
+				char OEMTableID [ 8 ];
 				
 				uint32_t OEMRevision;
 				uint32_t CreatorID;

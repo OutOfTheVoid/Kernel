@@ -15,6 +15,9 @@ public:
 		
 		Elements = reinterpret_cast <T *> ( mm_kmalloc ( sizeof ( T ) * kDataAllocation_DefaultSize ) );
 		
+		if ( Elements == NULL )
+			KPANIC ( "Vector allocation failed!" );
+		
 		Allocated = kDataAllocation_DefaultSize;
 		Used = 0;
 		

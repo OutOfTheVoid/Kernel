@@ -284,43 +284,33 @@ void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 	}
 	
 	RemoveAllocatedNode ( AllocRange );
-	
 	FreePageCount += AllocRange -> Length >> 12;
 	
-	bool Combine = true;
+	AddressRange * Lower = FindClosestSmallerFreeNode ( AllocRange );
+	AddressRange * Higher = FindFreeNode ( AllocRange -> Length + AllocRange -> Base );
 	
-	while ( Combine )
+	if ( Higher != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 	{
 		
-		Combine = false;
+		RemoveFreeNode ( Higher );
+		AllocRange -> Length += Higher -> Length;
+		FreeOldRange ( Higher );
 		
-		AddressRange * Lower = FindClosestSmallerFreeNode ( AllocRange );
-		AddressRange * Higher = FindFreeNode ( AllocRange -> Length + AllocRange -> Base );
+	}
+	
+	if ( Lower != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
 		
-		if ( Lower != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		if ( ( Lower != AllocRange ) && ( ( Lower -> Base + Lower -> Length ) == AllocRange -> Base ) )
 		{
 			
-			if ( ( Lower != AllocRange ) && ( ( Lower -> Base + Lower -> Length ) == AllocRange -> Base ) )
-			{
-				
-				Lower -> Length += AllocRange -> Length;
-				FreeOldRange ( AllocRange );
-				AllocRange = Lower;
-				
-				Combine = true;
-				
-			}
+			Lower -> Length += AllocRange -> Length;
+			FreeOldRange ( AllocRange );
+			AllocRange = Lower;
 			
-		}
-		
-		if ( Higher != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
-		{
+			* Error = kFree_Error_None;
 			
-			RemoveFreeNode ( Higher );
-			AllocRange -> Length += Higher -> Length;
-			FreeOldRange ( Higher );
-			
-			Combine = true;
+			return;
 			
 		}
 		
@@ -380,9 +370,6 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: FindClose
 		{
 			
 			if ( SearchNode -> Left == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
-				return SearchNode;
-			
-			if ( SearchNode -> Left -> Base == Node -> Base )
 				return SearchNode;
 			
 			SearchNode = SearchNode -> Left;

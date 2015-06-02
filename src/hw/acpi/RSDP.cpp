@@ -145,8 +145,6 @@ void HW::ACPI::RSDP :: Discard ()
 	
 	TableFound = false;
 	
-	Revision = 0;
-	
 	MM::Paging::PageTable :: ClearKernelMapping ( reinterpret_cast <uint32_t> ( Table ) );
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( reinterpret_cast <void *> ( Table ), & Error );
 	

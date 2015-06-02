@@ -2,8 +2,8 @@
 
 #include <util/string/String.h>
 
-#include <mm/paging/AddressSpace.h>
 #include <mm/paging/PageTable.h>
+#include <mm/KVMap.h>
 
 bool HW::ACPI::RSDT :: Validated = false;
 uint32_t HW::ACPI::RSDT :: TableCount = 0;
@@ -16,20 +16,28 @@ void HW::ACPI::RSDT :: Init ( void * RSDTAddress )
 	if ( Validated )
 		return;
 	
-	uint32_t Error;
+	Table = reinterpret_cast <RSDTable *> ( mm_kvmap ( RSDTAddress, 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
 	
-	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Alloc ( 0x1000, reinterpret_cast <void **> ( & Table ), & Error );
-	
-	if ( Error != MM::Paging::AddressSpace :: kAlloc_Error_None )
+	if ( Table == NULL )
 		return;
 	
-	MM::Paging::PageTable :: SetKernelMapping ( reinterpret_cast <uint32_t> ( Table ), reinterpret_cast <uint32_t> ( RSDTAddress ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+	uint32_t TableLength = ( reinterpret_cast <uint32_t> ( RSDTAddress ) + Table -> Header.Length ) - ( reinterpret_cast <uint32_t> ( RSDTAddress ) & 0xFFFFF000 );
+	
+	if ( TableLength > 0x2000 )
+	{
+		
+		mm_kvunmap ( Table );
+		Table = reinterpret_cast <RSDTable *> ( mm_kvmap ( RSDTAddress, TableLength, MM::Paging::PageTable :: Flags_Writeable ) );
+		
+		if ( Table == NULL )
+			return;
+		
+	}
 	
 	if ( ! ACPITable :: VerifyTable ( & Table -> Header ) )
 	{
 		
-		MM::Paging::PageTable :: ClearKernelMapping ( reinterpret_cast <uint32_t> ( Table ) );
-		MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( reinterpret_cast <void *> ( Table ), & Error );
+		mm_kvunmap ( Table );
 		
 		return;
 		
@@ -37,20 +45,19 @@ void HW::ACPI::RSDT :: Init ( void * RSDTAddress )
 	
 	Validated = true;
 	
-	TableCount = ( Table -> Header.Length - sizeof ( HW::ACPI::ACPITable :: ACPITableHeader ) ) / sizeof ( uint32_t );
+	TableCount = ( Table -> Header.Length - sizeof ( HW::ACPI::ACPITable :: ACPITableHeader ) ) / 4;
 	
 };
 
 void HW::ACPI::RSDT :: Discard ()
 {
 	
-	uint32_t Error;
-	
 	if ( ! Validated )
 		return;
 	
-	MM::Paging::PageTable :: ClearKernelMapping ( reinterpret_cast <uint32_t> ( Table ) );
-	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( reinterpret_cast <void *> ( Table ), & Error );
+	mm_kvunmap ( Table );
+	
+	Validated = false;
 	
 	Table = NULL;
 	
@@ -66,16 +73,39 @@ bool HW::ACPI::RSDT :: Valid ()
 void * HW::ACPI::RSDT :: FindTable ( const char * Name )
 {
 	
-	if ( ! Validated )
-		return NULL;
+	HW::ACPI::ACPITable :: ACPITableHeader * SearchTable;
+	uint32_t SearchTableLength;
 	
 	for ( uint32_t I = 0; I < TableCount; I ++ )
 	{
 		
-		HW::ACPI::ACPITable :: ACPITableHeader * SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( ( & Table -> SDTableBase ) [ I ] );
+		SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ 0 ] ), 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
+		SearchTableLength = ( reinterpret_cast <uint32_t> ( SearchTable ) + SearchTable -> Length ) - ( reinterpret_cast <uint32_t> ( SearchTable ) & 0xFFFFF000 );
+		
+		if ( SearchTableLength > 0x2000 )
+		{
+			
+			mm_kvunmap ( SearchTable );
+			
+			SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ 0 ] ), SearchTableLength, MM::Paging::PageTable :: Flags_Writeable ) );
+			
+			if ( SearchTable == NULL )
+				return NULL;
+			
+		}
+		
+		
 		
 		if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
-			return reinterpret_cast <void *> ( SearchTable );
+		{
+			
+			mm_kvunmap ( SearchTable );
+			
+			return SearchTable;
+			
+		}
+		
+		mm_kvunmap ( SearchTable );
 		
 	}
 	

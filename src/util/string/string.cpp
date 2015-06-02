@@ -194,11 +194,11 @@ C_LINKAGE void * memcpy ( void * Destination, const void * Source, size_t Count 
 int32_t strncmp ( const char * Str1, const char * Str2, size_t Count )
 {
 	
-	for ( ; Count > 0; Str1 ++, Str2 ++, -- Count )
+	for ( uint32_t i = 0; i < Count; i ++ )
 	{
 		
-		if ( * Str1 != * Str2 )
-			return static_cast <int32_t> ( * Str1 ) - static_cast <int32_t> ( * Str2 );
+		if ( Str1 [ i ] != Str2 [ i ] )
+			return static_cast <int32_t> ( Str1 [ i ] ) - static_cast <int32_t> ( Str2 [ i ] );
 		
 	}
 	

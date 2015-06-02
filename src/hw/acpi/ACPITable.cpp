@@ -3,11 +3,11 @@
 bool HW::ACPI::ACPITable :: VerifyTable ( ACPITableHeader * Header )
 {
 	
-	uint8_t Sum = 0;
+	unsigned char Sum = 0;
 	
 	for ( uint32_t i = 0; i < Header -> Length; i ++ )
-		Sum += reinterpret_cast <uint8_t *> ( Header ) [ i ];
+		Sum += reinterpret_cast <unsigned char *> ( Header ) [ i ];
 	
-	return ( Sum == 0 );
+	return ( ( Sum & 0xFF ) == 0 );
 	
 };

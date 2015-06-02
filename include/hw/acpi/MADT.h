@@ -7,6 +7,8 @@
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
+#include <util/Vector.h>
+
 namespace HW
 {
 	
@@ -17,7 +19,7 @@ namespace HW
 		{
 		public:
 			
-			static void Init ( void * MADTAddress );
+			static void Init ();
 			static bool Valid ();
 			
 			static void Discard ();
@@ -32,11 +34,67 @@ namespace HW
 				uint32_t LAPICAddress;
 				uint32_t Flags;
 				
-			} MADTable;
+				void * RecordsBase;
+				
+			} __attribute__ (( packed )) MADTable;
+			
+			typedef struct
+			{
+				
+				uint8_t Type;
+				uint8_t Length;
+				
+			} __attribute__ (( packed )) RecordHeader;
+			
+			typedef struct
+			{
+				
+				RecordHeader Header;
+				
+				uint8_t APICProcessorID;
+				uint8_t APICID;
+				
+				uint32_t Flags;
+				
+			} __attribute__ (( packed )) ProcessorLAPICRecord;
+			
+			typedef struct
+			{
+				
+				uint8_t ID;
+				
+				uint8_t Reserved;
+				
+				uint32_t Address;
+				uint32_t GlobalSystemInterruptBase;
+				
+			} __attribute__ (( packed )) IOAPICRecord;
+			
+			typedef struct
+			{
+				
+				uint8_t BusSource;
+				uint8_t IRQSource;
+				
+				uint32_t GlobalSystemInterrupt;
+				
+				uint16_t Flags;
+				
+			} __attribute__ (( packed )) InterruptSourceOverride;
+			
+			static const uint32_t kAPICFlags_ProcessorEnabled;
+			
+			static const uint8_t kRecordType_ProcessorLAPICRecord = 0;
+			static const uint8_t kRecordType_IOAPICRecord = 1;
+			static const uint8_t kRecordType_InterruptSourceOverride = 2;
 			
 			static const char * kSearchString;
 			
-			static RSDTTable * Table;
+			static MADTable * Table;
+			
+			static Vector <ProcessorLAPICRecord *> ProcessorLAPICRecords;
+			static Vector <IOAPICRecord *> IOAPICRecords;
+			static Vector <InterruptSourceOverride *> InterruptSourceOverrides;
 			
 			static bool Validated;
 			

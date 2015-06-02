@@ -2,6 +2,7 @@
 #include <hw/acpi/RSDP.h>
 #include <hw/acpi/RSDT.h>
 #include <hw/acpi/XSDT.h>
+#include <hw/acpi/MADT.h>
 
 #include <system/func/kprintf.h>
 
@@ -47,6 +48,10 @@ bool HW::ACPI :: StaticInit ()
 			
 		}
 		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "RSDT Validated!\nParsing MADT...\n" );
+		#endif
+		
 	}
 	else
 	{
@@ -63,6 +68,21 @@ bool HW::ACPI :: StaticInit ()
 			return false;
 			
 		}
+		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "XSDT Validated!\nParsing MADT...\n" );
+		#endif
+		
+	}
+	
+	MADT :: Init ();
+	
+	if ( ! MADT :: Valid () )
+	{
+		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "MADT Not valid!\n" );
+		#endif
 		
 	}
 	

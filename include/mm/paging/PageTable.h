@@ -30,7 +30,7 @@ namespace MM
 			static const uint32_t Flags_Writeable = 0x02;
 			static const uint32_t Flags_Present = 0x01;
 			
-			static void KInit ( multiboot_info_t * MultibootInfo );
+			static void KInit ();
 			static PDirectory GetKernelPT ();
 			
 			static PDirectory Create ();

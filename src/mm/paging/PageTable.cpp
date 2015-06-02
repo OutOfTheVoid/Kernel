@@ -22,7 +22,7 @@ C_LINKAGE void mm_paging_disable ();
 C_LINKAGE void mm_paging_flushCR3 ();
 C_LINKAGE void mm_paging_invalPage ( uint32_t Virtual );
 
-void MM::Paging::PageTable :: KInit ( multiboot_info_t * MultibootInfo )
+void MM::Paging::PageTable :: KInit ()
 {
 	
 	Kernel_PDirectory = reinterpret_cast <PDirectory> ( & mm_paging_kernelpd );
@@ -41,22 +41,8 @@ void MM::Paging::PageTable :: KInit ( multiboot_info_t * MultibootInfo )
 	
 	}
 	
-	// Identitiy map kernel && loaded modules
 	for ( i = 0; i < reinterpret_cast <uint32_t> ( & __kend ); i += 0x1000 )
 		SetKernelMapping ( i, i, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
-	
-	//for ( i = reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ); i < reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) + MM::Paging::PFA :: TableSize * sizeof ( MM::Paging::PFA :: Entry ); i += 0x1000 )
-	//	SetKernelMapping ( i, i, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
-	
-	if ( MultibootInfo -> flags & MULTIBOOT_INFO_MODS )
-	{
-		
-		multiboot_module_t * Modules = reinterpret_cast <multiboot_module_t *> ( MultibootInfo -> mods_addr );
-		
-		for ( i = 0; i < MultibootInfo -> mods_count; i ++ )
-			SetKernelRegionMapping ( Modules [ i ].mod_start & 0xFFFFF000, Modules [ i ].mod_start & 0xFFFFF000, Modules [ i ].mod_end - Modules [ i ].mod_start , Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
-		
-	}
 	
 };
 

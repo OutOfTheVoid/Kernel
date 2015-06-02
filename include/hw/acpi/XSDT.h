@@ -28,11 +28,12 @@ namespace HW
 				
 				HW::ACPI::ACPITable :: ACPITableHeader Header;
 				
-				uint64_t SDTableBase;
+				uint64_t SDTableBase [];
 				
-			} XSDTable;
+			} __attribute__ (( packed )) XSDTable;
 			
 			static XSDTable * Table;
+			static uint32_t TableLength;
 			
 			static bool Validated;
 			

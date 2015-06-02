@@ -31,9 +31,9 @@ namespace HW
 				
 				HW::ACPI::ACPITable :: ACPITableHeader Header;
 				
-				uint32_t SDTableBase;
+				uint32_t SDTableBase [];
 				
-			} RSDTable;
+			} __attribute__ (( packed )) RSDTable;
 			
 			static RSDTable * Table;
 			

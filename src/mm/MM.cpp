@@ -27,7 +27,7 @@ void MM :: Init ( multiboot_info_t * MultibootInfo )
 	system_func_kprintf ( "Physical memory - %u KB Total, %u KB Free\nKernel page table init...\n", Paging::PFA :: GetTotalKB (), Paging::PFA :: GetFreeKB () );
 #endif
 	
-	Paging::PageTable :: KInit ( Paging::PFA :: RetrieveMultibootInfoCopy () );
+	Paging::PageTable :: KInit ();
 	Paging::PageTable :: EnableKPaging ();
 	
 #ifdef KSTARTUP_DEBUG
