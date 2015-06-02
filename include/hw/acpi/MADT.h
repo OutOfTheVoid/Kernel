@@ -90,9 +90,9 @@ namespace HW
 			
 			static MADTable * Table;
 			
-			static Vector <ProcessorLAPICRecord *> ProcessorLAPICRecords;
-			static Vector <IOAPICRecord *> IOAPICRecords;
-			static Vector <InterruptSourceOverride *> InterruptSourceOverrides;
+			static Vector <ProcessorLAPICRecord *> * ProcessorLAPICRecords;
+			static Vector <IOAPICRecord *> * IOAPICRecords;
+			static Vector <InterruptSourceOverride *> * InterruptSourceOverrideRecords;
 			
 			static bool Validated;
 			
