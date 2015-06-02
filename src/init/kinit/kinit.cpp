@@ -11,6 +11,8 @@
 
 #include <mm/MM.h>
 #include <mm/KMalloc.h>
+#include <mm/Paging/PFA.h>
+#include <mm/Paging/PageTable.h>
 
 #include <interrupt/InterruptHandlers.h>
 
@@ -20,10 +22,14 @@
 #include <interrupt/PIC.h>
 #include <interrupt/APIC.h>
 
+#include <hw/acpi/ACPI.h>
+
 #include <math/bitmath.h>
 
 C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
+	
+	bool UseACPI;
 	
 	if ( Magic != MULTIBOOT_BOOTLOADER_MAGIC )
 		KPANIC ( "Multiboot bootloader magic number failed!" );
@@ -36,12 +42,20 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 
 	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_LightBlue, HW::Video::VText :: Color_LightGrey ) );
 	
-	system_func_kprintf ( "Kernel 0.0.3 dev\n(C) Liam Taylor 2015.\n\n" );
+	system_func_kprintf ( "Kernel 0.0.3 dev\n(C) Liam Taylor 2015.\n\nMM Init...\n" );
 	
 	MM :: Init ( MultibootInfo );
 	
+	system_func_kprintf ( "GDT Init...\n" );
+	
 	HW::CPU::GDT :: Init ( 3 );
 	HW::CPU::GDT :: Swap ();
+	
+	system_func_kprintf ( "ACPI Init...\n" );
+	
+	UseACPI = HW::ACPI::StaticInit ();
+	
+	system_func_kprintf ( UseACPI ? "Using ACPI\n" : "Not using ACPI\n" );
 	
 	system_func_kprintf ( "Initialized!\n" );
 	

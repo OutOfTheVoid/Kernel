@@ -6,7 +6,12 @@
 namespace HW
 {
 	
-	namespace ACPI {};
+	namespace ACPI
+	{
+		
+		bool StaticInit ();
+		
+	};
 	
 };
 

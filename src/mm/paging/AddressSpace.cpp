@@ -3,11 +3,13 @@
 #include <mm/paging/PFA.h>
 #include <mm/paging/PageTable.h>
 
-#include <system/func/panic.h>
-#include <system/func/kprintf.h>
-#include <system/func/pmalloc.h>
+#include <system/func/Panic.h>
+#include <system/func/KPrintf.h>
+#include <system/func/PMalloc.h>
 
 #include <cpputil/Unused.h>
+
+extern "C" void hw_cpu_hang ();
 
 const char * MM::Paging::AddressSpace :: ErrorStrings [] = { 
 	"None",
@@ -61,9 +63,21 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	AddressRange * InitialRange;
 	
 	uint32_t NewInitialFreeBase = 0xFFF + InitialFreeBase;
-	NewInitialFreeBase &= ~ 0xFFF;
+	NewInitialFreeBase &= 0xFFFFF000;
 	InitialFreeLength -= NewInitialFreeBase - InitialFreeBase;
-	InitialFreeLength &= ~ 0xFFF;
+	InitialFreeLength &= 0xFFFFF000;
+	
+	if ( Kernel )
+	{
+		
+		InitialFreeLength -= MM::Paging::PFA :: TableSize;
+		InitialFreeLength &= 0xFFFFF000;
+		
+		MM::Paging::PageTable :: SetKernelRegionMapping ( InitialFreeBase + InitialFreeLength, reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) & 0xFFFFF000, ( MM::Paging::PFA :: TableSize + 0xFFF ) & 0xFFFFF000, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
+		
+		MM::Paging::PFA :: Table = reinterpret_cast <MM::Paging::PFA :: Entry *> ( ( reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) & 0xFFF ) | ( InitialFreeBase + InitialFreeLength ) );
+		
+	}
 	
 	Space -> TotalPageCount = InitialFreeLength >> 12;
 	
@@ -90,7 +104,7 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 			
 		}
 		
-		MM::Paging::PageTable :: SetKernelMapping ( NewInitialFreeBase, reinterpret_cast <uint32_t> ( ISPhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+		MM::Paging::PageTable :: SetKernelMapping ( NewInitialFreeBase, reinterpret_cast <uint32_t> ( ISPhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 		InitialStorage = reinterpret_cast <Storage *> ( NewInitialFreeBase );
 		NewInitialFreeBase += 0x1000;
 		InitialFreeLength -= 0x1000;
@@ -135,14 +149,8 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	InitialRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> PrevInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	InitialRange -> Height = 0;
 	
-	uint32_t SizeClass = __CalculateSizeClass ( InitialFreeLength );
-	
-	Space -> FreeSizeClassHeads [ SizeClass ] = InitialRange;
-	Space -> RootFreeNode = InitialRange;
-	
-	Space -> FreeNodeCount = 1;
+	Space -> InsertFreeNode ( InitialRange );
 	
 	* Error = kCreateAddressSpace_Error_None;
 	
@@ -210,7 +218,7 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 				
 			}
 			
-			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 			NewStorage = reinterpret_cast <Storage *> ( NewStorageRange -> Length );
 			
 		}
@@ -1443,7 +1451,7 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 				
 			}
 			
-			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+			MM::Paging::PageTable :: SetKernelMapping ( NewStorageRange -> Length, reinterpret_cast <uint32_t> ( NewStoragePhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 			NewStorage = reinterpret_cast <Storage *> ( NewStorageRange -> Length );
 			
 		}

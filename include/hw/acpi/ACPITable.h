@@ -34,9 +34,9 @@ namespace HW
 				uint32_t CreatorID;
 				uint32_t CreatorRevision;
 				
-			} TableHeader;
+			} __attribute__ (( packed )) ACPITableHeader;
 			
-			bool VerifyTable ( TableHeader * Header );
+			static bool VerifyTable ( ACPITableHeader * Header );
 			
 		};
 		

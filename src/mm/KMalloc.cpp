@@ -26,7 +26,6 @@ void * liballoc_alloc ( size_t Pages )
 {
 	
 	void * Addr = system_func_pmalloc ( static_cast <uint32_t> ( Pages ) );
-	system_func_kprintf ( "liballoc_alloc: %h\n", reinterpret_cast <uint32_t> ( Addr ) );
 	
 	return Addr;
 	

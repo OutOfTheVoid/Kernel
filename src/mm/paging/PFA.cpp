@@ -1,11 +1,16 @@
 #include <mm/paging/PFA.h>
-#include <system/func/kprintf.h>
-#include <system/func/panic.h>
+
+#include <system/func/KPrintf.h>
+#include <system/func/Panic.h>
+
 #include <util/string/string.h>
-#include <hw/apm/apmHeader.h>
-#include <math/bitmath.h>
-#include <boot/bootimage.h>
+
+#include <hw/apm/APMHeader.h>
+
 #include <hw/video/VText.h>
+
+#include <math/Bitmath.h>
+#include <boot/Bootimage.h>
 
 multiboot_info_t * MM::Paging::PFA :: MBICopy;
 size_t MM::Paging::PFA :: MBICopySize;
@@ -54,7 +59,7 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 		TopLevel -= 12;
 	
 	// The amound of entries in our tree
-	uint32_t TableEntryCount = ( 1 << TopLevel ) - 1;
+	uint32_t TableEntryCount = ( 2 << TopLevel ) - 1;
 	
 	// Search the memory map for an appropriate storage zone for the page frame tree.
 	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
@@ -147,7 +152,7 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 	// Fill out our page tree and count free space
 	FreeCount = 0;
 	
-	for ( e = 0; e < ( MaxAddress & ( ~ 4095 ) ); e += ( e + 4096 == 0 ) ? 1 : 4096 )
+	for ( e = 0; e < ( MaxAddress & 0xFFFFF000 ); e += ( e + 4096 == 0 ) ? 1 : 4096 )
 	{
 		
 		uint32_t Index = __CalcTreeIndex ( e, 0 );

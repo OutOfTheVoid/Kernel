@@ -3,6 +3,7 @@ global mm_paging_loadPageDirectory
 global mm_paging_enable
 global mm_paging_disable
 global mm_paging_flushCR3
+global mm_paging_invalPage
 
 extern Current_PDirectory
 
@@ -61,3 +62,17 @@ mm_paging_disable:
 	pop ebp
 	
 	ret
+	
+mm_paging_invalPage:
+
+	push ebp
+	mov ebp, esp
+	
+	mov eax, [ esp + 8 ]
+	invlpg [eax]
+	
+	mov esp, ebp
+	pop ebp
+	
+	ret
+	

@@ -3,8 +3,10 @@
 #include <cpputil/linkage.h>
 
 #include <mm/KMalloc.h>
+#include <mm/Paging/PageTable.h>
 
-#include <system/func/panic.h>
+#include <system/func/Panic.h>
+#include <system/func/KPrintf.h>
 
 C_LINKAGE void hw_cpu_gdtLoad ();
 

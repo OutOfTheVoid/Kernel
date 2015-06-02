@@ -1,6 +1,6 @@
 #include <hw/acpi/ACPITable.h>
 
-bool HW::ACPI::ACPITable :: VerifyTable ( TableHeader * Header )
+bool HW::ACPI::ACPITable :: VerifyTable ( ACPITableHeader * Header )
 {
 	
 	uint8_t Sum = 0;

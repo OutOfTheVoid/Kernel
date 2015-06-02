@@ -1,4 +1,5 @@
-#include <system/func/pmalloc.h>
+#include <system/func/PMalloc.h>
+#include <system/func/KPrintf.h>
 
 #include <mm/paging/AddressSpace.h>
 #include <mm/paging/PFA.h>
@@ -68,7 +69,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 			while ( PhysSize )
 			{
 				
-				if ( PhysSize & 0x01 )
+				if ( ( PhysSize & 0x01 ) != 0 )
 				{
 					
 					if ( ! MM::Paging::PFA :: Alloc ( 0x1000 << i, & Physical ) )
@@ -77,7 +78,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 					MM::Paging::PageTable :: SetKernelRegionMapping ( reinterpret_cast <uint32_t> ( Virtual ), reinterpret_cast <uint32_t> ( Physical ), 0x1000 << i, PTFlags | MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
 					
 					Virtual = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( Virtual ) + ( 0x1000 << i ) );
-					Pages -= 1 << i;
+					Pages -= ( 1 << i );
 					
 				}
 				
@@ -143,7 +144,7 @@ void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
 		MM::Paging::PFA :: Free ( reinterpret_cast <void *> ( Phys ) );
 		MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Virtual ) + Offset, PhysSize );
 		
-		Pages -= PhysSize >> 12;
+		Pages -= ( PhysSize >> 12 );
 		Offset += PhysSize;
 		
 	}

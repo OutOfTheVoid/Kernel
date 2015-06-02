@@ -8,6 +8,8 @@
 
 #include <mm/MM.h>
 #include <mm/paging/Paging.h>
+#include <mm/paging/PageTable.h>
+#include <mm/paging/AddressSpace.h>
 
 #include <system/func/kprintf.h>
 #include <hw/video/VText.h>
@@ -39,6 +41,7 @@ namespace MM
 		private:
 			
 			friend class PageTable;
+			friend class AddressSpace;
 			
 			typedef struct
 			{
@@ -101,14 +104,14 @@ namespace MM
 				if ( Level == TargetLevel )
 				{
 					
-					if ( ( This.AFree != 0 ) && ( This.Split == 0 ) && ( This.Usable =! 0 ) )
+					if ( ( This.AFree & This.Usable ) && ( This.Split == 0 ) )
 						return Index;
 					
 					return 0xFFFFFFFF;
 					
 				}
 				
-				if ( ( This.AFree != 0 ) )
+				if ( This.AFree )
 				{
 					
 					uint32_t Temp = __FindFree (  __CalcChildAIndex ( Index ), TargetLevel, Level - 1 );
@@ -118,7 +121,7 @@ namespace MM
 					
 				}
 				
-				if ( ( This.BFree != 0 ) )
+				if ( This.BFree )
 					return __FindFree ( __CalcChildBIndex ( Index ), TargetLevel, Level - 1 );
 				
 				return 0xFFFFFFFF;
@@ -128,20 +131,17 @@ namespace MM
 			static uint32_t __FindAllocated ( uint32_t Address, uint32_t Level, uint32_t * FoundLevel )
 			{
 				
-				if ( Level > TopLevel )
-					return 0xFFFFFFFF;
-				
 				uint32_t Index = __CalcTreeIndex ( Address, Level );
 				
-				if ( ( Table [ Index ].Usable != 0 ) )
+				if ( Table [ Index ].Usable )
 				{
 					
-					if ( Table [ Index ].Split == 0 )
+					if ( ! Table [ Index ].Split )
 					{
 						
 						* FoundLevel = Level;
 						
-						return ( Table [ Index ].AFree == 0 ) ? Index : 0xFFFFFFFF;
+						return ( Table [ Index ].AFree ) ? 0xFFFFFFFF : Index;
 						
 					}
 					
@@ -159,10 +159,10 @@ namespace MM
 				Entry A = Table [ __CalcChildAIndex ( Index ) ];
 				Entry B = Table [ __CalcChildBIndex ( Index ) ];
 				
-				Table [ Index ].AFree = ( ( A.Usable != 0 ) && ( ( A.AFree != 0 ) || ( A.BFree != 0 ) ) ) ? 1 : 0;
-				Table [ Index ].BFree = ( ( B.Usable != 0 ) && ( ( B.AFree != 0 ) || ( B.BFree != 0 ) ) ) ? 1 : 0;
-				Table [ Index ].Usable = ( ( A.Usable != 0 ) || ( B.Usable != 0 ) ) ? 1 : 0;
-				Table [ Index ].Split = ( ( ( A.AFree != 0 ) && ( B.AFree != 0 ) ) && ( ( A.Split == 0 ) && ( B.Split == 0 ) ) && ( ( A.Usable != 0 ) && ( B.Usable != 0 ) ) ) ? 0 : 1;
+				Table [ Index ].AFree = A.Usable & ( A.AFree | A.BFree );
+				Table [ Index ].BFree = B.Usable & ( B.AFree | B.BFree );
+				Table [ Index ].Usable = ( A.Usable | B.Usable );
+				Table [ Index ].Split = Table [ Index ].Usable & ( ! ( Table [ Index ].AFree & Table [ Index ].BFree ) );
 				
 				if ( Index == 0 )
 					return;
