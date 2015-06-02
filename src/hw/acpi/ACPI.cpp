@@ -11,7 +11,7 @@ bool HW::ACPI :: StaticInit ()
 {
 	
 #ifdef KSTARTUP_DEBUG
-		system_func_kprintf ( "ACPI Static startup started.\n" );
+		system_func_kprintf ( "ACPI Static startup:\nLocating RSDP...\n" );
 #endif
 	
 	RSDP :: Locate ();
@@ -28,7 +28,7 @@ bool HW::ACPI :: StaticInit ()
 	}
 	
 	#ifdef KSTARTUP_DEBUG
-		system_func_kprintf ( "RSDP Found!\n" );
+		system_func_kprintf ( "RSDP Found!\nValidating SDT...\n" );
 	#endif
 	
 	if ( RSDP :: GetACPIRevision () == RSDP :: kACPI_Revision_1 )
@@ -65,6 +65,8 @@ bool HW::ACPI :: StaticInit ()
 		}
 		
 	}
+	
+	system_func_kprintf ( "ACPI Static startup successful!\n\n" );
 	
 	return true;
 	

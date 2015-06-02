@@ -1,12 +1,12 @@
 
-global hw_cpu_gdtLoad
+global mm_segmentation_gdtLoad
 
 extern Kernel_GDTR
 extern Kernel_OLD_GDTR
 
 segment .text
 
-hw_cpu_gdtLoad:
+mm_segmentation_gdtLoad:
 
 	;sgdt [ Kernel_OLD_GDTR ]
 	lgdt [ Kernel_GDTR ]

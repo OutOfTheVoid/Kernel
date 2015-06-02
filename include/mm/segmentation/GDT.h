@@ -1,15 +1,15 @@
 #ifndef HW_CPU_GDT_H
 #define HW_CPU_GDT_H
 
-#include <hw/HW.h>
-#include <hw/cpu/CPU.h>
+#include <mm/MM.h>
+#include <mm/segmentation/Segmentation.h>
 
 #include <stdint.h>
 
-namespace HW
+namespace MM
 {
 	
-	namespace CPU
+	namespace Segmentation
 	{
 		
 		class GDT

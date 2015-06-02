@@ -1,7 +1,6 @@
 #include <init/kinit/kinit.h>
 
 #include <hw/cpu/hang.h>
-#include <hw/cpu/GDT.h>
 #include <hw/cpu/CPUID.h>
 
 #include <hw/video/VText.h>
@@ -11,8 +10,9 @@
 
 #include <mm/MM.h>
 #include <mm/KMalloc.h>
-#include <mm/Paging/PFA.h>
-#include <mm/Paging/PageTable.h>
+#include <mm/paging/PFA.h>
+#include <mm/paging/PageTable.h>
+#include <mm/segmentation/GDT.h>
 
 #include <interrupt/InterruptHandlers.h>
 
@@ -42,14 +42,9 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 
 	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_LightBlue, HW::Video::VText :: Color_LightGrey ) );
 	
-	system_func_kprintf ( "Kernel 0.0.3 dev\n(C) Liam Taylor 2015.\n\nMM Init...\n" );
+	system_func_kprintf ( "Kernel 0.0.5 dev\n(C) Liam Taylor 2015.\n\nMM Init...\n" );
 	
 	MM :: Init ( MultibootInfo );
-	
-	system_func_kprintf ( "GDT Init...\n" );
-	
-	HW::CPU::GDT :: Init ( 3 );
-	HW::CPU::GDT :: Swap ();
 	
 	system_func_kprintf ( "ACPI Init...\n" );
 	

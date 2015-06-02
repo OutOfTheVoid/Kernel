@@ -37,6 +37,7 @@ namespace MM
 			static uint32_t GetAllocationSize ( void * Address );
 			
 			static uint32_t GetFreeKB ();
+			static uint32_t GetTotalKB ();
 			
 		private:
 			
@@ -59,6 +60,7 @@ namespace MM
 			static size_t TableSize;
 			static uint32_t TopLevel;
 			static uint32_t FreeCount;
+			static uint32_t TotalCount;
 			
 			static size_t CalcMBICopySize ( multiboot_info_t * MultibootInfo );
 			static void CopyMBI ( multiboot_info_t * Old, multiboot_info_t * New );

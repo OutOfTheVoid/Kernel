@@ -1,4 +1,4 @@
-#include <hw/cpu/GDT.h>
+#include <mm/Segmentation/GDT.h>
 
 #include <cpputil/linkage.h>
 
@@ -8,20 +8,20 @@
 #include <system/func/Panic.h>
 #include <system/func/KPrintf.h>
 
-C_LINKAGE void hw_cpu_gdtLoad ();
+C_LINKAGE void mm_segmentation_gdtLoad ();
 
-C_LINKAGE HW::CPU::GDT :: GDTR Kernel_GDTR;
-C_LINKAGE HW::CPU::GDT :: GDTR Kernel_OLD_GDTR;
+C_LINKAGE MM::Segmentation::GDT :: GDTR Kernel_GDTR;
+C_LINKAGE MM::Segmentation::GDT :: GDTR Kernel_OLD_GDTR;
 
-HW::CPU::GDT :: GDTR Kernel_GDTR = HW::CPU::GDT :: GDTR ();
-HW::CPU::GDT :: GDTR Kernel_OLD_GDTR = HW::CPU::GDT :: GDTR ();
+MM::Segmentation::GDT :: GDTR Kernel_GDTR = MM::Segmentation::GDT :: GDTR ();
+MM::Segmentation::GDT :: GDTR Kernel_OLD_GDTR = MM::Segmentation::GDT :: GDTR ();
 
-bool HW::CPU::GDT :: OwnsCurrent = false;
+bool MM::Segmentation::GDT :: OwnsCurrent = false;
 
-uint32_t HW::CPU::GDT :: EntryCount;
-HW::CPU::GDT :: GDTEntry * HW::CPU::GDT :: Entries;
+uint32_t MM::Segmentation::GDT :: EntryCount;
+MM::Segmentation::GDT :: GDTEntry * MM::Segmentation::GDT :: Entries;
 
-void HW::CPU::GDT :: Init ( uint8_t EntryCount )
+void MM::Segmentation::GDT :: Init ( uint8_t EntryCount )
 {
 	
 	GDTEntry * Entries = NULL;
@@ -31,8 +31,8 @@ void HW::CPU::GDT :: Init ( uint8_t EntryCount )
 	
 	Entries = reinterpret_cast <GDTEntry *> ( mm_kmalloc ( sizeof ( GDTEntry ) * EntryCount ) );
 	
-	HW::CPU::GDT :: EntryCount = EntryCount;
-	HW::CPU::GDT :: Entries = Entries;
+	MM::Segmentation::GDT :: EntryCount = EntryCount;
+	MM::Segmentation::GDT :: Entries = Entries;
 	
 	DefineEntry ( & Entries [ 0 ], 0, 0, kAccessType_None, kFlags_None );
 	
@@ -41,7 +41,7 @@ void HW::CPU::GDT :: Init ( uint8_t EntryCount )
 	
 };
 
-void HW::CPU::GDT :: SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable )
+void MM::Segmentation::GDT :: SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable )
 {
 	
 	if ( Index > EntryCount )
@@ -89,7 +89,7 @@ void HW::CPU::GDT :: SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Li
 	
 };
 
-void HW::CPU::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable )
+void MM::Segmentation::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable )
 {
 	
 	if ( Index > EntryCount )
@@ -137,13 +137,13 @@ void HW::CPU::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, uint32_t Li
 	
 };
 
-void HW::CPU::GDT :: Swap ()
+void MM::Segmentation::GDT :: Swap ()
 {
 	
 	Kernel_GDTR.Limit = sizeof ( GDTEntry ) * EntryCount - 1;
 	Kernel_GDTR.Base = reinterpret_cast <uint32_t> ( Entries );
 	
-	hw_cpu_gdtLoad ();
+	mm_segmentation_gdtLoad ();
 	
 	GDTEntry * OldEntries = reinterpret_cast <GDTEntry *> ( Kernel_OLD_GDTR.Base );
 	
@@ -154,7 +154,7 @@ void HW::CPU::GDT :: Swap ()
 	
 };
 
-void HW::CPU::GDT :: DefineEntry ( GDTEntry * Entry, uint32_t Limit, uint32_t Base, AccessType Access, Flags Flag )
+void MM::Segmentation::GDT :: DefineEntry ( GDTEntry * Entry, uint32_t Limit, uint32_t Base, AccessType Access, Flags Flag )
 {
 	
 	Entry -> LimitLow = Limit;

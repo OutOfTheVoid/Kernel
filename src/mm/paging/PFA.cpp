@@ -18,7 +18,9 @@ size_t MM::Paging::PFA :: MBICopySize;
 size_t MM::Paging::PFA :: TableSize;
 MM::Paging::PFA :: Entry * MM::Paging::PFA :: Table;
 uint32_t MM::Paging::PFA :: TopLevel;
+
 uint32_t MM::Paging::PFA :: FreeCount;
+uint32_t MM::Paging::PFA :: TotalCount;
 
 void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 {
@@ -254,6 +256,13 @@ uint32_t MM::Paging::PFA :: GetFreeKB ()
 	
 };
 
+uint32_t MM::Paging::PFA :: GetTotalKB ()
+{
+	
+	return TotalCount * 4;
+	
+};
+
 void MM::Paging::PFA :: CopyMBI ( multiboot_info_t * Old, multiboot_info_t * New )
 {
 	
@@ -363,6 +372,8 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint3
 	
 	if ( ( MultibootInfo -> flags & MULTIBOOT_INFO_MEM_MAP ) == 0 )
 		KPANIC ( "Multiboot memory map not supplied!" );
+	
+	TotalCount = ( ( MultibootInfo -> mem_lower ) >> 2 ) + ( ( MultibootInfo -> mem_upper ) >> 2 );
 	
 	* MaxAddress = 0;
 	

@@ -31,7 +31,7 @@ namespace HW
 				
 				HW::ACPI::ACPITable :: ACPITableHeader Header;
 				
-				uint32_t SDTTableBase;
+				uint32_t SDTableBase;
 				
 			} RSDTable;
 			

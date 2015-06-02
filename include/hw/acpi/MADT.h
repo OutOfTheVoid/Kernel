@@ -17,7 +17,7 @@ namespace HW
 		{
 		public:
 			
-			static void Init ( void * RSDTAddress );
+			static void Init ( void * MADTAddress );
 			static bool Valid ();
 			
 			static void Discard ();
@@ -33,6 +33,8 @@ namespace HW
 				uint32_t Flags;
 				
 			} MADTable;
+			
+			static const char * kSearchString;
 			
 			static RSDTTable * Table;
 			
