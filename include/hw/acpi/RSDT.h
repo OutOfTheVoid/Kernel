@@ -36,6 +36,7 @@ namespace HW
 			} __attribute__ (( packed )) RSDTable;
 			
 			static RSDTable * Table;
+			static uint32_t TableLength;
 			
 			static bool Validated;
 			

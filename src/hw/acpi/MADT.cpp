@@ -3,8 +3,6 @@
 #include <hw/acpi/XSDT.h>
 #include <hw/acpi/RSDP.h>
 
-#include <system/func/KPrintf.h>
-
 #include <mm/KVMap.h>
 #include <mm/KMalloc.h>
 #include <mm/paging/PageTable.h>
@@ -28,29 +26,29 @@ void HW::ACPI::MADT :: Init ()
 	
 	RecordHeader * RecordBase;
 	
-	ProcessorLAPICRecords = reinterpret_cast <Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> *> ( mm_kmalloc ( sizeof ( Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> ) ) );
+	ProcessorLAPICRecords = new Vector <ProcessorLAPICRecord *> ();
 	
 	if ( ProcessorLAPICRecords == NULL )
 		return;
 	
-	IOAPICRecords = reinterpret_cast <Vector <HW::ACPI::MADT :: IOAPICRecord *> *> ( mm_kmalloc ( sizeof ( Vector <HW::ACPI::MADT :: IOAPICRecord *> ) ) );
+	IOAPICRecords = new Vector <IOAPICRecord *> ();
 	
 	if ( ProcessorLAPICRecords == NULL )
 	{
 		
-		mm_kfree ( ProcessorLAPICRecords );
+		delete ProcessorLAPICRecords;
 		
 		return;
 		
 	}
 	
-	InterruptSourceOverrideRecords = reinterpret_cast <Vector <HW::ACPI::MADT :: InterruptSourceOverride *> *> ( mm_kmalloc ( sizeof ( Vector <HW::ACPI::MADT :: InterruptSourceOverride *> ) ) );
+	InterruptSourceOverrideRecords = new Vector <InterruptSourceOverride *> ();
 	
 	if ( InterruptSourceOverrideRecords == NULL )
 	{
 		
-		mm_kfree ( ProcessorLAPICRecords );
-		mm_kfree ( IOAPICRecords );
+		delete ProcessorLAPICRecords;
+		delete IOAPICRecords;
 		
 		return;
 		
@@ -65,9 +63,9 @@ void HW::ACPI::MADT :: Init ()
 		if ( ! RSDT :: Valid () )
 		{
 			
-			mm_kfree ( ProcessorLAPICRecords );
-			mm_kfree ( IOAPICRecords );
-			mm_kfree ( InterruptSourceOverrideRecords );
+			delete ProcessorLAPICRecords;
+			delete IOAPICRecords;
+			delete InterruptSourceOverrideRecords;
 			
 			return;
 			
@@ -82,9 +80,9 @@ void HW::ACPI::MADT :: Init ()
 		if ( ! XSDT :: Valid () )
 		{
 			
-			mm_kfree ( ProcessorLAPICRecords );
-			mm_kfree ( IOAPICRecords );
-			mm_kfree ( InterruptSourceOverrideRecords );
+			delete ProcessorLAPICRecords;
+			delete IOAPICRecords;
+			delete InterruptSourceOverrideRecords;
 			
 			return;
 			
@@ -97,26 +95,22 @@ void HW::ACPI::MADT :: Init ()
 	if ( PhysAddr == NULL )
 	{
 		
-		mm_kfree ( ProcessorLAPICRecords );
-		mm_kfree ( IOAPICRecords );
-		mm_kfree ( InterruptSourceOverrideRecords );
+		delete ProcessorLAPICRecords;
+		delete IOAPICRecords;
+		delete InterruptSourceOverrideRecords;
 		
 		return;
 		
 	}
-	
-	#ifdef KSTARTUP_DEBUG
-	system_func_kprintf ( "MADT physical found!\n" );
-	#endif
 	
 	Table = reinterpret_cast <MADTable *> ( mm_kvmap ( PhysAddr, 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
 	
 	if ( Table == NULL )
 	{
 		
-		mm_kfree ( ProcessorLAPICRecords );
-		mm_kfree ( IOAPICRecords );
-		mm_kfree ( InterruptSourceOverrideRecords );
+		delete ProcessorLAPICRecords;
+		delete IOAPICRecords;
+		delete InterruptSourceOverrideRecords;
 		
 		return;
 		
@@ -133,9 +127,9 @@ void HW::ACPI::MADT :: Init ()
 		if ( Table == NULL )
 		{
 			
-			mm_kfree ( ProcessorLAPICRecords );
-			mm_kfree ( IOAPICRecords );
-			mm_kfree ( InterruptSourceOverrideRecords );
+			delete ProcessorLAPICRecords;
+		delete IOAPICRecords;
+		delete InterruptSourceOverrideRecords;
 			
 			return;
 			
@@ -148,23 +142,15 @@ void HW::ACPI::MADT :: Init ()
 		
 		mm_kvunmap ( Table );
 		
-		mm_kfree ( ProcessorLAPICRecords );
-		mm_kfree ( IOAPICRecords );
-		mm_kfree ( InterruptSourceOverrideRecords );
+		delete ProcessorLAPICRecords;
+		delete IOAPICRecords;
+		delete InterruptSourceOverrideRecords;
 		
 		return;
 		
 	}
 	
-	#ifdef KSTARTUP_DEBUG
-	system_func_kprintf ( "MADT checksum ok!\n" );
-	#endif
-	
 	RecordBase = reinterpret_cast <RecordHeader *> ( reinterpret_cast <uint32_t> ( Table ) + sizeof ( MADTable ) );
-	
-	#ifdef KSTARTUP_DEBUG
-	system_func_kprintf ( "MADT report:\nLocal APIC Address: %h\n", Table -> LAPICAddress );
-	#endif
 	
 	ProcessorLAPICRecord * PLRRecord;
 	IOAPICRecord * IOARecord;
@@ -180,10 +166,6 @@ void HW::ACPI::MADT :: Init ()
 			
 			PLRRecord = reinterpret_cast <ProcessorLAPICRecord *> ( RecordBase );
 			
-			#ifdef KSTARTUP_DEBUG
-			system_func_kprintf ( "* Processor LAPIC: [ APIC processor ID: %u, APIC ID: %u, Flags: %h ]\n", PLRRecord -> APICProcessorID, PLRRecord -> APICID, PLRRecord -> Flags );
-			#endif
-			
 			ProcessorLAPICRecords -> Push ( PLRRecord );
 			
 			break;
@@ -192,10 +174,6 @@ void HW::ACPI::MADT :: Init ()
 			
 			IOARecord = reinterpret_cast <IOAPICRecord *> ( RecordBase );
 			
-			#ifdef KSTARTUP_DEBUG
-			system_func_kprintf ( "* I/O Apic: [ ID: %u, Address: %h, Global system interrupt base: %h ]\n", IOARecord -> ID, IOARecord -> Address, IOARecord -> GlobalSystemInterruptBase );
-			#endif
-			
 			IOAPICRecords -> Push ( IOARecord );
 			
 			break;
@@ -203,10 +181,6 @@ void HW::ACPI::MADT :: Init ()
 			case kRecordType_InterruptSourceOverride:
 			
 			ISORecord = reinterpret_cast <InterruptSourceOverride *> ( RecordBase );
-			
-			#ifdef KSTARTUP_DEBUG
-			system_func_kprintf ( "* Int src override: [ Bus: %u, IRQ: %u, Global system int: %u, Flags: %u ]\n", ISORecord -> BusSource, ISORecord -> IRQSource, ISORecord -> GlobalSystemInterrupt, ISORecord -> Flags );
-			#endif
 			
 			InterruptSourceOverrideRecords -> Push ( ISORecord );
 			
@@ -237,6 +211,21 @@ void HW::ACPI::MADT :: Discard ()
 	
 	mm_kvunmap ( Table );
 	
+	delete ProcessorLAPICRecords;
+	delete IOAPICRecords;
+	delete InterruptSourceOverrideRecords;
+	
 	Table = NULL;
 	
 };
+
+uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
+{
+	
+	if ( ! Validated )
+		return 0;
+	
+	return Table -> LAPICAddress;
+	
+};
+

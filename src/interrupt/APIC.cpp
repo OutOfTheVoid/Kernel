@@ -5,11 +5,15 @@
 #include <hw/cpu/CPUID.h>
 #include <hw/cpu/MSR.h>
 
+#include <hw/acpi/MADT.h>
+
 #include <system/func/panic.h>
 
 #include <cpputil/linkage.h>
 
 C_LINKAGE uint32_t interrupt_APIC_MMIOLocation;
+
+bool Interrupt::APIC :: Availible = true;
 
 void Interrupt::APIC :: Init ()
 {
@@ -26,7 +30,6 @@ void Interrupt::APIC :: Init ()
 	Interrupt::PIC :: Disable ();
 	
 	EnableAPIC ();
-	SetAPICBaseAddress ( reinterpret_cast <uint32_t> ( & interrupt_APIC_MMIOLocation ) );
 	
 };
 
@@ -42,6 +45,9 @@ void Interrupt::APIC :: SetAPICBaseAddress ( uint32_t Base )
 
 uint32_t Interrupt::APIC :: GetAPICBaseAddress ()
 {
+	
+	if ( HW::ACPI::MADT :: Valid () )
+		return HW::ACPI::MADT :: GetAPICBaseAddress ();
 	
 	uint32_t EAX;
 	uint32_t EDX;
@@ -62,10 +68,11 @@ void Interrupt::APIC :: EnableAPIC ()
 bool Interrupt::APIC :: HasAPIC ()
 {
 	
-	static bool Availible = true;
-	
 	if ( Availible == false )
 		return false;
+	
+	if ( HW::ACPI::MADT :: Valid () )
+		return true;
 	
 	uint32_t CPUIDRegs [ 4 ];
 	

@@ -86,7 +86,7 @@ bool HW::ACPI :: StaticInit ()
 		
 	}
 	
-	system_func_kprintf ( "ACPI Static startup successful!\n\n" );
+	system_func_kprintf ( "MADT Validated!\nACPI Static startup successful!\n\n" );
 	
 	return true;
 	

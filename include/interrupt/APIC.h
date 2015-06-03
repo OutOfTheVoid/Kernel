@@ -15,12 +15,12 @@ namespace Interrupt
 		
 	private:
 		
-		static const uint32_t kAPIC_InitialMMIOBase =  0xFEE00000;
-		
 		static void SetAPICBaseAddress ( uint32_t Base );
 		static uint32_t GetAPICBaseAddress ();
 		
 		static void EnableAPIC ();
+		
+		static bool Availible;
 		
 	};
 	

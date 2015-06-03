@@ -24,6 +24,8 @@ namespace HW
 			
 			static void Discard ();
 			
+			static uint32_t GetAPICBaseAddress ();
+			
 		private:
 			
 			typedef struct
