@@ -3,6 +3,8 @@
 
 #include <mt/timing/Timing.h>
 
+#include <stdint.h>
+
 namespace MT
 {
 	

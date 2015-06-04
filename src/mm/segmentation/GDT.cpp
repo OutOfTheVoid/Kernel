@@ -137,6 +137,61 @@ void MM::Segmentation::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, ui
 	
 };
 
+void MM::Segmentation::GDT :: SetDataEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable )
+{
+	
+	if ( Index > EntryCount )
+		KPANIC ( "Attempt to write to out of bounds GDT!" );
+	
+	AccessType Type = static_cast <AccessType> ( kAccessType_Present | kAccessType_Data | kAccessType_Bit4 | kAccessType_DirectionUp | ( Writeable ? kAccessType_DataWiteable : kAccessType_DataReadOnly ) );
+	
+	switch ( Ring )
+	{
+	case 0:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring0 );
+		
+		break;
+		
+	case 1:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring1 );
+		
+		break;
+		
+	case 2:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring2 );
+		
+		break;
+		
+	case 3:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring3 );
+		
+		break;
+		
+	default:
+		KPANIC ( "Invalid privelege ring specified" );
+		
+	}
+	
+	Flags Flag = static_cast <Flags> ( ( Limit > 0xFFFFF ) ? kFlags_Granularity4KB : kFlags_None );
+	
+	if ( Limit > 0xFFFFF )
+		Limit >>= 12;
+
+	DefineEntry ( & Entries [ Index ], Limit, Base, Type, Flag );
+	
+};
+
+void MM::Segmentation::GDT :: SetCodeEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable )
+{
+	
+	
+	
+};
+
 void MM::Segmentation::GDT :: Swap ()
 {
 	

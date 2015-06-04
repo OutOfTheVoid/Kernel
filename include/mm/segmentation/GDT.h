@@ -75,6 +75,8 @@ namespace MM
 			
 			static void SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable );
 			static void SetCodeEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable );
+			static void SetDataEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable );
+			static void SetCodeEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable );
 			
 			static void Swap ();
 			
