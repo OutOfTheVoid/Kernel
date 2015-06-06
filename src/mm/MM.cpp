@@ -11,8 +11,6 @@
 
 #include <boot/bootimage.h>
 
-#include <mt/APInit/APTrampoline.h>
-
 #include <KernelDef.h>
 
 void MM :: Init ( multiboot_info_t * MultibootInfo )
@@ -43,14 +41,10 @@ void MM :: Init ( multiboot_info_t * MultibootInfo )
 	system_func_kprintf ( "GDT init...\n" );
 #endif
 	
-	Segmentation::GDT :: Init ( 7 );
+	Segmentation::GDT :: Init ( 5 );
 	
 	Segmentation::GDT :: SetDataEntry32 ( 3, 0, 0xFFFFFFFF, 3, true );
 	Segmentation::GDT :: SetDataEntry32 ( 4, 0, 0xFFFFFFFF, 3, true );
-	
-	//Real Mode -> Protected Mode trampoline segments. Base = tramp_start for highmem real mode.
-	Segmentation::GDT :: SetCodeEntry16 ( 5, reinterpret_cast <uint32_t> ( & __krealbegin ), reinterpret_cast <uint32_t> ( & __krealend ) - reinterpret_cast <uint32_t> ( & __krealbegin ), 0, true );
-	Segmentation::GDT :: SetDataEntry16 ( 6, reinterpret_cast <uint32_t> ( & __krealbegin ), reinterpret_cast <uint32_t> ( & __krealend ) - reinterpret_cast <uint32_t> ( & __krealbegin ), 0, true );
 	
 	Segmentation::GDT :: Swap ();
 	

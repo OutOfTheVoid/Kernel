@@ -28,13 +28,6 @@ void MT::Synchronization::Spinlock :: Release ( Spinlock_t * Lock )
 	
 };
 
-MT::Synchronization::Spinlock :: Spinlock_t MT::Synchronization::Spinlock :: Initializer ()
-{
-	
-	return static_cast <Spinlock_t> ( 0 );
-	
-};
-
 void MT::Synchronization::Spinlock :: Initialize ( Spinlock_t * Lock )
 {
 	

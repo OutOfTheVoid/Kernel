@@ -20,7 +20,13 @@ namespace MT
 			
 			static void Release ( Spinlock_t * Lock );
 			
-			static Spinlock_t Initializer ();
+			static inline Spinlock_t Initializer ()
+			{
+				
+				return static_cast <Spinlock_t> ( 0 );
+				
+			};
+			
 			static void Initialize ( Spinlock_t * Lock );
 			
 		};

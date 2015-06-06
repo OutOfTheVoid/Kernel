@@ -425,6 +425,9 @@ bool MM::Paging::PFA :: TestRegionUsable ( uint32_t Offset, uint32_t Length )
 	uint32_t FreeOffset = Offset;
 	uint32_t FreeLength = Length;
 	
+	if ( Offset < 0x2000 && ( Offset + Length >= 0x1000 ) )
+		return false;
+	
 	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
 	
 	while ( ( reinterpret_cast <uint64_t> ( MMapEntry ) < MBICopy -> mmap_addr + MBICopy -> mmap_length ) || ( ! FoundFree ) )

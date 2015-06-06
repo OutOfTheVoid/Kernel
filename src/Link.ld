@@ -31,20 +31,6 @@ SECTIONS
 		*(.bss)
 	}
 	
-	__krealbegin = ALIGN(4K);
-	
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-		*(.text_realmode)
-	}
-	
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data_realmode)
-	}
-	
-	__krealend = ABSOLUTE(.);
-	
 	__kend = ABSOLUTE(.);
 	
 }
