@@ -1,6 +1,11 @@
 #ifndef MT_MT_H
 #define MT_MT_H
 
-namespace MT {};
+namespace MT
+{
+	
+	void Init ();
+	
+};
 
 #endif

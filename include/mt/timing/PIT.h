@@ -17,7 +17,7 @@ namespace MT
 			
 			static void Init ();
 			
-			static void SetTimeout ( double Time );
+			static void SetTimeoutMS ( double Time );
 			static void SetTimer ( double Frequencey );
 			
 			static bool GetTimeout ();
@@ -48,6 +48,15 @@ namespace MT
 			static const uint32_t kCommandFlag_SquareWaveMode = 0x0C;
 			static const uint32_t kCommandFlag_SoftwareStrobe = 0x02;
 			static const uint32_t kCommandFlag_HadwareStrobe = 0x0A;
+			
+			static const uint32_t kCommandFlag_NotLatchCount = 0x20;
+			static const uint32_t kCommandFlag_NotLatchStatus = 0x10;
+			
+			static const uint32_t kCommandFlag_ReadTimer0 = 0x02;
+			static const uint32_t kCommandFlag_ReadTimer1 = 0x04;
+			static const uint32_t kCommandFlag_ReadTimer2 = 0x06;
+			
+			static const uint32_t kStatusFlag_WaitState = 0x80;
 			
 		};
 		

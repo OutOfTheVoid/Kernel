@@ -10,6 +10,5 @@ void Interrupt :: Init ()
 	
 	APIC :: Init ();
 	
-	
 };
 
