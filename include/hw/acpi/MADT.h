@@ -9,6 +9,8 @@
 
 #include <util/Vector.h>
 
+#include <mt/synchronization/Spinlock.h>
+
 namespace HW
 {
 	
@@ -80,7 +82,7 @@ namespace HW
 				
 				uint16_t Flags;
 				
-			} __attribute__ (( packed )) InterruptSourceOverride;
+			} __attribute__ (( packed )) InterruptSourceOverrideRecord;
 			
 			static const uint32_t kAPICFlags_ProcessorEnabled;
 			
@@ -94,9 +96,11 @@ namespace HW
 			
 			static Vector <ProcessorLAPICRecord *> * ProcessorLAPICRecords;
 			static Vector <IOAPICRecord *> * IOAPICRecords;
-			static Vector <InterruptSourceOverride *> * InterruptSourceOverrideRecords;
+			static Vector <InterruptSourceOverrideRecord *> * InterruptSourceOverrideRecords;
 			
 			static bool Validated;
+			
+			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 		};
 		

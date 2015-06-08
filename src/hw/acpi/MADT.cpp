@@ -7,6 +7,8 @@
 #include <mm/KMalloc.h>
 #include <mm/paging/PageTable.h>
 
+#include <mt/synchronization/Spinlock.h>
+
 #include <KernelDef.h>
 
 bool HW::ACPI::MADT :: Validated = false;
@@ -16,7 +18,9 @@ const char * HW::ACPI::MADT :: kSearchString = "APIC";
 
 Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> * HW::ACPI::MADT :: ProcessorLAPICRecords;
 Vector <HW::ACPI::MADT :: IOAPICRecord *> * HW::ACPI::MADT :: IOAPICRecords;
-Vector <HW::ACPI::MADT :: InterruptSourceOverride *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords;
+Vector <HW::ACPI::MADT :: InterruptSourceOverrideRecord *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords;
+
+MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::MADT :: Lock = MT::Synchronization::Spinlock :: Initializer ();
 
 void HW::ACPI::MADT :: Init ()
 {
@@ -42,7 +46,7 @@ void HW::ACPI::MADT :: Init ()
 		
 	}
 	
-	InterruptSourceOverrideRecords = new Vector <InterruptSourceOverride *> ();
+	InterruptSourceOverrideRecords = new Vector <InterruptSourceOverrideRecord *> ();
 	
 	if ( InterruptSourceOverrideRecords == NULL )
 	{
@@ -154,7 +158,7 @@ void HW::ACPI::MADT :: Init ()
 	
 	ProcessorLAPICRecord * PLRRecord;
 	IOAPICRecord * IOARecord;
-	InterruptSourceOverride * ISORecord;
+	InterruptSourceOverrideRecord * ISORecord;
 	
 	while ( reinterpret_cast <uint32_t> ( RecordBase ) < reinterpret_cast <uint32_t> ( Table ) + Table -> Header.Length )
 	{
@@ -180,7 +184,7 @@ void HW::ACPI::MADT :: Init ()
 			
 			case kRecordType_InterruptSourceOverride:
 			
-			ISORecord = reinterpret_cast <InterruptSourceOverride *> ( RecordBase );
+			ISORecord = reinterpret_cast <InterruptSourceOverrideRecord *> ( RecordBase );
 			
 			InterruptSourceOverrideRecords -> Push ( ISORecord );
 			
@@ -208,6 +212,8 @@ void HW::ACPI::MADT :: Discard ()
 	
 	if ( ! Validated )
 		return;
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	mm_kvunmap ( Table );
 	

@@ -163,4 +163,7 @@ void Interrupt::InterruptHandlers :: InstallSystemInterruptHandlers ()
 
 void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame Frame )
 {
+	
+	(void) Frame;
+	
 };

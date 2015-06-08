@@ -188,7 +188,11 @@ void MM::Segmentation::GDT :: SetDataEntry16 ( uint32_t Index, uint32_t Base, ui
 void MM::Segmentation::GDT :: SetCodeEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable )
 {
 	
-	
+	(void) Index;
+	(void) Base;
+	(void) Limit;
+	(void) Ring;
+	(void) Readable;
 	
 };
 

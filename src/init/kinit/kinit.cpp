@@ -8,19 +8,12 @@
 #include <system/func/kprintf.h>
 #include <system/func/panic.h>
 
-#include <mm/MM.h>
-#include <mm/KMalloc.h>
-#include <mm/paging/PFA.h>
-#include <mm/paging/PageTable.h>
-#include <mm/segmentation/GDT.h>
-
-#include <interrupt/InterruptHandlers.h>
+#include <MM/MM.h>
 
 #include <boot/bootimage.h>
 
 #include <interrupt/IState.h>
-#include <interrupt/PIC.h>
-#include <interrupt/APIC.h>
+#include <interrupt/Interrupt.h>
 
 #include <hw/acpi/ACPI.h>
 
@@ -51,6 +44,8 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	UseACPI = HW::ACPI::StaticInit ();
 	
 	system_func_kprintf ( UseACPI ? "Using ACPI\n" : "Not using ACPI\n" );
+	
+	Interrupt :: Init ();
 	
 	system_func_kprintf ( "Initialized!\n" );
 	

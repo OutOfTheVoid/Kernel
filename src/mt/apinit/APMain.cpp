@@ -5,6 +5,6 @@
 void mt_apinit_apmain ()
 {
 	
-	
+	system_func_kprintf ( "Processor started!" );
 	
 };
