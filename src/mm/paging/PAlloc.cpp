@@ -1,10 +1,56 @@
 #include <mm/paging/PAlloc.h>
 #include <mm/paging/PageTable.h>
 
-void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone * Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error )
+const char * MM::Paging::PAlloc :: ErrorStrings [] = 
 {
 	
+	"None",	
 	
+};
+
+const char * MM::Paging::PAlloc :: GetErrorString ( uint32_t Error )
+{
+	
+	if ( Error > kMaxErrorNumber )
+		return "";
+	
+	return ErrorStrings [ Error ];
+	
+};
+
+void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error )
+{
+	
+	FreePageZone * NewZone = reinterpret_cast <FreePageZone *> ( Zone );
+	
+	InitialPhysicalLength -= ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF ) - InitialPhysicalBase;
+	InitialPhysicalBase = ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF );
+	
+	Storage * InitialStorage = reinterpret_cast <Storage *> ( InitialPhysicalBase );
+	InitialPhysicalBase += 0x1000;
+	InitialPhysicalLength -= 0x1000;
+	
+	FreePageZone * FreeZone = reinterpret_cast <FreePageZone *> ( & InitialStorage -> Ranges [ 0 ] );
+	AddressRange * InitialRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 1 ] );
+	
+	InitialStorage -> Bitmap [ 0 ] = 0x00000003;
+	InitialStorage -> Bitmap [ 1 ] = 0x00000000;
+	InitialStorage -> Bitmap [ 2 ] = 0x00000000;
+	InitialStorage -> Bitmap [ 3 ] = 0x00000000;
+	
+	InitialStorage -> FreeCount = 125;
+	
+	InitialRange -> Base = InitialPhysicalBase;
+	InitialRange -> Length = InitialPhysicalLength;
+	
+	InitialRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	InsertNode ( & NewZone -> FreeTreeRoot, InitialRange );
+	InsertNodeInSizeClass ( NewZone, InitialRange, __CalculateSizeClass ( InitialPhysicalLength ) );
 	
 };
 
@@ -52,16 +98,17 @@ void MM::Paging::PAlloc :: VirtualizeZone ( PageFreeZone * Zone, PageAllocZone *
 	Storage * CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FreeStorageHead;
 	PageAllocZone * NewZonePTRs [ AllocationZoneCount ];
 	
+	// TODO: virtualize trees
+	
 	uint32_t I;
 	
 	for ( I = 0; I < AllocationZoneCount; I ++ )
 		NewZonePTRs [ I ] = reinterpret_cast <PageAllocZone *> ( kPageFreeZonePTR_Invalid );
 	
+	uint32_t Virt = VirtualBase;
+	
 	while ( CurrentStorage != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
 	{
-		
-		uint32_t Virt = VirtualBase;
-		Virt += 0x1000;
 		
 		for ( I = 0; I < AllocationZoneCount; I ++ )
 		{
@@ -77,6 +124,8 @@ void MM::Paging::PAlloc :: VirtualizeZone ( PageFreeZone * Zone, PageAllocZone *
 		
 		CurrentStorage = CurrentStorage -> Next;
 		
+		Virt += 0x1000;
+		
 	}
 	
 	CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FullStorageHead;
@@ -84,8 +133,7 @@ void MM::Paging::PAlloc :: VirtualizeZone ( PageFreeZone * Zone, PageAllocZone *
 	while ( CurrentStorage != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
 	{
 		
-		uint32_t Virt = VirtualBase;
-		Virt += 0x1000;
+		Virt = VirtualBase;
 		
 		for ( I = 0; I < AllocationZoneCount; I ++ )
 		{
@@ -105,6 +153,42 @@ void MM::Paging::PAlloc :: VirtualizeZone ( PageFreeZone * Zone, PageAllocZone *
 	
 	for ( I = 0; I < AllocationZoneCount; I ++ )
 		AllocationZones [ I ] = NewZonePTRs [ I ];
+	
+	Virt += 0x1000;
+	
+};
+
+MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: NewRange ( FreePageZone * Zone )
+{
+	
+	Storage * FromStorage = Zone -> FreeStorageHead;
+	
+	uint32_t Slot = __GetFirstFreeStorageSlot ( FromStorage );
+	
+	FromStorage -> FreeCount --;
+	
+	if ( FromStorage -> FreeCount == 0 )
+	{
+		
+		Zone -> FreeStorageHead = FromStorage -> Next;
+		Zone -> FreeStorageHead -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+		
+		FromStorage -> Next = Zone -> FullStorageHead;
+		Zone -> FullStorageHead -> Previous = FromStorage;
+		Zone -> FullStorageHead = FromStorage;
+		
+	}
+	
+	__MarkStorageSlotUsed ( FromStorage, Slot );
+	
+	return & FromStorage -> Ranges [ Slot ];
+	
+};
+
+void MM::Paging::PAlloc :: FreeRange ( FreePageZone * Zone, AddressRange * Range )
+{
+	
+	
 	
 };
 

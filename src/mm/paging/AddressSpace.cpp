@@ -11,7 +11,8 @@
 
 extern "C" void hw_cpu_hang ();
 
-const char * MM::Paging::AddressSpace :: ErrorStrings [] = { 
+const char * MM::Paging::AddressSpace :: ErrorStrings [] =
+{ 
 	"None",
 	"Initial kernel free zone was not large enough to allocate required structures.",
 	"Failed to allocate physical memory.",
@@ -133,14 +134,13 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	InitialStorage -> Bitmap [ 1 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 2 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 3 ] = 0x00000000;
-	InitialStorage -> FreeCount = 111;
+	InitialStorage -> FreeCount = 125;
 	
 	Space -> FreeStorageHead = InitialStorage;
-	Space -> FreeStorageSlotCount = 111;
+	Space -> FreeStorageSlotCount = 125;
 	
 	InitialRange = & InitialStorage -> Ranges [ 0 ];
 	
-	InitialRange -> SSIndex = __StorageAndSlotToIndex ( InitialStorage, 0 );
 	InitialRange -> Base = NewInitialFreeBase;
 	InitialRange -> Length = InitialFreeLength;
 	
@@ -242,14 +242,14 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 		NewStorage -> Bitmap [ 1 ] = 0x00000000;
 		NewStorage -> Bitmap [ 2 ] = 0x00000000;
 		NewStorage -> Bitmap [ 3 ] = 0x00000000;
-		NewStorage -> FreeCount = 112;
+		NewStorage -> FreeCount = 126;
 		
 		FreeStorageHead -> Previous = NewStorage;
 		NewStorage -> Next = FreeStorageHead;
 		NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 		FreeStorageHead = NewStorage;
 		
-		FreeStorageSlotCount += 112;
+		FreeStorageSlotCount += 126;
 		
 	}
 	
@@ -481,7 +481,6 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: GetNewRan
 	__MarkStorageSlotUsed ( AllocStorage, Slot );
 	
 	NewRange = & AllocStorage -> Ranges [ Slot ];
-	NewRange -> SSIndex = __StorageAndSlotToIndex ( AllocStorage, Slot );
 	
 	return NewRange;
 	
@@ -490,8 +489,8 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: GetNewRan
 void MM::Paging::AddressSpace :: FreeOldRange ( AddressRange * Range )
 {
 	
-	Storage * ContainerStorage = __StorageFromIndex ( Range -> SSIndex );
-	uint32_t Slot = __SlotFromIndex ( Range -> SSIndex );
+	Storage * ContainerStorage = __StorageFromNode ( Range );
+	uint32_t Slot = __SlotFromNode ( Range );
 	
 	__MarkStorageSlotClear ( ContainerStorage, Slot );
 	
@@ -526,7 +525,7 @@ void MM::Paging::AddressSpace :: FreeOldRange ( AddressRange * Range )
 		FreeStorageHead = ContainerStorage;
 		
 	}
-	else if ( ( ContainerStorage -> FreeCount == 112 ) && ( FreeStorageHighWatermark < ( FreeStorageSlotCount * 4096 ) / 112 ) )
+	else if ( ( ContainerStorage -> FreeCount == 127 ) && ( FreeStorageHighWatermark < ( FreeStorageSlotCount * 4096 ) / 127 ) )
 	{
 		
 		FreeStorageSlotCount -= 112;
@@ -1453,14 +1452,14 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 		NewStorage -> Bitmap [ 1 ] = 0x00000000;
 		NewStorage -> Bitmap [ 2 ] = 0x00000000;
 		NewStorage -> Bitmap [ 3 ] = 0x00000000;
-		NewStorage -> FreeCount = 112;
+		NewStorage -> FreeCount = 126;
 		
 		FreeStorageHead -> Previous = NewStorage;
 		NewStorage -> Next = FreeStorageHead;
 		NewStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 		FreeStorageHead = NewStorage;
 		
-		FreeStorageSlotCount += 112;
+		FreeStorageSlotCount += 126;
 		
 	}
 	

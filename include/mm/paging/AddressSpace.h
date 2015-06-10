@@ -89,8 +89,6 @@ namespace MM
 				AddressRange_Struct * NextInSizeClass;
 				AddressRange_Struct * PrevInSizeClass;
 				
-				uint32_t SSIndex;
-				
 			} __attribute__((packed)) AddressRange; // 32 bytes
 			
 			typedef struct Storage_Struct
@@ -101,9 +99,9 @@ namespace MM
 				
 				uint32_t Bitmap [ 4 ];
 				
-				AddressRange Ranges [ 112 ];
-				
 				uint32_t FreeCount;
+				
+				AddressRange Ranges [ 127 ];
 				
 			} __attribute__((packed)) Storage;
 			
@@ -257,24 +255,17 @@ namespace MM
 				
 			};
 			
-			static inline uint32_t __StorageAndSlotToIndex ( Storage * Storage, uint32_t Slot )
+			static inline Storage * __StorageFromNode ( AddressRange * Node )
 			{
 				
-				return ( reinterpret_cast <uint32_t> ( Storage ) & 0xFFFFF000 ) | ( Slot & 0xFFF );
+				return reinterpret_cast <Storage *> ( reinterpret_cast <uint32_t> ( Node ) & 0xFFFFF000 );
 				
 			};
 			
-			static inline Storage * __StorageFromIndex ( uint32_t Index )
+			static inline uint32_t __SlotFromNode ( AddressRange * Node )
 			{
 				
-				return reinterpret_cast <Storage *> ( Index & 0xFFFFF000 );
-				
-			};
-			
-			static inline uint32_t __SlotFromIndex ( uint32_t Index )
-			{
-				
-				return ( Index & 0xFFF );
+				return ( ( ( reinterpret_cast <uint32_t> ( Node ) & 0x00000FFF ) - 16 ) / 32 );
 				
 			};
 			

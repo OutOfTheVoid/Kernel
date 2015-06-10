@@ -20,31 +20,20 @@ namespace MM
 		{
 		public:
 			
+			static const uint32_t kMaxErrorNumber = 0;
+			
 			typedef void PageAllocZone;
 			typedef void PageFreeZone;
 			
-			void InitFreeZone ( PageFreeZone * Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error );
-			PageAllocZone * MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error );
+			static const char * GetErrorString ( uint32_t Error );
 			
-			uint32_t PrePagingCalculateVirtualSize ( PageFreeZone * Zone, uint32_t * Error );
-			void VirtualizeZone ( PageFreeZone * Zone, PageAllocZone * AllocationZones [], uint32_t AllocationZoneCount, uint32_t VirtualBase, uint32_t * Error );
+			static void InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error );
+			static PageAllocZone * MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error );
+			
+			static uint32_t PrePagingCalculateVirtualSize ( PageFreeZone * Zone, uint32_t * Error );
+			static void VirtualizeZone ( PageFreeZone * Zone, PageAllocZone * AllocationZones [], uint32_t AllocationZoneCount, uint32_t VirtualBase, uint32_t * Error );
 			
 		private:
-			
-			typedef struct Storage_Struct
-			{
-				
-				uint32_t PagePhys;
-				uint32_t PageVirt;
-				
-				uint32_t Bitmap [ 4 ];
-				
-				uint32_t FreeCount;
-				
-				struct Storage_Struct * Next;
-				struct Storage_Struct * Previous;
-				
-			} Storage;
 			
 			typedef struct AddressRange_Struct
 			{
@@ -61,9 +50,21 @@ namespace MM
 				AddressRange_Struct * Left;
 				AddressRange_Struct * Right;
 				
-				uint32_t StorageRef;
+			} __attribute__ (( packed )) AddressRange;
+			
+			typedef struct Storage_Struct
+			{
 				
-			} AddressRange;
+				uint32_t Bitmap [ 4 ];
+				
+				uint32_t FreeCount;
+				
+				struct Storage_Struct * Next;
+				struct Storage_Struct * Previous;
+				
+				AddressRange Ranges [ 127 ];
+				
+			} __attribute__ (( packed )) Storage;
 			
 			typedef struct
 			{
@@ -76,7 +77,7 @@ namespace MM
 				Storage * FreeStorageHead;
 				Storage * FullStorageHead;
 				
-			} FreePageZone;
+			} __attribute__ (( packed )) FreePageZone;
 			
 			typedef struct
 			{
@@ -87,24 +88,29 @@ namespace MM
 				
 				AddressRange * UsedTreeRoot;
 				
-			} PageAllocationZone;
+			} __attribute__ (( packed )) PageAllocationZone;
+			
+			static const char * ErrorStrings [];
 			
 			static const uint32_t kAddressRangePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kPageFreeZonePTR_Invalid = 0xFFFFFFFF;
 			
-			void InsertNode ( AddressRange ** Root, AddressRange * ToInsert );
-			void RemoveNode ( AddressRange ** Root, AddressRange * ToRemove );
+			static void InsertNode ( AddressRange ** Root, AddressRange * ToInsert );
+			static void RemoveNode ( AddressRange ** Root, AddressRange * ToRemove );
 			
-			void RemoveNodeFromSizeClass ( FreePageZone * Zone, AddressRange * ToRemove, uint32_t SizeClass );
-			void InsertNodeInSizeClass ( FreePageZone * Zone, AddressRange * ToRemove, uint32_t SizeClass );
+			static void RemoveNodeFromSizeClass ( FreePageZone * Zone, AddressRange * ToRemove, uint32_t SizeClass );
+			static void InsertNodeInSizeClass ( FreePageZone * Zone, AddressRange * ToRemove, uint32_t SizeClass );
 			
-			AddressRange * Balance ( AddressRange * LocalRoot );
+			static AddressRange * Balance ( AddressRange * LocalRoot );
 			
-			AddressRange * FindBest ( FreePageZone * Zone, uint32_t MinimumSizeClass );
-			AddressRange * FindNode ( AddressRange * Root, uint32_t Base );
+			static AddressRange * FindBest ( FreePageZone * Zone, uint32_t MinimumSizeClass );
+			static AddressRange * FindNode ( AddressRange * Root, uint32_t Base );
 			
-			AddressRange * FindClosestSmallerNode ( AddressRange * Root, AddressRange * Node );
+			static AddressRange * FindClosestSmallerNode ( AddressRange * Root, AddressRange * Node );
+			
+			static AddressRange * NewRange ( FreePageZone * Zone );
+			static void FreeRange ( FreePageZone * Zone, AddressRange * Range );
 			
 			static inline void __TreePrint ( AddressRange * Node )
 			{
@@ -204,24 +210,17 @@ namespace MM
 				
 			};
 			
-			static inline uint32_t __StorageAndSlotToIndex ( Storage * Storage, uint32_t Slot )
+			static inline Storage * __StorageFromNode ( AddressRange * Node )
 			{
 				
-				return ( reinterpret_cast <uint32_t> ( Storage ) & 0xFFFFF000 ) | ( Slot & 0xFFF );
+				return reinterpret_cast <Storage *> ( reinterpret_cast <uint32_t> ( Node ) & 0xFFFFF000 );
 				
 			};
 			
-			static inline Storage * __StorageFromIndex ( uint32_t Index )
+			static inline uint32_t __SlotFromNode ( AddressRange * Node )
 			{
 				
-				return reinterpret_cast <Storage *> ( Index & 0xFFFFF000 );
-				
-			};
-			
-			static inline uint32_t __SlotFromIndex ( uint32_t Index )
-			{
-				
-				return ( Index & 0xFFF );
+				return ( ( ( reinterpret_cast <uint32_t> ( Node ) & 0x00000FFF ) - 16 ) / 32 );
 				
 			};
 			
