@@ -22,6 +22,8 @@ C_LINKAGE void mm_paging_disable ();
 C_LINKAGE void mm_paging_flushCR3 ();
 C_LINKAGE void mm_paging_invalPage ( uint32_t Virtual );
 
+C_LINKAGE uint32_t mm_paging_getStatus ();
+
 void MM::Paging::PageTable :: KInit ()
 {
 	
@@ -46,7 +48,7 @@ void MM::Paging::PageTable :: KInit ()
 	
 };
 
-MM::Paging::PageTable :: PDirectory MM::Paging::PageTable :: GetKernelPT ()
+MM::Paging::PageTable :: PDirectory MM::Paging::PageTable :: GetKernelPD ()
 {
 	
 	return Kernel_PDirectory;
@@ -211,3 +213,9 @@ void MM::Paging::PageTable :: FlushKPDirectory ()
 	
 };
 
+bool MM::Paging::PageTable :: KPagingStatus ()
+{
+	
+	return mm_paging_getStatus ();
+	
+};

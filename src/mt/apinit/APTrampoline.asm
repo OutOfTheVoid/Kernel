@@ -24,32 +24,9 @@
 	
 %define CR0FLAG_PROTECTEDMODE 0x01
 
-mt_apinit_kapmain:
-
-	dd 0
-
-mt_apinit_initstacktop:
-
-	dd 0
-	
-mt_apinit_startptr:
-
-	dd mt_apinit_trampoline
-
-mt_apinit_gdt:
-
-	SEGMENT_NULL
-	SEGMENT_32 ( SEGMENT_TYPE_EXECUTABLE | SEGMENT_TYPE_C_READABLE ), 0, 0xFFFFFFFF
-	SEGMENT_32 SEGMENT_TYPE_D_WRITABLE, 0, 0xFFFFFFFF
-	
-mt_apinit_gdtend:
-
-mt_apinit_gdtr:
-
-	dw ( mt_apinit_gdtend - mt_apinit_gdt - 1 )
-	dd mt_apinit_gdt
-
 mt_apinit_trampoline:
+
+	cli
 
 	xor ax, ax
 	mov ds, ax
@@ -77,13 +54,48 @@ mt_apinit_protectedjump:
 	mov fs, ax
 	mov gs, ax
 	
+	mov eax, [ mt_apinit_initpgdir ]
+	mov cr3, eax
+	
+	mov eax, cr0
+	or eax, 0x80000000
+	mov cr0, eax
+	
 	mov eax, [ mt_apinit_initstacktop ]
 	mov esp, eax
 	
-	call [mt_apinit_kapmain]
+	call [ mt_apinit_kapmain ]
 	
 mt_apinit_hang:
 	
 	cli
 	hlt
 	jmp mt_apinit_hang
+	
+	
+times 512 - ( $ - $$ ) db 0
+	
+mt_apinit_kapmain:
+
+	dd 0
+
+mt_apinit_initstacktop:
+
+	dd 0
+	
+mt_apinit_initpgdir:
+
+	dd 0
+
+mt_apinit_gdt:
+
+	SEGMENT_NULL
+	SEGMENT_32 ( SEGMENT_TYPE_EXECUTABLE | SEGMENT_TYPE_C_READABLE ), 0, 0xFFFFFFFF
+	SEGMENT_32 SEGMENT_TYPE_D_WRITABLE, 0, 0xFFFFFFFF
+	
+mt_apinit_gdtend:
+
+mt_apinit_gdtr:
+
+	dw ( mt_apinit_gdtend - mt_apinit_gdt - 1 )
+	dd mt_apinit_gdt

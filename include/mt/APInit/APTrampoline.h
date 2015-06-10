@@ -17,18 +17,18 @@ namespace MT
 			
 			static void Init ();
 			static void SetStack ( void * Stack );
-			
-			static void * GetEntry ();
+			static void SetPagingDirectory ( uint32_t * PagingDirectory );
 			
 		private:
 			
 			typedef struct
 			{
 				
+				uint8_t Code [ 512 ];
+				
 				uint32_t PModeMainPTR;
 				uint32_t InitStackTop;
-				
-				uint32_t Trampoline;
+				uint32_t * PagingDirectory;
 				
 			} __attribute__ (( packed )) TrapolineBinary;
 			

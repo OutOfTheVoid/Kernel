@@ -7,8 +7,6 @@
 
 #include <hw/apm/APMHeader.h>
 
-#include <hw/video/VText.h>
-
 #include <math/Bitmath.h>
 #include <boot/Bootimage.h>
 
@@ -134,20 +132,20 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 	for ( e = 0; e < __CalcTreeIndex ( 0, 0 ); e ++ )
 	{
 		
-		Table [ e ].AFree = 0;
-		Table [ e ].BFree = 0;
-		Table [ e ].Split = 1;
-		Table [ e ].Usable = 0;
+		__Table ( e ).AFree = 0;
+		__Table ( e ).BFree = 0;
+		__Table ( e ).Split = 1;
+		__Table ( e ).Usable = 0;
 		
 	}
 	
 	for ( e = __CalcTreeIndex ( 0, 0 ); e < TableSize; e ++ )
 	{
 		
-		Table [ e ].AFree = 0;
-		Table [ e ].BFree = 0;
-		Table [ e ].Split = 0;
-		Table [ e ].Usable = 0;
+		__Table ( e ).AFree = 0;
+		__Table ( e ).BFree = 0;
+		__Table ( e ).Split = 0;
+		__Table ( e ).Usable = 0;
 		
 	}
 	
@@ -162,10 +160,10 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
 		if ( TestRegionUsable ( e, 4096 ) )
 		{
 			
-			Table [ Index ].AFree = 1;
-			Table [ Index ].BFree = 1;
-			Table [ Index ].Split = 0;
-			Table [ Index ].Usable = 1;
+			__Table ( Index ).AFree = 1;
+			__Table ( Index ).BFree = 1;
+			__Table ( Index ).Split = 0;
+			__Table ( Index ).Usable = 1;
 			
 			FreeCount ++;
 			
@@ -203,9 +201,9 @@ bool MM::Paging::PFA :: Alloc ( uint32_t Length, void ** Address )
 		
 	}
 	
-	Table [ Index ].Split = 0;
-	Table [ Index ].AFree = 0;
-	Table [ Index ].BFree = 0;
+	__Table ( Index ).Split = 0;
+	__Table ( Index ).AFree = 0;
+	__Table ( Index ).BFree = 0;
 	
 	FreeCount -= 1 << Level;
 	
@@ -227,9 +225,9 @@ void MM::Paging::PFA :: Free ( void * Address )
 	if ( Index == 0xFFFFFFFF )
 		return;
 	
-	Table [ Index ].AFree = 1;
-	Table [ Index ].BFree = 1;
-	Table [ Index ].Split = 0;
+	__Table ( Index ).AFree = 1;
+	__Table ( Index ).BFree = 1;
+	__Table ( Index ).Split = 0;
 	
 	FreeCount += 1 << FoundLevel;
 	
@@ -389,7 +387,15 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint3
 		{
 			
 			if ( ( MMapEntry -> addr <= reinterpret_cast <uint32_t> ( & __kbegin ) ) && ( MMapEntry -> addr + MMapEntry -> len > reinterpret_cast <uint32_t> ( & __kbegin ) ) )
+			{
+				
+				MMapEntry -> len -= reinterpret_cast <uint32_t> ( & __kend ) - MMapEntry -> addr;
 				MMapEntry -> addr = reinterpret_cast <uint32_t> ( & __kend );
+				
+				if ( MMapEntry -> len > 0xFFFFFFFF )
+					MMapEntry -> len = 0;
+				
+			}
 			
 			if ( MultibootInfo -> flags & MULTIBOOT_INFO_MODS )
 			{
@@ -400,16 +406,24 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint3
 				{
 					
 					if ( ( MMapEntry -> addr <= ModuleEntry [ i ].mod_start ) && ( MMapEntry -> addr + MMapEntry -> len > ModuleEntry [ i ].mod_start ) )
+					{
+						
+						MMapEntry -> len -= ModuleEntry [ i ].mod_end - MMapEntry -> addr;
 						MMapEntry -> addr = ModuleEntry [ i ].mod_end;
+						
+						if ( MMapEntry -> len > 0xFFFFFFFF )
+							MMapEntry -> len = 0;
+						
+					}
 					
 				}
 				
 			}
 			
+			if ( * MaxAddress < MMapEntry -> addr + MMapEntry -> len )
+				* MaxAddress = ( MMapEntry -> addr + MMapEntry -> len > 0xFFFFFFFF ) ? 0xFFFFFFFF : MMapEntry -> addr + MMapEntry -> len;
+			
 		}
-		
-		if ( * MaxAddress < MMapEntry -> addr + MMapEntry -> len )
-			* MaxAddress = ( MMapEntry -> addr + MMapEntry -> len > 0xFFFFFFFF ) ? 0xFFFFFFFF : MMapEntry -> addr + MMapEntry -> len;
 		
 		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
 		

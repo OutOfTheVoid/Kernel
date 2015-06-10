@@ -17,9 +17,11 @@ namespace Interrupt
 		static void IncrementBlock ();
 		static void DecrementBlock ();
 		
+		static uint32_t GetBlockCount ();
+		
 	private:
 		
-		static uint32_t Count;
+		static uint32_t BSPCount;
 		
 	};
 	

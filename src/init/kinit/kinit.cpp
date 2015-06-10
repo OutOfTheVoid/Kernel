@@ -26,8 +26,6 @@
 C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
 	
-	bool UseACPI;
-	
 	if ( Magic != MULTIBOOT_BOOTLOADER_MAGIC )
 		KPANIC ( "Multiboot bootloader magic number failed!" );
 
@@ -45,9 +43,7 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	
 	system_func_kprintf ( "ACPI Init...\n" );
 	
-	UseACPI = HW::ACPI::StaticInit ();
-	
-	system_func_kprintf ( UseACPI ? "Using ACPI\n" : "Not using ACPI\n" );
+	HW::ACPI :: StaticInit ();
 	
 	system_func_kprintf ( "Interrupt Init...\n" );
 	
@@ -57,13 +53,7 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	
 	MT :: Init ();
 	
-	system_func_kprintf ( "Initialized!\nRunning tests...\n" );
-	
-	system_func_kprintf ( "Wait test: 3s...\n" );
-	
-	mt_timing_pwaitms ( 3000.0 );
-	
-	system_func_kprintf ( "Wait done!\n" );
+	system_func_kprintf ( "BSP Initialized!\n" );
 	
 	hw_cpu_hang ();
 	

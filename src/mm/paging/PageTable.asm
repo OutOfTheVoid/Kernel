@@ -4,6 +4,7 @@ global mm_paging_enable
 global mm_paging_disable
 global mm_paging_flushCR3
 global mm_paging_invalPage
+global mm_paging_getStatus
 
 extern Current_PDirectory
 
@@ -55,7 +56,7 @@ mm_paging_disable:
 	mov ebp, esp
 	
 	mov eax, cr0
-	and eax, ~ 0x80000000,
+	and eax, ~ 0x80000000
 	mov cr0, eax
 	
 	mov esp, ebp
@@ -70,6 +71,19 @@ mm_paging_invalPage:
 	
 	mov eax, [ esp + 8 ]
 	invlpg [eax]
+	
+	mov esp, ebp
+	pop ebp
+	
+	ret
+	
+mm_paging_getStatus:
+
+	push ebp
+	mov ebp, esp
+
+	mov eax, cr0
+	and eax, 0x80000000
 	
 	mov esp, ebp
 	pop ebp

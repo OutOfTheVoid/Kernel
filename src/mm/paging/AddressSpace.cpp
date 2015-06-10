@@ -385,7 +385,7 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: FindClose
 			
 		}
 		
-	};
+	}
 	
 };
 

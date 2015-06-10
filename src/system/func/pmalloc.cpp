@@ -25,16 +25,16 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 	if ( ( MM::Paging::PFA :: GetFreeKB () >> 2 ) < Pages )
 		return NULL;
 	
-	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Alloc ( Pages * 0x1000, & Virtual, & Error );
-	
 	if ( MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> GetFreePages () < Pages )
 		return NULL;
+	
+	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Alloc ( Pages * 0x1000, & Virtual, & Error );
 	
 	if ( Error != MM::Paging::AddressSpace :: kAlloc_Error_None )
 		return NULL;
 	
 	if ( Hint == PMALLOC_PHSCHEME_DEFAULT )
-		Hint = PMALLOC_PHSCHEME_BINARY;
+		Hint = PMALLOC_PHSCHEME_DISTRIBUTE;
 	
 	void * VCopy = Virtual;
 	uint32_t PagesCopy = Pages;

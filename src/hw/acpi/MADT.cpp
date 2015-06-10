@@ -7,8 +7,6 @@
 #include <mm/KMalloc.h>
 #include <mm/paging/PageTable.h>
 
-#include <mt/synchronization/Spinlock.h>
-
 #include <KernelDef.h>
 
 bool HW::ACPI::MADT :: Validated = false;
@@ -29,6 +27,9 @@ void HW::ACPI::MADT :: Init ()
 	void * PhysAddr;
 	
 	RecordHeader * RecordBase;
+	
+	if ( Validated || ! RSDP :: Found () )
+		return;
 	
 	ProcessorLAPICRecords = new Vector <ProcessorLAPICRecord *> ();
 	
@@ -57,9 +58,6 @@ void HW::ACPI::MADT :: Init ()
 		return;
 		
 	}
-	
-	if ( Validated )
-		return;
 	
 	if ( RSDP :: GetACPIRevision () == RSDP :: kACPI_Revision_1 )
 	{
@@ -132,8 +130,8 @@ void HW::ACPI::MADT :: Init ()
 		{
 			
 			delete ProcessorLAPICRecords;
-		delete IOAPICRecords;
-		delete InterruptSourceOverrideRecords;
+			delete IOAPICRecords;
+			delete InterruptSourceOverrideRecords;
 			
 			return;
 			
@@ -223,6 +221,8 @@ void HW::ACPI::MADT :: Discard ()
 	
 	Table = NULL;
 	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
 };
 
 uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
@@ -232,6 +232,37 @@ uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
 		return 0;
 	
 	return Table -> LAPICAddress;
+	
+};
+
+uint32_t HW::ACPI::MADT :: GetProcessorCount ()
+{
+	
+	if ( ! Validated )
+		return 0;
+	
+	return ProcessorLAPICRecords -> Length ();
+	
+};
+
+uint8_t HW::ACPI::MADT :: GetProcessorLAPICID ( uint32_t Index )
+{
+	
+	return ( * ProcessorLAPICRecords ) [ Index ] -> APICID;
+	
+};
+
+uint8_t HW::ACPI::MADT :: GetProcessorID ( uint32_t Index )
+{
+	
+	return ( * ProcessorLAPICRecords ) [ Index ] -> APICProcessorID;
+	
+};
+
+bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
+{
+	
+	return ( ( * ProcessorLAPICRecords ) [ Index ] -> Flags & kAPICFlags_ProcessorEnabled );
 	
 };
 

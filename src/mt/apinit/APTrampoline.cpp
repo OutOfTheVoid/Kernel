@@ -1,6 +1,9 @@
 #include <mt/apinit/APTrampoline.h>
 #include <mt/apinit/APMain.h>
 
+//#include <hw/pc/CMOS.h>
+//#include <hw/pc/BIOS.h>
+
 #include <cpputil/Linkage.h>
 
 #include <util/string/String.h>
@@ -19,6 +22,9 @@ void MT::APInit::APTrampoline :: Init ()
 	
 	Binary -> PModeMainPTR = reinterpret_cast <uint32_t> ( & mt_apinit_apmain );
 	
+	//HW::PC::CMOS :: Write ( HW::PC::CMOS :: kRegister_System_ShutdownCode, HW::PC::CMOS :: kShutdownCode_JumpNoEOI );
+	//HW::PC::BIOS :: ConfigWarmBootJump ( reinterpret_cast <uint32_t> ( Binary ) );
+	
 };
 
 void MT::APInit::APTrampoline :: SetStack ( void * Stack )
@@ -28,10 +34,10 @@ void MT::APInit::APTrampoline :: SetStack ( void * Stack )
 	
 };
 
-void * MT::APInit::APTrampoline :: GetEntry ()
+void MT::APInit::APTrampoline :: SetPagingDirectory ( uint32_t * PagingDirectory )
 {
 	
-	return reinterpret_cast <void *> ( Binary -> Trampoline );
+	Binary -> PagingDirectory = PagingDirectory;
 	
 };
 

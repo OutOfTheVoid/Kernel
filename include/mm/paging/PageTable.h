@@ -31,7 +31,7 @@ namespace MM
 			static const uint32_t Flags_Present = 0x01;
 			
 			static void KInit ();
-			static PDirectory GetKernelPT ();
+			static PDirectory GetKernelPD ();
 			
 			static PDirectory Create ();
 			static void Destroy ( PDirectory Table );
@@ -50,6 +50,8 @@ namespace MM
 			static void DisableKPaging ();
 			
 			static void FlushKPDirectory ();
+			
+			static bool KPagingStatus ();
 			
 		private:
 			

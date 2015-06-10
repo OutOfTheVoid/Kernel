@@ -15,8 +15,8 @@ namespace HW
 		public:
 			
 			static const uint32_t kMSR_APIC_BASE = 0x1B;
-			static const uint32_t kMSR_APIC_BSP = 0x100;
-			static const uint32_t kMSR_APIC_ENABLE = 0x800;
+			static const uint32_t kMSR_APICBASEFlag_BSP = 0x100;
+			static const uint32_t kMSR_APICBASEFlag_Enable = 0x800;
 			
 			static inline void GetMSR ( uint32_t Register, uint32_t * EAX, uint32_t * EDX )
 			{

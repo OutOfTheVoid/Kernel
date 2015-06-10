@@ -77,6 +77,13 @@ namespace MM
 				
 			};
 			
+			static inline Entry & __Table ( uint32_t Index )
+			{
+				
+				return * reinterpret_cast <Entry *> ( reinterpret_cast <uint32_t> ( Table ) + Index );
+				
+			}
+			
 			static inline uint32_t __CalcChildAIndex ( uint32_t ParentIndex )
 			{
 				

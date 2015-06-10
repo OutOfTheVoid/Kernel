@@ -10,15 +10,50 @@ namespace Interrupt
 	{
 	public:
 		
-		static void Init ();
+		static const bool kTimerMode_OneShot = 0;
+		static const bool kTimerMode_Periodic = 1;
+		
+		static const uint32_t kTimerDivision_1 = 0;
+		static const uint32_t kTimerDivision_2 = 1;
+		static const uint32_t kTimerDivision_4 = 2;
+		static const uint32_t kTimerDivision_8 = 3;
+		static const uint32_t kTimerDivision_16 = 4;
+		static const uint32_t kTimerDivision_32 = 5;
+		static const uint32_t kTimerDivision_64 = 6;
+		static const uint32_t kTimerDivision_128 = 7;
+		
 		static bool HasAPIC ();
+		
+		static void Init ();
+		static void APInit ();
+		
+		static void Enable ();
+		static void Disable ();
+		
+		static bool IsLocalBSP ();
+		
+		static uint8_t GetLocalID ();
+		static void SetLocalID ( uint8_t ID );
+		
+		static uint8_t GetLocalVersion ();
+		
+		static void SetLocalTimerVector ( bool InitiallyMasked, uint8_t Vector );
+		static void SetLocalTimerDivide ( uint32_t Divide );
+		
+		static void StartTimerOneShot ( uint32_t InitialValue );
+		static bool PollTimerOneShot ();
+		
+		static void StartTimerPeriodic ( uint32_t SystemClockPeriod );
+		
+		static void SendPhysicalInitIPI ( uint8_t TargetID, bool Assert );
+		static void SendPhysicalStartUpIPI ( uint8_t TargetID );
 		
 	private:
 		
+		static uint8_t GetLocalLVTCount ();
+		
 		static void SetAPICBaseAddress ( uint32_t Base );
 		static uint32_t GetAPICBaseAddress ();
-		
-		static void EnableAPIC ();
 		
 		static void ReadRegister ( uint32_t Offset, uint32_t * DataOut, uint32_t DWordLength );
 		static void WriteRegister ( uint32_t Offset, uint32_t * DataIn, uint8_t DwordLength );
@@ -49,14 +84,10 @@ namespace Interrupt
 		static const uint32_t kRegisterOffset_InterruptRequest = 0x200;
 		static const uint32_t kRegisterOffset_ErrorStatus = 0x280;
 		
-		static const uint32_t kRegisterOffset_LVTCMCI = 0x2F0;
-		
 		static const uint32_t kRegisterOffset_InterruptCommand_Lower = 0x300;
 		static const uint32_t kRegisterOffset_InterruptCommand_Upper = 0x310;
 		
 		static const uint32_t kRegisterOffset_LVTTimer = 0x320;
-		static const uint32_t kRegisterOffset_LVTThermal = 0x330;
-		static const uint32_t kRegisterOffset_LVTPerformance = 0x340;
 		static const uint32_t kRegisterOffset_LVTLINT0 = 0x350;
 		static const uint32_t kRegisterOffset_LVTLINT1 = 0x360;
 		static const uint32_t kRegisterOffset_LVTError = 0x370;
@@ -64,6 +95,35 @@ namespace Interrupt
 		static const uint32_t kRegisterOffset_TimerInitialCount = 0x380;
 		static const uint32_t kRegisterOffset_TimerCurrentCount = 0x390;
 		static const uint32_t kRegisterOffset_TimerDivideConfig = 0x3E0;
+		
+		static const uint32_t kSpuriousInterruptVectorFlag_APICEnable = 0x00000100;
+		
+		static const uint32_t kLVTFlag_Mask = 0x10000;
+		static const uint32_t kLVTFlag_TimerModePeriodic = 0x20000;
+		
+		static const uint32_t kIPIDeliveryMode_Fixed = 0x000;
+		static const uint32_t kIPIDeliveryMode_LowestPriority = 0x100;
+		static const uint32_t kIPIDeliveryMode_SMI = 0x200;
+		static const uint32_t kIPIDeliveryMode_NMI = 0x400;
+		static const uint32_t kIPIDeliveryMode_INIT = 0x500;
+		static const uint32_t kIPIDeliveryMode_StartUp = 0x600;
+		
+		static const uint32_t kIPIDestinationMode_Logical = 0x800;
+		static const uint32_t kIPIDestinationMode_Physical = 0x000;
+		
+		static const uint32_t kIPIDeliverStatus_Idle = 0x0000;
+		static const uint32_t kIPIDeliverStatus_Pending = 0x1000;
+		
+		static const uint32_t kIPILevel_DeAssert = 0x0000;
+		static const uint32_t kIPILevel_Assert = 0x4000;
+		
+		static const uint32_t kIPITriggerMode_Edge = 0x0000;
+		static const uint32_t kIPITriggerMode_Level = 0x8000;
+		
+		static const uint32_t kIPIDestinationShorthand_None = 0x00000;
+		static const uint32_t kIPIDestinationShorthand_Self = 0x40000;
+		static const uint32_t kIPIDestinationShorthand_All = 0x80000;
+		static const uint32_t kIPIDestinationShorthand_AllExcludingSelf = 0x80000;
 		
 	};
 	

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include <hw/HW.h>
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
@@ -27,6 +26,11 @@ namespace HW
 			static void Discard ();
 			
 			static uint32_t GetAPICBaseAddress ();
+			
+			static uint32_t GetProcessorCount ();
+			static uint8_t GetProcessorLAPICID ( uint32_t Index );
+			static uint8_t GetProcessorID ( uint32_t Index );
+			static bool GetProcessorEnabled ( uint32_t Index );
 			
 		private:
 			
@@ -84,7 +88,7 @@ namespace HW
 				
 			} __attribute__ (( packed )) InterruptSourceOverrideRecord;
 			
-			static const uint32_t kAPICFlags_ProcessorEnabled;
+			static const uint32_t kAPICFlags_ProcessorEnabled = 1;
 			
 			static const uint8_t kRecordType_ProcessorLAPICRecord = 0;
 			static const uint8_t kRecordType_IOAPICRecord = 1;

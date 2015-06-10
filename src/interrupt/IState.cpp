@@ -1,34 +1,42 @@
 #include <interrupt/IState.h>
+
 #include <hw/cpu/interrupt.h>
 
-uint32_t Interrupt::IState :: Count;
+uint32_t Interrupt::IState :: BSPCount;
 
 void Interrupt::IState :: Init ()
 {
 	
-	Count = 0;
+	BSPCount = 0;
 	
 };
 
 void Interrupt::IState :: IncrementBlock ()
 {
 	
-	if ( Count == 0 )
+	if ( BSPCount == 0 )
 		hw_cpu_cli ();
 	
-	Count ++;
+	BSPCount ++;
 	
 };
 
 void Interrupt::IState :: DecrementBlock ()
 {
 	
-	if ( Count == 0 )
+	if ( BSPCount == 0 )
 		return;
 	
-	Count --;
+	BSPCount --;
 	
-	if ( Count == 0 )
+	if ( BSPCount == 0 )
 		hw_cpu_sei ();
+	
+};
+
+uint32_t Interrupt::IState :: GetBlockCount ()
+{
+	
+	return BSPCount;
 	
 };

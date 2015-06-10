@@ -3,6 +3,7 @@
 #include <hw/acpi/RSDT.h>
 #include <hw/acpi/XSDT.h>
 #include <hw/acpi/MADT.h>
+//#include <hw/acpi/SRAT.h>
 
 #include <system/func/kprintf.h>
 
@@ -81,12 +82,41 @@ bool HW::ACPI :: StaticInit ()
 	{
 		
 		#ifdef KSTARTUP_DEBUG
-			system_func_kprintf ( "MADT Not valid!\n" );
+			system_func_kprintf ( "MADT Not valid!\nParsing SRAT..." );
+		#endif
+		
+	}
+	else
+	{
+		
+		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "MADT Validated!\nParsing SRAT...\n" );
 		#endif
 		
 	}
 	
-	system_func_kprintf ( "MADT Validated!\nACPI Static startup successful!\n\n" );
+	/*SRAT :: Init ();
+	
+	if ( ! SRAT :: Valid () )
+	{
+		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "SRAT Not valid!\n" );
+		#endif
+		
+	}
+	else
+	{
+		
+		
+		#ifdef KSTARTUP_DEBUG
+			system_func_kprintf ( "SRAT Validated!\n" );
+		#endif
+		
+	}*/
+	
+	system_func_kprintf ( "ACPI Static startup successful!\n\n" );
 	
 	return true;
 	
