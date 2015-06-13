@@ -5,6 +5,7 @@
 
 #include <mm/MM.h>
 #include <mm/paging/Paging.h>
+#include <mm/paging/PAlloc.h>
 
 #include <math/Bitmath.h>
 #include <math/IntMath.h>
@@ -72,6 +73,8 @@ namespace MM
 			
 		private:
 			
+			friend class PAlloc;
+			
 			struct Storage_struct;
 			
 			typedef struct AddressRange_Struct
@@ -127,11 +130,12 @@ namespace MM
 			AddressRange * GetNewRange ();
 			void FreeOldRange ( AddressRange * Range );
 			
+			bool CheckStorage ( uint32_t * Error );
+			
 			static const char * ErrorStrings [];
 			
 			static const uint32_t kAddressRangePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
-			
 			
 			AddressRange * RootFreeNode;
 			AddressRange * RootAllocatedNode;

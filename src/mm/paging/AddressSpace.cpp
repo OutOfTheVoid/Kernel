@@ -183,10 +183,10 @@ MM::Paging::AddressSpace :: AddressSpace ()
 	
 };
 
-void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t * Error )
+bool MM::Paging::AddressSpace :: CheckStorage ( uint32_t * Error )
 {
 	
-	if ( FreeStorageSlotCount <= 2 )
+	if ( FreeStorageSlotCount <= 4 )
 	{
 		
 		Storage * NewStorage;
@@ -201,7 +201,7 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 				
 				* Error = kAlloc_Error_FailedPhysicalAllocation;
 				
-				return;
+				return false;
 				
 			}
 			
@@ -214,7 +214,7 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 				
 				* Error = kAlloc_Error_OutOfKVirtualSpace;
 				
-				return;
+				return false;
 				
 			}
 			
@@ -232,7 +232,7 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 				
 				* Error = kAlloc_Error_FailedPMalloc;
 				
-				return;
+				return false;
 				
 			}
 			
@@ -252,6 +252,16 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 		FreeStorageSlotCount += 126;
 		
 	}
+	
+	return true;
+	
+};
+
+void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t * Error )
+{
+	
+	if ( ! CheckStorage ( Error ) )
+		return;
 	
 	AddressRange * AllocationRange = DoAlloc ( Length );
 	
@@ -416,6 +426,9 @@ MM::Paging::AddressSpace :: AddressRange * MM::Paging::AddressSpace :: DoAlloc (
 	SizeClass = __CalculateSizeClass ( BorrowRange -> Length );
 	
 	AddressRange * AllocRange = GetNewRange ();
+	
+	if ( AllocRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		return reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
 	BorrowRange -> Length -= RequestedSize;
 	AllocRange -> Base = BorrowRange -> Base + BorrowRange -> Length;

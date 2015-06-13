@@ -10,6 +10,10 @@
 
 #include <mt/synchronization/Spinlock.h>
 
+/* MADT.h: Contains definitions for parsing the ACPI Multiple Apic Description Table,
+* required for multi-processor interrupt support, and this, multi-processor support.
+*/
+
 namespace HW
 {
 	

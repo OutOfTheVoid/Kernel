@@ -22,16 +22,18 @@ namespace MM
 			
 			static const uint32_t kMaxErrorNumber = 0;
 			
+			static const uint32_t kError_None = 0;
+			
 			typedef void PageAllocZone;
 			typedef void PageFreeZone;
 			
 			static const char * GetErrorString ( uint32_t Error );
 			
-			static void InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error );
+			static void InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t InitialVPage, uint32_t * Error );
 			static PageAllocZone * MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error );
 			
-			static uint32_t PrePagingCalculateVirtualSize ( PageFreeZone * Zone, uint32_t * Error );
-			static void VirtualizeZone ( PageFreeZone * Zone, PageAllocZone * AllocationZones [], uint32_t AllocationZoneCount, uint32_t VirtualBase, uint32_t * Error );
+			static void Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Size, uint32_t * Error );
+			static void Free ( PageAllocZone * AllocationZone, void * Address, uint32_t * Error );
 			
 		private:
 			
@@ -73,9 +75,14 @@ namespace MM
 				
 				AddressRange * FreeSizeClassHeads [ 20 ];
 				AddressRange * FreeTreeRoot;
+				AddressRange * StorageTreeRoot;
 				
 				Storage * FreeStorageHead;
 				Storage * FullStorageHead;
+				
+				uint32_t FreeStorageSlotCount;
+				uint32_t StorageCount;
+				uint32_t FreePageCount;
 				
 			} __attribute__ (( packed )) FreePageZone;
 			
@@ -96,6 +103,8 @@ namespace MM
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kPageFreeZonePTR_Invalid = 0xFFFFFFFF;
 			
+			static AddressRange * DoAlloc ( FreePageZone * Zone, uint32_t Length );
+			
 			static void InsertNode ( AddressRange ** Root, AddressRange * ToInsert );
 			static void RemoveNode ( AddressRange ** Root, AddressRange * ToRemove );
 			
@@ -111,6 +120,8 @@ namespace MM
 			
 			static AddressRange * NewRange ( FreePageZone * Zone );
 			static void FreeRange ( FreePageZone * Zone, AddressRange * Range );
+			
+			static bool ExpandStorage ( FreePageZone * Zone );
 			
 			static inline void __TreePrint ( AddressRange * Node )
 			{

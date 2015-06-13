@@ -6,6 +6,10 @@
 #include <hw/HW.h>
 #include <hw/acpi/ACPI.h>
 
+/* ACPITable.h: Overarching support for ACPI Tables. This includes the standard ACPI table header,
+* as well as a way to verify a table for it's checksum.
+*/
+
 namespace HW
 {
 	

@@ -1,5 +1,6 @@
 #include <mm/paging/PAlloc.h>
 #include <mm/paging/PageTable.h>
+#include <mm/paging/AddressSpace.h>
 
 const char * MM::Paging::PAlloc :: ErrorStrings [] = 
 {
@@ -18,27 +19,41 @@ const char * MM::Paging::PAlloc :: GetErrorString ( uint32_t Error )
 	
 };
 
-void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error )
+void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t InitialVPage, uint32_t * Error )
 {
 	
-	FreePageZone * NewZone = reinterpret_cast <FreePageZone *> ( Zone );
+	FreePageZone ** NewZone = reinterpret_cast <FreePageZone **> ( Zone );
 	
 	InitialPhysicalLength -= ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF ) - InitialPhysicalBase;
 	InitialPhysicalBase = ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF );
 	
-	Storage * InitialStorage = reinterpret_cast <Storage *> ( InitialPhysicalBase );
+	void * InitStoragePhysical = reinterpret_cast <void *> ( InitialPhysicalBase );
+	
+	MM::Paging::PageTable :: SetKernelMapping ( InitialVPage, InitialPhysicalBase, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
+	
 	InitialPhysicalBase += 0x1000;
 	InitialPhysicalLength -= 0x1000;
 	
-	FreePageZone * FreeZone = reinterpret_cast <FreePageZone *> ( & InitialStorage -> Ranges [ 0 ] );
-	AddressRange * InitialRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 1 ] );
+	Storage * InitialStorage = reinterpret_cast <Storage *> ( InitialVPage );
 	
-	InitialStorage -> Bitmap [ 0 ] = 0x00000003;
+	* NewZone = reinterpret_cast <FreePageZone *> ( & InitialStorage -> Ranges [ 0 ] );
+	AddressRange * InitialRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 4 ] );
+	AddressRange * InitialStorageRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 5 ] );
+	
+	InitialStorageRange -> Base = InitialPhysicalBase - 0x1000;
+	InitialStorageRange -> Length = 0x1000;
+	
+	InitialStorageRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialStorageRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialStorageRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialStorageRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	InitialStorageRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	InitialStorage -> Bitmap [ 0 ] = 0x0000003F;
 	InitialStorage -> Bitmap [ 1 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 2 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 3 ] = 0x00000000;
-	
-	InitialStorage -> FreeCount = 125;
+	InitialStorage -> FreeCount = 121;
 	
 	InitialRange -> Base = InitialPhysicalBase;
 	InitialRange -> Length = InitialPhysicalLength;
@@ -49,112 +64,184 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	InitialRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
-	InsertNode ( & NewZone -> FreeTreeRoot, InitialRange );
-	InsertNodeInSizeClass ( NewZone, InitialRange, __CalculateSizeClass ( InitialPhysicalLength ) );
+	( * NewZone ) -> FreePageCount = InitialPhysicalLength >> 12;
+	( * NewZone ) -> FreeStorageSlotCount = InitialStorage -> FreeCount;
+	( * NewZone ) -> FreeStorageHead = InitialStorage;
+	( * NewZone ) -> FullStorageHead = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+	
+	( * NewZone ) -> StorageTreeRoot = InitialStorageRange;
+	( * NewZone ) -> FreeTreeRoot = InitialRange;
+	
+	for ( uint32_t I = 0; I < 20; I ++ )
+		( * NewZone ) -> FreeSizeClassHeads [ I ] = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	uint32_t InitSizeClass = __CalculateSizeClass ( InitialPhysicalLength );
+	
+	InsertNode ( & ( * NewZone ) -> FreeTreeRoot, InitialRange );
+	InsertNodeInSizeClass ( ( * NewZone ), InitialRange, InitSizeClass );
+	
+	( * NewZone ) -> Name = Name;
+	
+	* Error = kError_None;
 	
 };
 
 MM::Paging::PAlloc :: PageAllocZone * MM::Paging::PAlloc :: MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error )
 {
 	
-	
-	
-};
-
-uint32_t MM::Paging::PAlloc :: PrePagingCalculateVirtualSize ( PageFreeZone * Zone, uint32_t * Error )
-{
-	
-	uint32_t PageCount = 0;
-	
-	Storage * CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FreeStorageHead;
-	
-	while ( CurrentStorage != reinterpret_cast <Storage *>  ( kStoragePTR_Invalid ) )
-	{
-		
-		PageCount ++;
-		
-		CurrentStorage = CurrentStorage -> Next;
-		
-	}
-	
-	CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FullStorageHead;
-	
-	while ( CurrentStorage != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
-	{
-		
-		PageCount ++;
-		
-		CurrentStorage = CurrentStorage -> Next;
-		
-	}
-	
-	return PageCount << 12;
+	// TODO
 	
 };
 
-void MM::Paging::PAlloc :: VirtualizeZone ( PageFreeZone * Zone, PageAllocZone * AllocationZones [], uint32_t AllocationZoneCount, uint32_t VirtualBase, uint32_t * Error )
+void MM::Paging::PAlloc :: Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Size, uint32_t * Error )
 {
 	
-	Storage * CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FreeStorageHead;
-	PageAllocZone * NewZonePTRs [ AllocationZoneCount ];
+	// TODO
 	
-	// TODO: virtualize trees
+	* Error = kError_None;
 	
-	uint32_t I;
+};
+
+void MM::Paging::PAlloc :: Free ( PageAllocZone * AllocationZone, void * Address, uint32_t * Error )
+{
 	
-	for ( I = 0; I < AllocationZoneCount; I ++ )
-		NewZonePTRs [ I ] = reinterpret_cast <PageAllocZone *> ( kPageFreeZonePTR_Invalid );
+	// TODO
 	
-	uint32_t Virt = VirtualBase;
+	* Error = kError_None;
 	
-	while ( CurrentStorage != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+};
+
+MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZone * Zone, uint32_t Length )
+{
+	
+	uint32_t SizeClass = __CalculateSizeClass ( Length );
+	
+	AddressRange * BorrowRange = FindBest ( Zone, SizeClass );
+		
+	if ( BorrowRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		return reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	if ( BorrowRange -> Length != Length )
 	{
 		
-		for ( I = 0; I < AllocationZoneCount; I ++ )
-		{
-			
-			if ( ( NewZonePTRs [ I ] == reinterpret_cast <PageAllocZone *> ( kPageFreeZonePTR_Invalid ) ) && ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) > reinterpret_cast <uint32_t> ( CurrentStorage ) ) && ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) < ( reinterpret_cast <uint32_t> ( CurrentStorage ) + sizeof ( CurrentStorage ) ) ) )
-				NewZonePTRs [ I ] = reinterpret_cast <void *> ( ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) & 0xFFF ) | Virt );
-			
-		}
+		RemoveNode ( & Zone -> FreeTreeRoot, BorrowRange );
 		
-		PageTable :: SetKernelMapping ( Virt, reinterpret_cast <uint32_t> ( CurrentStorage ), PageTable :: Flags_Writeable | PageTable :: Flags_Present | PageTable :: Flags_Cutsom_KMap );
+		Zone -> FreePageCount -= Length >> 12;
 		
-		CurrentStorage = reinterpret_cast <Storage *> ( Virt );
+		return BorrowRange;
 		
-		CurrentStorage = CurrentStorage -> Next;
+	};
+	
+	AddressRange * AllocRange = NewRange ( Zone );
+	
+	if ( AllocRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		return reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	BorrowRange -> Length -= Length;
+	AllocRange -> Base = BorrowRange -> Base + BorrowRange -> Length;
+	AllocRange -> Length = Length;
+	
+	uint32_t NewSizeClass = __CalculateSizeClass ( BorrowRange -> Length );
+	
+	if ( NewSizeClass != SizeClass )
+	{
 		
-		Virt += 0x1000;
+		Zone -> FreeSizeClassHeads [ SizeClass ] = BorrowRange -> NextInSizeClass;
+		
+		if ( BorrowRange -> NextInSizeClass != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+			Zone -> FreeSizeClassHeads [ SizeClass ] -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+		
+		if ( Zone -> FreeSizeClassHeads [ NewSizeClass ] != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+			Zone -> FreeSizeClassHeads [ NewSizeClass ] -> PreviousInSizeClass = BorrowRange;
+		
+		BorrowRange -> NextInSizeClass = Zone -> FreeSizeClassHeads [ NewSizeClass ];
+		Zone -> FreeSizeClassHeads [ NewSizeClass ] = BorrowRange;
 		
 	}
 	
-	CurrentStorage = reinterpret_cast <FreePageZone *> ( Zone ) -> FullStorageHead;
+	AllocRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
-	while ( CurrentStorage != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+	InsertNode ( & Zone -> StorageTreeRoot, AllocRange );
+	
+	Zone -> FreePageCount -= Length >> 12;
+	
+	return AllocRange;
+	
+};
+
+bool MM::Paging::PAlloc :: ExpandStorage ( FreePageZone * Zone )
+{
+	
+	if ( Zone -> FreeStorageSlotCount <= 3 )
 	{
 		
-		Virt = VirtualBase;
+		MM::Paging::AddressSpace * KernelAddressSpace = MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ();
+		MM::Paging::AddressSpace :: AddressRange * AllocationRange = KernelAddressSpace -> DoAlloc ( 0x1000 );
 		
-		for ( I = 0; I < AllocationZoneCount; I ++ )
+		if ( AllocationRange == reinterpret_cast <MM::Paging::AddressSpace :: AddressRange *> ( MM::Paging::AddressSpace :: kAddressRangePTR_Invalid ) )
+			return false;
+		
+		AddressRange * AllocationRangePhysical = DoAlloc ( 0x1000 );
+		
+		if ( AllocationRangePhysical == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		{
 			
-			if ( ( NewZonePTRs [ I ] == reinterpret_cast <PageAllocZone *> ( kPageFreeZonePTR_Invalid ) ) && ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) > reinterpret_cast <uint32_t> ( CurrentStorage ) ) && ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) < ( reinterpret_cast <uint32_t> ( CurrentStorage ) + sizeof ( CurrentStorage ) ) ) )
-				NewZonePTRs [ I ] = reinterpret_cast <void *> ( ( reinterpret_cast <uint32_t> ( AllocationZones [ I ] ) & 0xFFF ) | Virt );
+			KernelAddressSpace -> Free ( AllocationRange -> Base );
+			
+			return false;
 			
 		}
 		
-		PageTable :: SetKernelMapping ( Virt, reinterpret_cast <uint32_t> ( CurrentStorage ), PageTable :: Flags_Writeable | PageTable :: Flags_Present | PageTable :: Flags_Cutsom_KMap );
+		InsertNode ( & Zone -> StorageTreeRoot, AllocationRangePhysical );
 		
-		CurrentStorage = reinterpret_cast <Storage *> ( Virt );
+		MM::Paging::PageTable :: SetKernelMapping ( AllocationRange -> Base, AllocationRangePhysical -> Base, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 		
-		CurrentStorage = CurrentStorage -> Next;
+		Storage * NewStorage = reinterpret_cast <Storage *> ( AllocationRange -> Base );
+		
+		NewStorage -> Bitmap [ 0 ] = 0x00000000;
+		NewStorage -> Bitmap [ 1 ] = 0x00000000;
+		NewStorage -> Bitmap [ 2 ] = 0x00000000;
+		NewStorage -> Bitmap [ 3 ] = 0x00000000;
+		NewStorage -> FreeCount = 127;
+		
+		NewStorage -> Next = Zone -> FreeStorageHead;
+		
+		if ( Zone -> FreeStorageHead != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+			Zone -> FreeStorageHead -> Previous = NewStorage;
+		
+		Zone -> FreeStorageHead = NewStorage;
+		
+		Zone -> FreeStorageSlotCount += 127;
+		
+		uint32_t DummyError;
+		KernelAddressSpace -> CheckStorage ( & DummyError );
+		
+		if ( DummyError != MM::Paging::AddressSpace :: kCreateAddressSpace_Error_None )
+		{
+			
+			Zone -> FreeStorageHead = NewStorage -> Next;
+			
+			if ( NewStorage -> Next != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+				NewStorage -> Next -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+			
+			Zone -> FreeStorageSlotCount -= 127;
+			
+			MM::Paging::PageTable :: SetKernelMapping ( AllocationRange -> Base, AllocationRangePhysical -> Base, MM::Paging::PageTable :: Flags_Writeable );
+			
+			KernelAddressSpace -> Free ( AllocationRange -> Base );
+			Free ( AllocationRangePhysical -> Base );
+			
+			return false;
+			
+		}
 		
 	}
 	
-	for ( I = 0; I < AllocationZoneCount; I ++ )
-		AllocationZones [ I ] = NewZonePTRs [ I ];
-	
-	Virt += 0x1000;
+	return true;
 	
 };
 
@@ -183,12 +270,52 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: NewRange ( FreePageZo
 	
 	return & FromStorage -> Ranges [ Slot ];
 	
+	// TODO: Handle watermark underflow
+	
 };
 
 void MM::Paging::PAlloc :: FreeRange ( FreePageZone * Zone, AddressRange * Range )
 {
 	
+	Storage * ToStorage = __StorageFromNode ( Range );
+	uint32_t Slot = __SlotFromNode ( Range );
 	
+	 __MarkStorageSlotClear ( ToStorage, Slot );
+	 
+	ToStorage -> FreeCount ++;
+	
+	if ( ToStorage -> FreeCount == 1 )
+	{
+		
+		if ( Zone -> FullStorageHead == ToStorage )
+		{
+			
+			Zone -> FullStorageHead = ToStorage -> Next;
+			
+			if ( Zone -> FullStorageHead != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+				Zone -> FullStorageHead -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+			
+		}
+		else
+		{
+			
+			ToStorage -> Previous -> Next = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
+			
+			if ( ToStorage -> Next != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+				ToStorage -> Next -> Previous = ToStorage -> Previous;
+			
+		}
+		
+		ToStorage -> Next = Zone -> FreeStorageHead;
+		
+		if ( Zone -> FreeStorageHead != reinterpret_cast <Storage *> ( kStoragePTR_Invalid ) )
+			Zone -> FreeStorageHead -> Previous = ToStorage;
+		
+		Zone -> FreeStorageHead = ToStorage;
+		
+	}
+	
+	// TODO: Handle watermark overflow...
 	
 };
 
