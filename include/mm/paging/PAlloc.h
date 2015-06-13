@@ -20,9 +20,15 @@ namespace MM
 		{
 		public:
 			
-			static const uint32_t kMaxErrorNumber = 0;
+			static const uint32_t kMaxErrorNumber = 3;
 			
 			static const uint32_t kError_None = 0;
+			
+			static const uint32_t kMakePageAllocation_Error_OutOfPhysicalMemroy = 1;
+			
+			static const uint32_t kInitFreeZone_Error_OutOfPhysicalMemroy = 1;
+			
+			static const uint32_t kError_Free_NotAllocated = 3;
 			
 			typedef void PageAllocZone;
 			typedef void PageFreeZone;
@@ -32,7 +38,7 @@ namespace MM
 			static void InitFreeZone ( PageFreeZone ** Zone, const char * Name, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t InitialVPage, uint32_t * Error );
 			static PageAllocZone * MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error );
 			
-			static void Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Size, uint32_t * Error );
+			static void Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Length, uint32_t * Error );
 			static void Free ( PageAllocZone * AllocationZone, void * Address, uint32_t * Error );
 			
 		private:
@@ -95,6 +101,8 @@ namespace MM
 				
 				AddressRange * UsedTreeRoot;
 				
+				uint32_t AllocatedPageCount;
+				
 			} __attribute__ (( packed )) PageAllocationZone;
 			
 			static const char * ErrorStrings [];
@@ -102,6 +110,8 @@ namespace MM
 			static const uint32_t kAddressRangePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kPageFreeZonePTR_Invalid = 0xFFFFFFFF;
+			
+			static void DoFree ( FreePageZone * Zone, AddressRange * Range );
 			
 			static AddressRange * DoAlloc ( FreePageZone * Zone, uint32_t Length );
 			

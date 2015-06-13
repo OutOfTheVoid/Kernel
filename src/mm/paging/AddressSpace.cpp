@@ -316,7 +316,6 @@ void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 			
 			Lower -> Length += AllocRange -> Length;
 			FreeOldRange ( AllocRange );
-			AllocRange = Lower;
 			
 			* Error = kFree_Error_None;
 			

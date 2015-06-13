@@ -6,6 +6,9 @@ const char * MM::Paging::PAlloc :: ErrorStrings [] =
 {
 	
 	"None",	
+	"Out of physical memory",
+	"Out of virtual memory",
+	"Memory freed was not allocated"
 	
 };
 
@@ -27,7 +30,14 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	InitialPhysicalLength -= ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF ) - InitialPhysicalBase;
 	InitialPhysicalBase = ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF );
 	
-	void * InitStoragePhysical = reinterpret_cast <void *> ( InitialPhysicalBase );
+	if ( InitialPhysicalLength < 0x2000 )
+	{
+		
+		* Error = kInitFreeZone_Error_OutOfPhysicalMemroy;
+		
+		return;
+		
+	}
 	
 	MM::Paging::PageTable :: SetKernelMapping ( InitialVPage, InitialPhysicalBase, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 	
@@ -89,14 +99,62 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 MM::Paging::PAlloc :: PageAllocZone * MM::Paging::PAlloc :: MakePageAllocationZone ( const char * Name, PageFreeZone * FreeZone, uint32_t * Error )
 {
 	
-	// TODO
+	FreePageZone * Zone = reinterpret_cast <FreePageZone *> ( FreeZone );
+	AddressRange * NewSpace = NewRange ( Zone );
+	
+	PageAllocationZone * NewZone = reinterpret_cast <PageAllocationZone *> ( NewSpace );
+	
+	if ( ! ExpandStorage ( Zone ) )
+	{
+		
+		FreeRange ( Zone, NewSpace );
+		
+		* Error = kMakePageAllocation_Error_OutOfPhysicalMemroy;
+		
+		return NULL;
+		
+	}
+	
+	NewZone -> Name = Name;
+	NewZone -> FreeZone = Zone;
+	NewZone -> UsedTreeRoot = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	NewZone -> AllocatedPageCount = 0;
+	
+	* Error = kError_None;
+	
+	return NewZone;
 	
 };
 
-void MM::Paging::PAlloc :: Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Size, uint32_t * Error )
+void MM::Paging::PAlloc :: Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Length, uint32_t * Error )
 {
 	
-	// TODO
+	PageAllocationZone * Zone = reinterpret_cast <PageAllocationZone *> ( AllocationZone );
+	
+	AddressRange * AllocationRange = DoAlloc ( Zone -> FreeZone, Length );
+	
+	if ( AllocationRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		* Error = kMakePageAllocation_Error_OutOfPhysicalMemroy;
+		
+		return;
+		
+	}
+	
+	InsertNode ( & Zone -> UsedTreeRoot, AllocationRange );
+	
+	if ( ! ExpandStorage ( Zone -> FreeZone ) )
+	{
+		
+		Free ( AllocationZone, reinterpret_cast <void *> ( AllocationRange -> Base ), Error );
+		
+		return;
+		
+	}
+	
+	Zone -> AllocatedPageCount += Length >> 12;
+	* Address = reinterpret_cast <void *> ( AllocationRange -> Base );
 	
 	* Error = kError_None;
 	
@@ -105,9 +163,87 @@ void MM::Paging::PAlloc :: Alloc ( PageAllocZone * AllocationZone, void ** Addre
 void MM::Paging::PAlloc :: Free ( PageAllocZone * AllocationZone, void * Address, uint32_t * Error )
 {
 	
-	// TODO
+	PageAllocationZone * Zone = reinterpret_cast <PageAllocationZone *> ( AllocationZone );
+	
+	AddressRange * Range = FindNode ( Zone -> UsedTreeRoot, reinterpret_cast <uint32_t> ( Address ) );
+	
+	if ( Range == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		* Error = kError_Free_NotAllocated;
+		
+		return;
+		
+	}
+	
+	RemoveNode ( & Zone -> UsedTreeRoot, Range );
+	Zone -> AllocatedPageCount -= Range -> Length >> 12;
+	
+	DoFree ( Zone -> FreeZone, Range );
 	
 	* Error = kError_None;
+	
+};
+
+void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
+{
+	
+	if ( Range == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		return;
+	
+	uint32_t SizeClass = __CalculateSizeClass ( Range -> Length );
+	
+	Zone -> FreePageCount += Range -> Length >> 12;
+	
+	AddressRange * Lower = FindClosestSmallerNode ( Zone -> FreeTreeRoot, Range );
+	AddressRange * Higher = FindNode ( Zone -> FreeTreeRoot, Range -> Length + Range -> Base );
+	
+	if ( Higher != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		RemoveNodeFromSizeClass ( Zone, Range, SizeClass );
+		RemoveNodeFromSizeClass ( Zone, Higher, __CalculateSizeClass ( Higher -> Length ) );
+		RemoveNode ( & Zone -> FreeTreeRoot, Higher );
+		
+		Range -> Length += Higher -> Length;
+		SizeClass = __CalculateSizeClass ( Range -> Length );
+		
+		FreeRange ( Zone, Higher );
+		
+	}
+	
+	if ( Lower != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		if ( ( Lower != Range ) && ( ( Lower -> Base + Lower -> Length ) == Range -> Base ) )
+		{
+			
+			RemoveNodeFromSizeClass ( Zone, Range, SizeClass );
+			
+			uint32_t LowerSizeClass = __CalculateSizeClass ( Lower -> Length );
+			
+			Lower -> Length += Range -> Length;
+			
+			uint32_t LowerSizeClassUpdated __CalculateSizeClass ( Lower -> Length )
+			
+			if ( LowerSizeClass != LowerSizeClassUpdated )	
+			{
+				
+				RemoveNodeFromSizeClass ( Zone, Lower, LowerSizeClass );
+				InsertNodeInSizeClass ( Zone, Lower, LowerSizeClassUpdated );
+				
+			}
+			
+			FreeRange ( Zone, Range );
+			
+			return;
+			
+		}
+			
+	}
+	
+	InsertNodeInSizeClass ( Zone, Range, SizeClass );
+	InsertNode ( & Zone -> FreeTreeRoot, Range );
 	
 };
 
@@ -124,6 +260,7 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZon
 	if ( BorrowRange -> Length != Length )
 	{
 		
+		RemoveNodeFromSizeClass ( Zone, BorrowRange, SizeClass );
 		RemoveNode ( & Zone -> FreeTreeRoot, BorrowRange );
 		
 		Zone -> FreePageCount -= Length >> 12;
@@ -165,8 +302,6 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZon
 	AllocRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	AllocRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
-	InsertNode ( & Zone -> StorageTreeRoot, AllocRange );
-	
 	Zone -> FreePageCount -= Length >> 12;
 	
 	return AllocRange;
@@ -185,12 +320,13 @@ bool MM::Paging::PAlloc :: ExpandStorage ( FreePageZone * Zone )
 		if ( AllocationRange == reinterpret_cast <MM::Paging::AddressSpace :: AddressRange *> ( MM::Paging::AddressSpace :: kAddressRangePTR_Invalid ) )
 			return false;
 		
-		AddressRange * AllocationRangePhysical = DoAlloc ( 0x1000 );
+		AddressRange * AllocationRangePhysical = DoAlloc ( Zone, 0x1000 );
 		
 		if ( AllocationRangePhysical == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		{
 			
-			KernelAddressSpace -> Free ( AllocationRange -> Base );
+			uint32_t DummyError;
+			KernelAddressSpace -> Free ( reinterpret_cast <void *> ( AllocationRange -> Base ), & DummyError );
 			
 			return false;
 			
@@ -232,8 +368,10 @@ bool MM::Paging::PAlloc :: ExpandStorage ( FreePageZone * Zone )
 			
 			MM::Paging::PageTable :: SetKernelMapping ( AllocationRange -> Base, AllocationRangePhysical -> Base, MM::Paging::PageTable :: Flags_Writeable );
 			
-			KernelAddressSpace -> Free ( AllocationRange -> Base );
-			Free ( AllocationRangePhysical -> Base );
+			uint32_t DummyError;
+			KernelAddressSpace -> Free ( reinterpret_cast <void *> ( AllocationRange -> Base ), & DummyError );
+			
+			DoFree ( Zone, AllocationRangePhysical );
 			
 			return false;
 			
