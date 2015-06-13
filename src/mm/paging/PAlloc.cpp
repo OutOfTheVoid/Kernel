@@ -126,8 +126,31 @@ MM::Paging::PAlloc :: PageAllocZone * MM::Paging::PAlloc :: MakePageAllocationZo
 	
 };
 
+uint32_t MM::Paging::PAlloc :: GetAllocationSize ( PageAllocZone * AllocationZone, void * Address )
+{
+	
+	PageAllocationZone * Zone = reinterpret_cast <PageAllocationZone *> ( AllocationZone );
+	
+	AddressRange * Range = FindNode ( Zone -> UsedTreeRoot, reinterpret_cast <uint32_t> ( Address ) );
+	
+	if ( Range == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+		return 0;
+	
+	return Range -> Length;
+	
+};
+
 void MM::Paging::PAlloc :: Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Length, uint32_t * Error )
 {
+	
+	if ( Length == 0 )
+	{
+		
+		* Error = kError_None;
+		
+		return;
+		
+	}
 	
 	PageAllocationZone * Zone = reinterpret_cast <PageAllocationZone *> ( AllocationZone );
 	
@@ -224,7 +247,7 @@ void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
 			
 			Lower -> Length += Range -> Length;
 			
-			uint32_t LowerSizeClassUpdated __CalculateSizeClass ( Lower -> Length )
+			uint32_t LowerSizeClassUpdated = __CalculateSizeClass ( Lower -> Length );
 			
 			if ( LowerSizeClass != LowerSizeClassUpdated )	
 			{

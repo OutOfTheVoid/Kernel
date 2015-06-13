@@ -41,6 +41,8 @@ namespace MM
 			static void Alloc ( PageAllocZone * AllocationZone, void ** Address, uint32_t Length, uint32_t * Error );
 			static void Free ( PageAllocZone * AllocationZone, void * Address, uint32_t * Error );
 			
+			static uint32_t GetAllocationSize ( PageAllocZone * AllocationZone, void * Address );
+			
 		private:
 			
 			typedef struct AddressRange_Struct
