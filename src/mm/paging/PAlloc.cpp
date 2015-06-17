@@ -27,8 +27,9 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	
 	FreePageZone ** NewZone = reinterpret_cast <FreePageZone **> ( Zone );
 	
-	InitialPhysicalLength -= ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF ) - InitialPhysicalBase;
-	InitialPhysicalBase = ( ( InitialPhysicalBase + 0xFFF ) & 0xFFF );
+	InitialPhysicalLength -= ( ( InitialPhysicalBase + 0xFFF ) & 0xFFFFF000 ) - InitialPhysicalBase;
+	InitialPhysicalBase = ( InitialPhysicalBase + 0xFFF ) & 0xFFFFF000;
+	InitialPhysicalLength = ( InitialPhysicalLength + 0xFFF ) & 0xFFFFF000;
 	
 	if ( InitialPhysicalLength < 0x2000 )
 	{
@@ -47,8 +48,8 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	Storage * InitialStorage = reinterpret_cast <Storage *> ( InitialVPage );
 	
 	* NewZone = reinterpret_cast <FreePageZone *> ( & InitialStorage -> Ranges [ 0 ] );
-	AddressRange * InitialRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 4 ] );
-	AddressRange * InitialStorageRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 5 ] );
+	AddressRange * InitialRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 7 ] );
+	AddressRange * InitialStorageRange = reinterpret_cast <AddressRange *> ( & InitialStorage -> Ranges [ 8 ] );
 	
 	InitialStorageRange -> Base = InitialPhysicalBase - 0x1000;
 	InitialStorageRange -> Length = 0x1000;
@@ -59,11 +60,11 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	InitialStorageRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialStorageRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
-	InitialStorage -> Bitmap [ 0 ] = 0x0000003F;
+	InitialStorage -> Bitmap [ 0 ] = 0x000001FF;
 	InitialStorage -> Bitmap [ 1 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 2 ] = 0x00000000;
 	InitialStorage -> Bitmap [ 3 ] = 0x00000000;
-	InitialStorage -> FreeCount = 121;
+	InitialStorage -> FreeCount = 117;
 	
 	InitialRange -> Base = InitialPhysicalBase;
 	InitialRange -> Length = InitialPhysicalLength;
@@ -79,16 +80,18 @@ void MM::Paging::PAlloc :: InitFreeZone ( PageFreeZone ** Zone, const char * Nam
 	( * NewZone ) -> FreeStorageHead = InitialStorage;
 	( * NewZone ) -> FullStorageHead = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 	
-	( * NewZone ) -> StorageTreeRoot = InitialStorageRange;
-	( * NewZone ) -> FreeTreeRoot = InitialRange;
+	( * NewZone ) -> StorageTreeRoot = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	( * NewZone ) -> FreeTreeRoot = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
 	for ( uint32_t I = 0; I < 20; I ++ )
 		( * NewZone ) -> FreeSizeClassHeads [ I ] = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
 	uint32_t InitSizeClass = __CalculateSizeClass ( InitialPhysicalLength );
 	
-	InsertNode ( & ( * NewZone ) -> FreeTreeRoot, InitialRange );
 	InsertNodeInSizeClass ( ( * NewZone ), InitialRange, InitSizeClass );
+	InsertNode ( & ( * NewZone ) -> FreeTreeRoot, InitialRange );
+	
+	InsertNode ( & ( * NewZone ) -> StorageTreeRoot, InitialStorageRange );
 	
 	( * NewZone ) -> Name = Name;
 	
@@ -137,6 +140,18 @@ uint32_t MM::Paging::PAlloc :: GetAllocationSize ( PageAllocZone * AllocationZon
 		return 0;
 	
 	return Range -> Length;
+	
+};
+
+uint32_t MM::Paging::PAlloc :: GetFreePages ( PageFreeZone * FreeZone )
+{
+	
+	FreePageZone * Zone = reinterpret_cast <FreePageZone *> ( FreeZone );
+	
+	if ( Zone == NULL )
+		return 0;
+	
+	return Zone -> FreePageCount;
 	
 };
 
@@ -233,7 +248,7 @@ void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
 		
 		FreeRange ( Zone, Higher );
 		
-	}
+		}
 	
 	if ( Lower != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 	{
@@ -242,6 +257,7 @@ void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
 		{
 			
 			RemoveNodeFromSizeClass ( Zone, Range, SizeClass );
+			
 			
 			uint32_t LowerSizeClass = __CalculateSizeClass ( Lower -> Length );
 			
@@ -255,9 +271,11 @@ void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
 				RemoveNodeFromSizeClass ( Zone, Lower, LowerSizeClass );
 				InsertNodeInSizeClass ( Zone, Lower, LowerSizeClassUpdated );
 				
+				
 			}
 			
 			FreeRange ( Zone, Range );
+			
 			
 			return;
 			
@@ -268,22 +286,23 @@ void MM::Paging::PAlloc :: DoFree ( FreePageZone * Zone, AddressRange * Range )
 	InsertNodeInSizeClass ( Zone, Range, SizeClass );
 	InsertNode ( & Zone -> FreeTreeRoot, Range );
 	
-};
+	};
 
 MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZone * Zone, uint32_t Length )
 {
 	
 	uint32_t SizeClass = __CalculateSizeClass ( Length );
 	
-	AddressRange * BorrowRange = FindBest ( Zone, SizeClass );
+	AddressRange * BorrowRange = FindBest ( Zone, __CalculateSizeClass ( Length ) );
 		
 	if ( BorrowRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		return reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
-	if ( BorrowRange -> Length != Length )
+	if ( BorrowRange -> Length == Length )
 	{
 		
 		RemoveNodeFromSizeClass ( Zone, BorrowRange, SizeClass );
+		
 		RemoveNode ( & Zone -> FreeTreeRoot, BorrowRange );
 		
 		Zone -> FreePageCount -= Length >> 12;
@@ -297,33 +316,27 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZon
 	if ( AllocRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		return reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
+	AllocRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	AllocRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	uint32_t OldSizeClass = __CalculateSizeClass ( BorrowRange -> Length );
+	
 	BorrowRange -> Length -= Length;
 	AllocRange -> Base = BorrowRange -> Base + BorrowRange -> Length;
 	AllocRange -> Length = Length;
 	
 	uint32_t NewSizeClass = __CalculateSizeClass ( BorrowRange -> Length );
 	
-	if ( NewSizeClass != SizeClass )
+	if ( NewSizeClass != OldSizeClass )
 	{
 		
-		Zone -> FreeSizeClassHeads [ SizeClass ] = BorrowRange -> NextInSizeClass;
-		
-		if ( BorrowRange -> NextInSizeClass != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
-			Zone -> FreeSizeClassHeads [ SizeClass ] -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-		
-		if ( Zone -> FreeSizeClassHeads [ NewSizeClass ] != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
-			Zone -> FreeSizeClassHeads [ NewSizeClass ] -> PreviousInSizeClass = BorrowRange;
-		
-		BorrowRange -> NextInSizeClass = Zone -> FreeSizeClassHeads [ NewSizeClass ];
-		Zone -> FreeSizeClassHeads [ NewSizeClass ] = BorrowRange;
+		RemoveNodeFromSizeClass ( Zone, BorrowRange, OldSizeClass );
+		InsertNodeInSizeClass ( Zone, BorrowRange, NewSizeClass );
 		
 	}
-	
-	AllocRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	AllocRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	AllocRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	AllocRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
-	AllocRange -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
 	Zone -> FreePageCount -= Length >> 12;
 	
@@ -483,24 +496,30 @@ void MM::Paging::PAlloc :: FreeRange ( FreePageZone * Zone, AddressRange * Range
 void MM::Paging::PAlloc :: RemoveNodeFromSizeClass ( FreePageZone * Zone, AddressRange * ToRemove, uint32_t SizeClass )
 {
 	
-	if ( reinterpret_cast <FreePageZone *> ( Zone ) -> FreeSizeClassHeads [ SizeClass ] == ToRemove )
-		reinterpret_cast <FreePageZone *> ( Zone ) -> FreeSizeClassHeads [ SizeClass ] = ToRemove -> NextInSizeClass;
+	if ( Zone -> FreeSizeClassHeads [ SizeClass ] == ToRemove )
+		Zone -> FreeSizeClassHeads [ SizeClass ] = ToRemove -> NextInSizeClass;
 	else if ( ToRemove -> PreviousInSizeClass != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		ToRemove -> PreviousInSizeClass -> NextInSizeClass = ToRemove -> NextInSizeClass;
 	
 	if ( ToRemove -> NextInSizeClass != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 		ToRemove -> NextInSizeClass -> PreviousInSizeClass = ToRemove -> PreviousInSizeClass;
 	
+	ToRemove -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
+	ToRemove -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	
 };
 
 void MM::Paging::PAlloc :: InsertNodeInSizeClass ( FreePageZone * Zone, AddressRange * ToInsert, uint32_t SizeClass )
 {
 	
-	ToInsert -> NextInSizeClass = reinterpret_cast <FreePageZone *> ( Zone ) -> FreeSizeClassHeads [ SizeClass ];
-	reinterpret_cast <FreePageZone *> ( Zone ) -> FreeSizeClassHeads [ SizeClass ] = ToInsert;
+	ToInsert -> NextInSizeClass = Zone -> FreeSizeClassHeads [ SizeClass ];
+	Zone -> FreeSizeClassHeads [ SizeClass ] = ToInsert;
 	
 	if ( ToInsert -> NextInSizeClass != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
-		ToInsert -> NextInSizeClass -> PreviousInSizeClass = ToInsert;	
+		ToInsert -> NextInSizeClass -> PreviousInSizeClass = ToInsert;
+	
+	ToInsert -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
 };
 
@@ -799,11 +818,13 @@ void MM::Paging::PAlloc :: RemoveNode ( AddressRange ** Root, AddressRange * ToR
 			
 			( * Root ) = Balance ( UnbalancedNode );
 			
+			
 			return;
 			
 		}
 		
 		UnbalancedNode = Balance ( UnbalancedNode );
+		
 		UnbalancedNode = UnbalancedNode -> Parent;
 		
 	}
@@ -869,7 +890,7 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: Balance ( AddressRang
 MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: FindBest ( FreePageZone * Zone, uint32_t MinimumSizeClass )
 {
 	
-	while ( MinimumSizeClass <= 19 )
+	while ( MinimumSizeClass < 20 )
 	{
 		
 		if ( Zone -> FreeSizeClassHeads [ MinimumSizeClass ] != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )

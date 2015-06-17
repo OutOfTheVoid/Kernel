@@ -3,7 +3,7 @@
 #include <hw/acpi/RSDT.h>
 #include <hw/acpi/XSDT.h>
 #include <hw/acpi/MADT.h>
-//#include <hw/acpi/SRAT.h>
+#include <hw/acpi/SRAT.h>
 
 #include <system/func/kprintf.h>
 
@@ -96,7 +96,7 @@ bool HW::ACPI :: StaticInit ()
 		
 	}
 	
-	/*SRAT :: Init ();
+	SRAT :: Init ();
 	
 	if ( ! SRAT :: Valid () )
 	{
@@ -114,7 +114,7 @@ bool HW::ACPI :: StaticInit ()
 			system_func_kprintf ( "SRAT Validated!\n" );
 		#endif
 		
-	}*/
+	}
 	
 	system_func_kprintf ( "ACPI Static startup successful!\n\n" );
 	

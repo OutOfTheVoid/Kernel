@@ -5,6 +5,8 @@
 
 #include <mm/KMalloc.h>
 
+#include <cpputil/Unused.h>
+
 template <typename T>
 class Vector
 {

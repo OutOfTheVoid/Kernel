@@ -25,9 +25,6 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 	if ( ( MM::Paging::PFA :: GetFreeKB () >> 2 ) < Pages )
 		return NULL;
 	
-	if ( MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> GetFreePages () < Pages )
-		return NULL;
-	
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Alloc ( Pages * 0x1000, & Virtual, & Error );
 	
 	if ( Error != MM::Paging::AddressSpace :: kAlloc_Error_None )
@@ -44,7 +41,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 	{
 		
 	case PMALLOC_PHSCHEME_BLOCK:
-		
+	
 		PhysSize = math_bitmath_nextPowerOfTwo ( Pages );
 		
 		if ( MM::Paging::PFA :: Alloc ( PhysSize << 12, & Physical ) )
@@ -135,6 +132,8 @@ void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
 	uint32_t Offset = 0;
 	uint32_t DummyError = 0;
 	
+	system_func_kprintf ( "FAIL" );
+	
 	while ( Pages != 0 )
 	{
 		
@@ -147,11 +146,11 @@ void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
 		Pages -= ( PhysSize >> 12 );
 		Offset += PhysSize;
 		
-	}
+		}
 	
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( Virtual, & DummyError );
 	
-};
+	};
 
 void system_func_pfree ( void * Base )
 {

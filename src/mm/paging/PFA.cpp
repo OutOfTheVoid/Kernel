@@ -1,263 +1,114 @@
 #include <mm/paging/PFA.h>
+#include <mm/paging/PageTable.h>
 
 #include <system/func/KPrintf.h>
 #include <system/func/Panic.h>
 
 #include <util/string/string.h>
 
+#include <cpputil/Unused.h>
+
 #include <hw/apm/APMHeader.h>
 
 #include <math/Bitmath.h>
 #include <boot/Bootimage.h>
 
-multiboot_info_t * MM::Paging::PFA :: MBICopy;
-size_t MM::Paging::PFA :: MBICopySize;
+MM::Paging::PAlloc :: PageFreeZone * MM::Paging::PFA :: GeneralPhysicalFree;
+MM::Paging::PAlloc :: PageAllocZone * MM::Paging::PFA :: KernelGeneralPhysicalAlloc;
 
-size_t MM::Paging::PFA :: TableSize;
-MM::Paging::PFA :: Entry * MM::Paging::PFA :: Table;
-uint32_t MM::Paging::PFA :: TopLevel;
-
-uint32_t MM::Paging::PFA :: FreeCount;
-uint32_t MM::Paging::PFA :: TotalCount;
-
-void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo )
+void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo, uint32_t MultibootInfoSize, uint32_t * KVStart )
 {
 	
-	// Make sure we have a multiboot information structure before continuing.
-	if ( MultibootInfo == NULL )
-		KPANIC ( "Multiboot information structure not supplied!" );
+	UNUSED ( MultibootInfoSize );
 	
-	Table = NULL;
-	TableSize = 0;
+	* KVStart += 0xFFF;
+	* KVStart &= 0xFFFFF000;
 	
-	uint32_t MaxAddress;
+	MBEarlyAnalyze ( MultibootInfo );
 	
-	// Analyze the multiboot info structure and modify "free" memory listings so as to preserve kernel code and multiboot info
-	MBEarlyAnalyze ( MultibootInfo, & MaxAddress );
+	// TODO: Build PMM
 	
-	// Figure out how large to make the temporary buffer in stack space. 
-	// This holds MultibootInfo while we look for a place to put it, as
-	// it's currently in some arbitrary location that could get in the way
-	// of the page frame tree.
-	MBICopySize = CalcMBICopySize ( MultibootInfo );
+	uint32_t BaseAddr = 0;
+	uint32_t Length = 0;
 	
-	// Reserve stack space
-	char MultibootInfoCopy [ MBICopySize ];
-	MBICopy = reinterpret_cast <multiboot_info_t *> ( MultibootInfoCopy );
+	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MultibootInfo -> mmap_addr );
 	
-	// Copy the multiboot information structure
-	CopyMBI ( MultibootInfo, MBICopy );
-	
-	// Calculate how many page frame records we will need in our tree
-	
-	// TopLevel: the maximum "level" in the page tree. Level 0 refers to 4KB records, increasing by powers of two from there.
-	TopLevel = 32 - math_bitmath_clz ( math_bitmath_nextPowerOfTwo ( MaxAddress ) );
-	
-	if ( TopLevel == 0 )
-		TopLevel = 20;
-	else
-		TopLevel -= 12;
-	
-	// The amound of entries in our tree
-	uint32_t TableEntryCount = ( 2 << TopLevel ) - 1;
-	
-	// Search the memory map for an appropriate storage zone for the page frame tree.
-	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
-	
-	while ( reinterpret_cast <uint64_t> ( MMapEntry ) < MBICopy -> mmap_addr + MBICopy -> mmap_length )
+	while ( reinterpret_cast <uint64_t> ( MMapEntry ) < MultibootInfo -> mmap_addr + MultibootInfo -> mmap_length )
 	{
 		
-		if ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE )
+		if ( ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE ) && ( MMapEntry -> len != 0 ) )
 		{
 			
-			if ( MMapEntry -> len >= TableEntryCount * sizeof ( Entry ) )
+			BaseAddr = ( static_cast <uint32_t> ( MMapEntry -> addr ) + 0xFFF ) & 0xFFFFF000;
+			Length = static_cast <uint32_t> ( MMapEntry -> len ) - ( static_cast <uint32_t> ( MMapEntry -> addr ) - BaseAddr );
+			
+			if ( Length >= 0x2000 )
 			{
 				
-				Table = reinterpret_cast <Entry *> ( MMapEntry -> addr );
-				TableSize = TableEntryCount;
-				
-				MMapEntry -> addr += TableEntryCount * sizeof ( Entry );
+				MMapEntry -> type = MULTIBOOT_MEMORY_RESERVED;
 				
 				break;
 				
 			}
 			
 		}
-		
+	
 		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
 		
 	}
 	
-	if ( TableSize == 0 )
-		KPANIC ( "Unable to find suitable memory region for PFA tree!\n" );
+	if ( reinterpret_cast <uint64_t> ( MMapEntry ) >= MultibootInfo -> mmap_addr + MultibootInfo -> mmap_length )
+		KPANIC ( "Unable to find free physical region greater than 4KB!" );
 	
-	// Look for an appopriate place to store the MBI structure and put it there.
-	MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
-	bool MBIRelocated = false;
+	uint32_t Error;
 	
-	while ( reinterpret_cast <uint64_t> ( MMapEntry ) < MBICopy -> mmap_addr + MBICopy -> mmap_length )
-	{
-		
-		if ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE )
-		{
-			
-			if ( MMapEntry -> len >= MBICopySize )
-			{
-				
-				multiboot_info_t * NewMBI = reinterpret_cast <multiboot_info_t *> ( MMapEntry -> addr );
-				
-				CopyMBI ( MBICopy, NewMBI );
-				MBICopy = NewMBI;
-				
-				MMapEntry -> addr += MBICopySize;
-				
-				MBIRelocated = true;
-				
-				break;
-				
-			}
-			
-		}
-		
-		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
-		
-	}
+	PAlloc :: InitFreeZone ( & GeneralPhysicalFree, "General physical memory", BaseAddr, Length, * KVStart, & Error );
+	* KVStart += 0x1000;
 	
-	if ( ! MBIRelocated )
-		KPANIC ( "Could not find a location to relocate Multiboot info to!" );
+	if ( Error != PAlloc :: kError_None )
+		KPANIC ( "PAlloc error creating kernel physical free zone: %s", PAlloc :: GetErrorString ( Error ) );
 	
-	uint32_t e;
+	KernelGeneralPhysicalAlloc = PAlloc :: MakePageAllocationZone ( "KPAlloc (PFA)", GeneralPhysicalFree, & Error );
 	
-	// Fill our table with default values. All but the bottom level are split.
-	for ( e = 0; e < __CalcTreeIndex ( 0, 0 ); e ++ )
-	{
-		
-		__Table ( e ).AFree = 0;
-		__Table ( e ).BFree = 0;
-		__Table ( e ).Split = 1;
-		__Table ( e ).Usable = 0;
-		
-	}
-	
-	for ( e = __CalcTreeIndex ( 0, 0 ); e < TableSize; e ++ )
-	{
-		
-		__Table ( e ).AFree = 0;
-		__Table ( e ).BFree = 0;
-		__Table ( e ).Split = 0;
-		__Table ( e ).Usable = 0;
-		
-	}
-	
-	// Fill out our page tree and count free space
-	FreeCount = 0;
-	
-	for ( e = 0; e < ( MaxAddress & 0xFFFFF000 ); e += ( e + 4096 == 0 ) ? 1 : 4096 )
-	{
-		
-		uint32_t Index = __CalcTreeIndex ( e, 0 );
-		
-		if ( TestRegionUsable ( e, 4096 ) )
-		{
-			
-			__Table ( Index ).AFree = 1;
-			__Table ( Index ).BFree = 1;
-			__Table ( Index ).Split = 0;
-			__Table ( Index ).Usable = 1;
-			
-			FreeCount ++;
-			
-		}
-		
-		__CascadeChangesUp ( __CalcParentIndex ( Index ) );
-		
-	}
-	
-};
-
-multiboot_info_t * MM::Paging::PFA :: RetrieveMultibootInfoCopy ()
-{
-	
-	return MBICopy;
+	if ( Error != PAlloc :: kError_None )
+		KPANIC ( "PAlloc error creating kernel physical alloc zone: %s", PAlloc :: GetErrorString ( Error ) );
 	
 };
 
 bool MM::Paging::PFA :: Alloc ( uint32_t Length, void ** Address )
 {
 	
-	if ( Length < 4096 )
-		Length = 4096;
+	uint32_t Error;
 	
-	uint32_t Level = 19 - math_bitmath_clz ( math_bitmath_nextPowerOfTwo ( Length ) );
+	PAlloc :: Alloc ( KernelGeneralPhysicalAlloc, Address, Length, & Error );
 	
-	uint32_t Index = __FindFree ( 0, Level, TopLevel );
-	
-	if ( Index == 0xFFFFFFFF )
-	{
-		
-		* Address = reinterpret_cast <void *> ( 0xFFFFFFFF );
-		
-		return false;
-		
-	}
-	
-	__Table ( Index ).Split = 0;
-	__Table ( Index ).AFree = 0;
-	__Table ( Index ).BFree = 0;
-	
-	FreeCount -= 1 << Level;
-	
-	if ( Level != TopLevel )
-		__CascadeChangesUp ( __CalcParentIndex ( Index ) );
-	
-	* Address = reinterpret_cast <void *> ( ( 4096 << Level ) * ( Index - ( ( 1 << ( TopLevel - Level ) ) - 1 ) ) );
-	
-	return true;
+	return ( Error == PAlloc :: kError_None );
 	
 };
 
 void MM::Paging::PFA :: Free ( void * Address )
 {
 	
-	uint32_t FoundLevel = 0;
-	uint32_t Index = __FindAllocated ( reinterpret_cast <uint32_t> ( Address ), TopLevel, & FoundLevel );
+	uint32_t Error;
 	
-	if ( Index == 0xFFFFFFFF )
-		return;
+	PAlloc :: Free ( KernelGeneralPhysicalAlloc, Address, & Error );
 	
-	__Table ( Index ).AFree = 1;
-	__Table ( Index ).BFree = 1;
-	__Table ( Index ).Split = 0;
-	
-	FreeCount += 1 << FoundLevel;
-	
-	__CascadeChangesUp ( __CalcParentIndex ( Index ) );
+	if ( Error != PAlloc :: kError_None )
+		system_func_kprintf ( "WARNING: PAlloc: %s\n", PAlloc :: GetErrorString ( Error ) );
 	
 };
 
 uint32_t MM::Paging::PFA :: GetAllocationSize ( void * Address )
 {
 	
-	uint32_t FoundLevel = 0;
-	
-	if ( __FindAllocated ( reinterpret_cast <uint32_t> ( Address ), TopLevel, & FoundLevel ) == 0xFFFFFFFF )
-		return 0;
-	
-	return 0x1000 << FoundLevel;
+	return PAlloc :: GetAllocationSize ( KernelGeneralPhysicalAlloc, Address );
 	
 };
 
 uint32_t MM::Paging::PFA :: GetFreeKB ()
 {
 	
-	return FreeCount * 4;
-	
-};
-
-uint32_t MM::Paging::PFA :: GetTotalKB ()
-{
-	
-	return TotalCount * 4;
+	return PAlloc :: GetFreePages ( GeneralPhysicalFree ) << 2;
 	
 };
 
@@ -365,15 +216,11 @@ size_t MM::Paging::PFA :: CalcMBICopySize ( multiboot_info_t * MultibootInfo )
 	
 };
 
-void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint32_t * MaxAddress )
+void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo )
 {
 	
 	if ( ( MultibootInfo -> flags & MULTIBOOT_INFO_MEM_MAP ) == 0 )
 		KPANIC ( "Multiboot memory map not supplied!" );
-	
-	TotalCount = ( ( MultibootInfo -> mem_lower ) >> 2 ) + ( ( MultibootInfo -> mem_upper ) >> 2 );
-	
-	* MaxAddress = 0;
 	
 	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MultibootInfo -> mmap_addr );
 	
@@ -386,14 +233,16 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint3
 		if ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE )
 		{
 			
+			if ( MMapEntry -> addr > 0xFFFFFFFF )
+				MMapEntry -> len = 0;
+			else if ( MMapEntry -> addr + MMapEntry -> len > 0xFFFFFFFF )
+				MMapEntry -> len = 0x100000000 - ( MMapEntry -> addr + MMapEntry -> len );
+			
 			if ( ( MMapEntry -> addr <= reinterpret_cast <uint32_t> ( & __kbegin ) ) && ( MMapEntry -> addr + MMapEntry -> len > reinterpret_cast <uint32_t> ( & __kbegin ) ) )
 			{
 				
 				MMapEntry -> len -= reinterpret_cast <uint32_t> ( & __kend ) - MMapEntry -> addr;
 				MMapEntry -> addr = reinterpret_cast <uint32_t> ( & __kend );
-				
-				if ( MMapEntry -> len > 0xFFFFFFFF )
-					MMapEntry -> len = 0;
 				
 			}
 			
@@ -411,93 +260,16 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo, uint3
 						MMapEntry -> len -= ModuleEntry [ i ].mod_end - MMapEntry -> addr;
 						MMapEntry -> addr = ModuleEntry [ i ].mod_end;
 						
-						if ( MMapEntry -> len > 0xFFFFFFFF )
-							MMapEntry -> len = 0;
-						
 					}
 					
 				}
 				
 			}
 			
-			if ( * MaxAddress < MMapEntry -> addr + MMapEntry -> len )
-				* MaxAddress = ( MMapEntry -> addr + MMapEntry -> len > 0xFFFFFFFF ) ? 0xFFFFFFFF : MMapEntry -> addr + MMapEntry -> len;
-			
 		}
 		
 		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
 		
 	};
-	
-};
-
-bool MM::Paging::PFA :: TestRegionUsable ( uint32_t Offset, uint32_t Length )
-{
-	
-	bool FoundFree = false;
-	
-	uint32_t FreeOffset = Offset;
-	uint32_t FreeLength = Length;
-	
-	if ( Offset < 0x2000 && ( Offset + Length >= 0x1000 ) )
-		return false;
-	
-	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
-	
-	while ( ( reinterpret_cast <uint64_t> ( MMapEntry ) < MBICopy -> mmap_addr + MBICopy -> mmap_length ) || ( ! FoundFree ) )
-	{
-		
-		if ( reinterpret_cast <uint64_t> ( MMapEntry ) >= MBICopy -> mmap_addr + MBICopy -> mmap_length )
-		{
-			
-			MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MBICopy -> mmap_addr );
-			
-			if ( FreeOffset == Offset )
-				return false;
-			
-		}
-		
-		if ( ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE ) && ( MMapEntry -> addr < FreeOffset ) && ( MMapEntry -> addr + MMapEntry -> len > FreeOffset ) )
-		{
-			
-			uint32_t OffsetShift = ( ( MMapEntry -> addr + MMapEntry -> len > FreeOffset + FreeLength ) ? FreeOffset + FreeLength : MMapEntry -> addr + MMapEntry -> len ) - FreeOffset;
-			FreeOffset = OffsetShift;
-			FreeLength = FreeLength - OffsetShift;
-			
-			if ( FreeLength == 0 )
-				FoundFree = true;
-			
-		}
-		
-		if ( ( MMapEntry -> type != MULTIBOOT_MEMORY_AVAILABLE ) && ( MMapEntry -> addr < Offset + Length ) && ( MMapEntry -> addr + MMapEntry -> len >= Offset ) )
-		{
-			
-			return false;
-			
-		}
-		
-		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
-		
-	}
-	
-	if ( MBICopy -> flags & MULTIBOOT_INFO_MODS )
-	{
-		
-		multiboot_module_t * ModuleEntry = reinterpret_cast <multiboot_module_t *> ( MBICopy -> mods_addr );
-		
-		for ( uint32_t i = 0; i < MBICopy -> mods_count; i ++ )
-		{
-			
-			if ( ( ModuleEntry [ i ].mod_start < Offset + Length ) && ( ModuleEntry [ i ].mod_end > Offset ) )
-				return false;
-			
-		}
-		
-	}
-	
-	if ( ( Offset < reinterpret_cast <uint32_t> ( Table ) + sizeof ( Entry ) * TableSize ) && ( Offset + Length > reinterpret_cast <uint32_t> ( Table ) ) )
-		return false;
-	
-	return true;
 	
 };

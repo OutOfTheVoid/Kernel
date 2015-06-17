@@ -68,18 +68,6 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	InitialFreeLength -= NewInitialFreeBase - InitialFreeBase;
 	InitialFreeLength &= 0xFFFFF000;
 	
-	if ( Kernel )
-	{
-		
-		InitialFreeLength -= MM::Paging::PFA :: TableSize;
-		InitialFreeLength &= 0xFFFFF000;
-		
-		MM::Paging::PageTable :: SetKernelRegionMapping ( InitialFreeBase + InitialFreeLength, reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) & 0xFFFFF000, ( MM::Paging::PFA :: TableSize + 0xFFF ) & 0xFFFFF000, MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
-		
-		MM::Paging::PFA :: Table = reinterpret_cast <MM::Paging::PFA :: Entry *> ( ( reinterpret_cast <uint32_t> ( MM::Paging::PFA :: Table ) & 0xFFF ) | ( InitialFreeBase + InitialFreeLength ) );
-		
-	}
-	
 	Space -> TotalPageCount = InitialFreeLength >> 12;
 	
 	if ( Kernel )

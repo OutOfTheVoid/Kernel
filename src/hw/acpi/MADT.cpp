@@ -14,9 +14,9 @@ HW::ACPI::MADT :: MADTable * HW::ACPI::MADT :: Table = NULL;
 
 const char * HW::ACPI::MADT :: kSearchString = "APIC";
 
-Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> * HW::ACPI::MADT :: ProcessorLAPICRecords;
-Vector <HW::ACPI::MADT :: IOAPICRecord *> * HW::ACPI::MADT :: IOAPICRecords;
-Vector <HW::ACPI::MADT :: InterruptSourceOverrideRecord *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords;
+Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> * HW::ACPI::MADT :: ProcessorLAPICRecords = NULL;
+Vector <HW::ACPI::MADT :: IOAPICRecord *> * HW::ACPI::MADT :: IOAPICRecords = NULL;
+Vector <HW::ACPI::MADT :: InterruptSourceOverrideRecord *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords = NULL;
 
 MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::MADT :: Lock = MT::Synchronization::Spinlock :: Initializer ();
 

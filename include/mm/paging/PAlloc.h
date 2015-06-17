@@ -43,6 +43,8 @@ namespace MM
 			
 			static uint32_t GetAllocationSize ( PageAllocZone * AllocationZone, void * Address );
 			
+			static uint32_t GetFreePages ( PageFreeZone * FreeZone );
+			
 		private:
 			
 			typedef struct AddressRange_Struct
@@ -146,6 +148,29 @@ namespace MM
 				__TreePrint ( Node -> Right );
 				
 			};
+			
+			static inline void __FSCHPrint ( FreePageZone * Zone )
+			{
+				
+				for ( uint32_t i = 0; i < 20; i ++ )
+				{
+					
+					AddressRange * Range;
+					
+					Range = Zone -> FreeSizeClassHeads [ i ];
+					
+					while ( Range != reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+					{
+						
+						system_func_kprintf ( "[SC: %u, [%h, %h] @ %h]", i, Range -> Base, Range -> Length, Range );
+						
+						Range = Range -> NextInSizeClass;
+						
+					}
+					
+				}
+				
+			}
 			
 			static inline void __CalcHeight ( AddressRange * Node )
 			{
