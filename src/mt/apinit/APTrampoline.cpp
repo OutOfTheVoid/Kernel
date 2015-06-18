@@ -46,7 +46,7 @@ void MT::APInit::APTrampoline :: SetPagingDirectory ( uint32_t * PagingDirectory
 uint32_t MT::APInit::APTrampoline :: GetStartupPage ()
 {
 	
-	return reinterpret_cast <uint32_t> ( & __mt_apinit_trampolinestart ) >> 12;
+	return 1;
 	
 };
 

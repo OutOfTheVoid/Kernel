@@ -15,10 +15,10 @@ void mt_apinit_apmain ()
 	ThisCPU -> Flags &= ~ ( HW::CPU::Processor :: kCPUFlag_RealMode | HW::CPU::Processor :: kCPUFlag_StartingUp );
 	ThisCPU -> Flags |= HW::CPU::Processor :: kCPUFlag_ProtectedMode;
 	
+	uint8_t ID = ThisCPU -> Index;
+	
 	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
 	
-	system_func_kprintf ( "Processor started!" );
-	
-	for (;;);
+	system_func_kprintf ( "Processor %u started!\n", ID );
 	
 };

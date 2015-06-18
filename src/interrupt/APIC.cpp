@@ -312,7 +312,7 @@ void Interrupt::APIC :: SendPhysicalInitIPI ( uint8_t TargetID, bool Assert )
 {
 	
 	uint32_t InterruptCommandHighRegister = ( static_cast <uint32_t> ( TargetID ) << 24 );
-	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | ( Assert ? kIPILevel_Assert : kIPILevel_DeAssert ) | kIPITriggerMode_Edge | kIPIDestinationMode_Physical | kIPIDeliveryMode_INIT;
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | ( Assert ? kIPILevel_Assert : 0 ) | kIPILevel_LTrig | kIPITriggerMode_Edge | kIPIDestinationMode_Physical | kIPIDeliveryMode_INIT;
 	
 	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
 	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );

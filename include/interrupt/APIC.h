@@ -120,7 +120,7 @@ namespace Interrupt
 		
 		static const uint32_t kIPIDeliverStatus_Pending = 0x1000;
 		
-		static const uint32_t kIPILevel_DeAssert = 0x8000;
+		static const uint32_t kIPILevel_LTrig = 0x8000;
 		static const uint32_t kIPILevel_Assert = 0x4000;
 		
 		static const uint32_t kIPITriggerMode_Edge = 0x0000;

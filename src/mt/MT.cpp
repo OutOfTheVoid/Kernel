@@ -61,13 +61,9 @@ void MT :: Init ()
 					
 					HW::CPU::Processor :: CPUInfo * APInfo = HW::CPU::Processor :: Define ( false, APICID, InitStackBottom, 0x4000 );
 					
-					system_func_kprintf ( "IPI\n" );
-					
 					Interrupt::APIC :: SendPhysicalInitIPI ( APICID, true );
 					
 					mt_timing_pwaitms ( 10.0 );
-					
-					system_func_kprintf ( "SIPI\n" );
 					
 					Interrupt::APIC :: SendPhysicalStartupIPI ( APICID, APInit::APTrampoline :: GetStartupPage () );
 					
@@ -80,13 +76,7 @@ void MT :: Init ()
 					MT::Synchronization::Spinlock :: Release ( & APInfo -> Lock );
 					
 					if ( ! Started )
-					{
-						
-						system_func_kprintf ( "SIPI\n" );
-						
 						Interrupt::APIC :: SendPhysicalStartupIPI ( APICID, APInit::APTrampoline :: GetStartupPage () );
-						
-					}
 					
 					while ( ! Started )
 					{
