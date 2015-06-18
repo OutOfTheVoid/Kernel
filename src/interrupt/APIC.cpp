@@ -36,27 +36,25 @@ void Interrupt::APIC :: Init ()
 		Interrupt::PIC :: SetIRQEnabled ( i, false );
 	
 	Interrupt::PIC :: Disable ();
-	
-	system_func_kprintf ( "APIC Base address: %h\n", GetAPICBaseAddress () );
-	
-	uint32_t BaseAddress = GetAPICBaseAddress ();
-	Base = BaseAddress;
+
+	Base = GetAPICBaseAddress ();
+	system_func_kprintf ( "APIC Base address: %h\n", Base );
 		
 	BaseVirtual = reinterpret_cast <uint32_t *> ( mm_kvmap ( reinterpret_cast <void *> ( Base ), 0x1000, MM::Paging::PageTable :: Flags_NoCache | MM::Paging::PageTable :: Flags_Writeable ) );
 	
 	if ( BaseVirtual == NULL )
 		KPANIC ( "Failed to allocate virtual memory to map APIC!" );
 	
-	Disable ();
+	Enable ();
+	
+	SetTaskPriority ( 0 );
 	
 };
 
 void Interrupt::APIC :: APInit ()
 {
 	
-	Disable ();
-	
-	SetAPICBaseAddress ( GetAPICBaseAddress () | HW::CPU::MSR :: kMSR_APICBASEFlag_Enable );
+	Enable ();
 	
 }
 
@@ -82,18 +80,6 @@ void Interrupt::APIC :: WriteRegister ( uint32_t Offset, uint32_t * DataIn, uint
 	
 };
 
-void Interrupt::APIC :: SetAPICBaseAddress ( uint32_t Base )
-{
-	
-	uint32_t EAX = ( Base & 0xFFFFF100 ) | HW::CPU::MSR :: kMSR_APICBASEFlag_Enable;
-	uint32_t EDX = 0;
-	
-	HW::CPU::MSR :: SetMSR ( HW::CPU::MSR :: kMSR_APIC_BASE, & EAX, & EDX );
-	
-	APIC :: Base = Base;
-	
-};
-
 uint32_t Interrupt::APIC :: GetAPICBaseAddress ()
 {
 	
@@ -112,11 +98,7 @@ uint32_t Interrupt::APIC :: GetAPICBaseAddress ()
 void Interrupt::APIC :: Enable ()
 {
 	
-	uint32_t SpuriousInterruptRegister;
-	
-	ReadRegister ( kRegisterOffset_SpuriousInterruptVector, & SpuriousInterruptRegister, 1 );
-	
-	SpuriousInterruptRegister |= kSpuriousInterruptVectorFlag_APICEnable;
+	uint32_t SpuriousInterruptRegister = 0xFF | kSpuriousInterruptVectorFlag_APICEnable;
 	
 	WriteRegister ( kRegisterOffset_SpuriousInterruptVector, & SpuriousInterruptRegister, 1 );
 	
@@ -125,11 +107,7 @@ void Interrupt::APIC :: Enable ()
 void Interrupt::APIC :: Disable ()
 {
 	
-	uint32_t SpuriousInterruptRegister;
-	
-	ReadRegister ( kRegisterOffset_SpuriousInterruptVector, & SpuriousInterruptRegister, 1 );
-	
-	SpuriousInterruptRegister &= ~ kSpuriousInterruptVectorFlag_APICEnable;
+	uint32_t SpuriousInterruptRegister = 0xFF;
 	
 	WriteRegister ( kRegisterOffset_SpuriousInterruptVector, & SpuriousInterruptRegister, 1 );
 	
@@ -333,22 +311,59 @@ bool Interrupt::APIC :: PollTimerOneShot ()
 void Interrupt::APIC :: SendPhysicalInitIPI ( uint8_t TargetID, bool Assert )
 {
 	
-	uint32_t InterruptCommandHighRegister = static_cast <uint32_t> ( TargetID ) << 24;
-	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | kIPITriggerMode_Edge | ( Assert ? kIPILevel_Assert : kIPILevel_DeAssert ) | kIPIDestinationMode_Physical | kIPIDeliveryMode_INIT;
+	uint32_t InterruptCommandHighRegister = ( static_cast <uint32_t> ( TargetID ) << 24 );
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | ( Assert ? kIPILevel_Assert : kIPILevel_DeAssert ) | kIPITriggerMode_Edge | kIPIDestinationMode_Physical | kIPIDeliveryMode_INIT;
 	
 	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
 	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
 	
 };
 
-void Interrupt::APIC :: SendPhysicalStartUpIPI ( uint8_t TargetID )
+void Interrupt::APIC :: SendPhysicalStartupIPI ( uint8_t TargetID, uint32_t EntryPageNum )
 {
 	
-	uint32_t InterruptCommandHighRegister = static_cast <uint32_t> ( TargetID ) << 24;
-	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | kIPITriggerMode_Edge | kIPILevel_Assert | kIPIDestinationMode_Physical | kIPIDeliveryMode_StartUp;
+	uint32_t InterruptCommandHighRegister = ( static_cast <uint32_t> ( TargetID ) << 24 );
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | kIPITriggerMode_Edge | kIPILevel_Assert | kIPIDestinationMode_Physical | kIPIDeliveryMode_StartUp | ( EntryPageNum & 0xFF );
 	
 	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
 	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
+	
+};
+
+bool Interrupt::APIC :: IPIAccepted ()
+{
+	
+	uint32_t InterruptCommandLowRegister;
+	
+	ReadRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
+	
+	return ( InterruptCommandLowRegister & kIPIDeliverStatus_Pending ) != 0;
+	
+};
+
+void Interrupt::APIC :: ClearErrorStatus ()
+{
+	
+	uint32_t NewStatus = 0;
+	
+	WriteRegister ( kRegisterOffset_ErrorStatus, & NewStatus, 1 );
+	WriteRegister ( kRegisterOffset_ErrorStatus, & NewStatus, 1 );
+	
+};
+
+void Interrupt::APIC :: EndOfInterrupt ( uint8_t Level )
+{
+	
+	uint32_t Level32 = Level;
+	
+	WriteRegister ( kRegisterOffset_EOI, & Level32, 1 );
+	
+};
+
+void Interrupt::APIC :: SetTaskPriority ( uint32_t Priority )
+{
+	
+	WriteRegister ( kRegisterOffset_TaskPriority, & Priority, 1 );
 	
 };
 

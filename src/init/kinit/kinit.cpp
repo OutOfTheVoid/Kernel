@@ -23,6 +23,8 @@
 
 #include <math/bitmath.h>
 
+C_LINKAGE void hw_cpu_hang ();
+
 C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
 	
@@ -54,7 +56,5 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	MT :: Init ();
 	
 	system_func_kprintf ( "BSP Initialized!\n" );
-	
-	hw_cpu_hang ();
 	
 };

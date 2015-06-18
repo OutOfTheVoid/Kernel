@@ -92,7 +92,7 @@ namespace MM
 				AddressRange_Struct * NextInSizeClass;
 				AddressRange_Struct * PrevInSizeClass;
 				
-			} __attribute__((packed)) AddressRange; // 32 bytes
+			} __attribute__(( packed )) AddressRange; // 32 bytes
 			
 			typedef struct Storage_Struct
 			{
@@ -106,7 +106,7 @@ namespace MM
 				
 				AddressRange Ranges [ 127 ];
 				
-			} __attribute__((packed)) Storage;
+			} __attribute__(( packed )) Storage;
 			
 			AddressSpace ();
 			

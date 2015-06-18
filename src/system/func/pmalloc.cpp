@@ -31,7 +31,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 		return NULL;
 	
 	if ( Hint == PMALLOC_PHSCHEME_DEFAULT )
-		Hint = PMALLOC_PHSCHEME_DISTRIBUTE;
+		Hint = PMALLOC_PHSCHEME_BINARY;
 	
 	void * VCopy = Virtual;
 	uint32_t PagesCopy = Pages;
@@ -54,9 +54,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 		}
 		
 	case PMALLOC_PHSCHEME_BINARY:
-	
-		VCopy = Virtual;
-		PagesCopy = Pages;
+		
 		i = 0;
 		
 		{
@@ -101,7 +99,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 			
 		}
 		
-		for ( i = 0; i < PhysSize; i ++ )
+		for ( i = 0; i < Pages; i ++ )
 		{
 			
 			if ( ! MM::Paging::PFA :: Alloc ( 0x1000, & Physical ) )
@@ -131,8 +129,6 @@ void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
 	
 	uint32_t Offset = 0;
 	uint32_t DummyError = 0;
-	
-	system_func_kprintf ( "FAIL" );
 	
 	while ( Pages != 0 )
 	{

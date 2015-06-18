@@ -960,3 +960,54 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: FindClosestSmallerNod
 	}
 	
 };
+
+void MM::Paging::PAlloc :: AddFreePageRange ( PageFreeZone * FreeZone, uint32_t Base, uint32_t Length, uint32_t * Error )
+{
+	
+	FreePageZone * Zone = reinterpret_cast <FreePageZone *> ( FreeZone );
+	
+	Length -= ( ( 0xFFF + Base ) & 0xFFFFF000 ) - Base;
+	Base = ( ( 0xFFF + Base ) & 0xFFFFF000 );
+	Length &= 0xFFFFF000;
+	
+	if ( Length == 0 )
+		return;
+	
+	if ( ! ExpandStorage ( Zone ) )
+	{
+		
+		* Error = kAddFreePageRange_Error_OutOfPhysicalMemroy;
+		
+		return;
+		
+	}
+	
+	AddressRange * Range = NewRange ( Zone );
+	
+	if ( Range == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
+	{
+		
+		* Error = kAddFreePageRange_Error_OutOfPhysicalMemroy;
+		
+		return;
+		
+	}
+	
+	Range -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	Range -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	Range -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	Range -> PreviousInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	Range -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
+	Range -> Base = Base;
+	Range -> Length = Length;
+	
+	uint32_t SizeClass = __CalculateSizeClass ( Length );
+	
+	InsertNodeInSizeClass ( Zone, Range, SizeClass );
+	InsertNode ( & Zone -> FreeTreeRoot, Range );
+	
+	Zone -> FreePageCount += Length >> 12;
+	
+	* Error = kError_None;
+	
+};

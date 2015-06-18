@@ -17,4 +17,8 @@ C_LINKAGE uint32_t __kbegin;
 // End of the kernel text and data (physical).
 C_LINKAGE uint32_t __kend;
 
+// Bottom and top of BSP kernel stack
+C_LINKAGE uint32_t boot_multiboot_StackBottom;
+C_LINKAGE uint32_t boot_multiboot_StackTop;
+
 #endif

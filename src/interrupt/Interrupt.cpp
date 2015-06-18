@@ -1,4 +1,6 @@
 #include <interrupt/Interrupt.h>
+#include <interrupt/InterruptHandlers.h>
+#include <interrupt/PIC.h>
 #include <interrupt/APIC.h>
 
 #include <system/func/kprintf.h>
@@ -8,6 +10,7 @@
 void Interrupt :: Init ()
 {
 	
+	PIC :: Init ();
 	APIC :: Init ();
 	
 };

@@ -26,8 +26,6 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo, uint32_t Multib
 	
 	MBEarlyAnalyze ( MultibootInfo );
 	
-	// TODO: Build PMM
-	
 	uint32_t BaseAddr = 0;
 	uint32_t Length = 0;
 	
@@ -41,6 +39,7 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo, uint32_t Multib
 			
 			BaseAddr = ( static_cast <uint32_t> ( MMapEntry -> addr ) + 0xFFF ) & 0xFFFFF000;
 			Length = static_cast <uint32_t> ( MMapEntry -> len ) - ( static_cast <uint32_t> ( MMapEntry -> addr ) - BaseAddr );
+			Length &= 0xFFFFF000;
 			
 			if ( Length >= 0x2000 )
 			{
@@ -72,6 +71,42 @@ void MM::Paging::PFA :: Init ( multiboot_info_t * MultibootInfo, uint32_t Multib
 	
 	if ( Error != PAlloc :: kError_None )
 		KPANIC ( "PAlloc error creating kernel physical alloc zone: %s", PAlloc :: GetErrorString ( Error ) );
+	
+};
+
+void MM::Paging::PFA :: Init2 ( multiboot_info_t * MultibootInfo, uint32_t MultibootInfoSize )
+{
+	
+	uint32_t BaseAddr = 0;
+	uint32_t Length = 0;
+	
+	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MultibootInfo -> mmap_addr );
+	
+	while ( reinterpret_cast <uint64_t> ( MMapEntry ) < MultibootInfo -> mmap_addr + MultibootInfo -> mmap_length )
+	{
+		
+		if ( ( MMapEntry -> type == MULTIBOOT_MEMORY_AVAILABLE ) && ( MMapEntry -> len != 0 ) )
+		{
+			
+			BaseAddr = ( static_cast <uint32_t> ( MMapEntry -> addr ) + 0xFFF ) & 0xFFFFF000;
+			Length = static_cast <uint32_t> ( MMapEntry -> len ) - ( static_cast <uint32_t> ( MMapEntry -> addr ) - BaseAddr );
+			
+			if ( Length >= 0x2000 )
+			{
+				
+				uint32_t DummyError;
+				
+				PAlloc :: AddFreePageRange ( GeneralPhysicalFree, BaseAddr, Length, & DummyError );
+				
+				break;
+				
+			}
+			
+		}
+	
+		MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry ) + MMapEntry -> size + 4 );
+		
+	}
 	
 };
 
@@ -238,11 +273,39 @@ void MM::Paging::PFA :: MBEarlyAnalyze ( multiboot_info_t * MultibootInfo )
 			else if ( MMapEntry -> addr + MMapEntry -> len > 0xFFFFFFFF )
 				MMapEntry -> len = 0x100000000 - ( MMapEntry -> addr + MMapEntry -> len );
 			
+			multiboot_memory_map_t * MMapEntry2 = reinterpret_cast <multiboot_memory_map_t *> ( MultibootInfo -> mmap_addr );
+			
+			while ( reinterpret_cast <uint64_t> ( MMapEntry2 ) < MultibootInfo -> mmap_addr + MultibootInfo -> mmap_length )
+			{
+				
+				if ( MMapEntry2 != MMapEntry )
+				{
+					
+					if ( ( MMapEntry -> addr < ( MMapEntry2 -> addr + MMapEntry2 -> len ) ) && ( ( MMapEntry -> addr + MMapEntry -> len ) > MMapEntry2 -> addr ) )
+						KPANIC ( "mm overlap!" );
+					
+				}
+				
+				MMapEntry2 = reinterpret_cast <multiboot_memory_map_t *> ( reinterpret_cast <uint32_t> ( MMapEntry2 ) + MMapEntry2 -> size + 4 );
+				
+			}
+			
 			if ( ( MMapEntry -> addr <= reinterpret_cast <uint32_t> ( & __kbegin ) ) && ( MMapEntry -> addr + MMapEntry -> len > reinterpret_cast <uint32_t> ( & __kbegin ) ) )
 			{
 				
 				MMapEntry -> len -= reinterpret_cast <uint32_t> ( & __kend ) - MMapEntry -> addr;
 				MMapEntry -> addr = reinterpret_cast <uint32_t> ( & __kend );
+				
+			}
+			
+			if ( ( MMapEntry -> addr < 0xA0000 ) && ( MMapEntry -> addr + MMapEntry -> len > 0xA0000 ) )
+				MMapEntry -> len = 0xA0000 - MMapEntry -> addr;
+			
+			if ( ( MMapEntry -> addr <= 0x1000 ) && ( MMapEntry -> addr + MMapEntry -> len > 0x1000 ) )
+			{
+				
+				MMapEntry -> len -= 0x1000 - MMapEntry -> addr;
+				MMapEntry -> addr = 0x2000;
 				
 			}
 			

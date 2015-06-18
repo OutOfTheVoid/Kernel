@@ -34,13 +34,11 @@ void MM :: Init ( multiboot_info_t * MultibootInfo )
 	
 	Paging::AddressSpace :: KInit ( KVStart, KernelVMLength - KVStart );
 	
-	Segmentation::GDT :: Init ( 5 );
+	Paging::PFA :: Init2 ( MultibootInfo, MBICopySize );
 	
-	Segmentation::GDT :: SetDataEntry32 ( 3, 0, 0xFFFFFFFF, 3, true );
-	Segmentation::GDT :: SetDataEntry32 ( 4, 0, 0xFFFFFFFF, 3, true );
+	Segmentation::GDT :: Init ( 3 );
 	
 	Segmentation::GDT :: Swap ();
-	
 	
 };
 

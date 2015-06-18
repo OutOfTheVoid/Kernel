@@ -63,19 +63,16 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	Storage * InitialStorage = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 	AddressRange * InitialRange;
 	
-	uint32_t NewInitialFreeBase = 0xFFF + InitialFreeBase;
-	NewInitialFreeBase &= 0xFFFFF000;
-	InitialFreeLength -= NewInitialFreeBase - InitialFreeBase;
+	InitialFreeLength -= ( ( InitialFreeBase + 0xFFF ) & 0xFFFFF000 ) - InitialFreeBase;
+	InitialFreeBase = ( InitialFreeBase + 0xFFF ) & 0xFFFFF000;
 	InitialFreeLength &= 0xFFFFF000;
-	
-	Space -> TotalPageCount = InitialFreeLength >> 12;
 	
 	if ( Kernel )
 	{
 		
 		void * ISPhysical;
 		
-		if ( NewInitialFreeBase < 0x2000 )
+		if ( InitialFreeLength < 0x2000 )
 		{
 			
 			* Error = kCreateAddressSpace_Error_InitialZoneSize;
@@ -84,7 +81,7 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 			
 		}
 		
-		if ( ! MM::Paging::PFA :: Alloc ( 4096, & ISPhysical ) )
+		if ( ! MM::Paging::PFA :: Alloc ( 0x1000, & ISPhysical ) )
 		{
 			
 			* Error = kCreateAddressSpace_Error_FailedPhysicalAllocation;
@@ -93,9 +90,9 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 			
 		}
 		
-		MM::Paging::PageTable :: SetKernelMapping ( NewInitialFreeBase, reinterpret_cast <uint32_t> ( ISPhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
-		InitialStorage = reinterpret_cast <Storage *> ( NewInitialFreeBase );
-		NewInitialFreeBase += 0x1000;
+		MM::Paging::PageTable :: SetKernelMapping ( InitialFreeBase, reinterpret_cast <uint32_t> ( ISPhysical ), MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Cutsom_KMap );
+		InitialStorage = reinterpret_cast <Storage *> ( InitialFreeBase );
+		InitialFreeBase += 0x1000;
 		InitialFreeLength -= 0x1000;
 		
 	}
@@ -115,6 +112,8 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 		
 	}
 	
+	Space -> TotalPageCount = InitialFreeLength >> 12;
+	
 	InitialStorage -> Previous = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 	InitialStorage -> Next = reinterpret_cast <Storage *> ( kStoragePTR_Invalid );
 	
@@ -129,16 +128,19 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	
 	InitialRange = & InitialStorage -> Ranges [ 0 ];
 	
-	InitialRange -> Base = NewInitialFreeBase;
-	InitialRange -> Length = InitialFreeLength;
-	
 	InitialRange -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> PrevInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	InitialRange -> NextInSizeClass = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 	
+	InitialRange -> Base = InitialFreeBase;
+	InitialRange -> Length = InitialFreeLength;
+	
+	uint32_t SizeClass = __CalculateSizeClass ( InitialFreeLength );
+	
 	Space -> InsertFreeNode ( InitialRange );
+	Space -> FreeSizeClassHeads [ SizeClass ] = InitialRange;
 	
 	* Error = kCreateAddressSpace_Error_None;
 	
@@ -249,7 +251,13 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 {
 	
 	if ( ! CheckStorage ( Error ) )
+	{
+		
+		* Error = kAlloc_Error_OutOfVirtualSpace;
+		
 		return;
+		
+	}
 	
 	AddressRange * AllocationRange = DoAlloc ( Length );
 	

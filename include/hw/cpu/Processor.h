@@ -3,6 +3,9 @@
 
 #include <hw/cpu/CPU.h>
 
+#include <mt/MT.h>
+#include <mt/synchronization/Spinlock.h>
+
 #include <stdint.h>
 
 namespace HW
@@ -39,14 +42,17 @@ namespace HW
 				
 				uint8_t Index;
 				
+				MT::Synchronization::Spinlock :: Spinlock_t Lock;
+				
 			} CPUInfo;
 			
 			static CPUInfo * GetCurrent ();
-			static CPUInfo * GetCurrentNP ();
 			
 		private:
 			
-			static void Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength );
+			friend void MT :: Init ();
+			
+			static CPUInfo * Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength );
 			
 			static CPUInfo Infos [ 0x100 ];
 			static uint8_t IndexToAPICID [ 0x100 ];

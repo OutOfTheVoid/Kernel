@@ -44,7 +44,7 @@ void MM::Paging::PageTable :: KInit ()
 	}
 	
 	for ( i = 0; i < reinterpret_cast <uint32_t> ( & __kend ); i += 0x1000 )
-		SetKernelMapping ( i, i, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+		SetKernelMapping ( i, i, Flags_Present | Flags_Writeable );
 	
 };
 

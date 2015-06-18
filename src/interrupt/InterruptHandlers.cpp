@@ -79,6 +79,8 @@ INTERRUPT_IRQ_EXTERN ( 0x1D );
 INTERRUPT_IRQ_EXTERN ( 0x1E );
 INTERRUPT_IRQ_EXTERN ( 0x1F );
 
+INTERRUPT_IRQ_EXTERN ( 0xFF ); // For APICs
+
 C_LINKAGE void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame );
 
 void Interrupt::InterruptHandlers :: Init ()
@@ -158,6 +160,8 @@ void Interrupt::InterruptHandlers :: InstallSystemInterruptHandlers ()
 	HW::CPU::IDT :: DefineIDTEntry ( Interrupt::IRQ :: kIRQ_BaseInterrupt + 0x1D, & INTERRUPT_IRQ_NAME ( 0x1D ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( Interrupt::IRQ :: kIRQ_BaseInterrupt + 0x1E, & INTERRUPT_IRQ_NAME ( 0x1E ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( Interrupt::IRQ :: kIRQ_BaseInterrupt + 0x1F, & INTERRUPT_IRQ_NAME ( 0x1F ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
+	
+	HW::CPU::IDT :: DefineIDTEntry ( 0xFF, & INTERRUPT_IRQ_NAME ( 0xFF ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	
 };
 

@@ -24,15 +24,15 @@ MM::Segmentation::GDT :: GDTEntry * MM::Segmentation::GDT :: Entries;
 void MM::Segmentation::GDT :: Init ( uint8_t EntryCount )
 {
 	
-	GDTEntry * Entries = NULL;
-	
 	if ( EntryCount < 3 )
 		EntryCount = 3;
 	
 	Entries = reinterpret_cast <GDTEntry *> ( mm_kmalloc ( sizeof ( GDTEntry ) * EntryCount ) );
 	
-	MM::Segmentation::GDT :: EntryCount = EntryCount;
-	MM::Segmentation::GDT :: Entries = Entries;
+	if ( Entries == NULL )
+		KPANIC ( "GDT kmalloc failed!" );
+	
+	GDT :: EntryCount = EntryCount;
 	
 	DefineEntry ( & Entries [ 0 ], 0, 0, kAccessType_None, kFlags_None );
 	
@@ -80,9 +80,9 @@ void MM::Segmentation::GDT :: SetDataEntry32 ( uint32_t Index, uint32_t Base, ui
 		
 	}
 	
-	Flags Flag = static_cast <Flags> ( ( ( Limit > 0xFFFFF ) ? kFlags_Granularity4KB : kFlags_None ) | kFlags_32Bit );
+	Flags Flag = static_cast <Flags> ( ( ( Limit > 0xFFFF ) ? kFlags_Granularity4KB : kFlags_None ) | kFlags_32Bit );
 	
-	if ( Limit > 0xFFFFF )
+	if ( Limit > 0xFFFF )
 		Limit >>= 12;
 
 	DefineEntry ( & Entries [ Index ], Limit, Base, Type, Flag );
@@ -128,10 +128,10 @@ void MM::Segmentation::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, ui
 		
 	}
 	
-	Flags Flag = static_cast <Flags> ( ( ( Limit > 0xFFFFF ) ? kFlags_Granularity4KB : 0 ) | kFlags_32Bit );
+	Flags Flag = static_cast <Flags> ( ( ( Limit > 0xFFFF ) ? kFlags_Granularity4KB : 0 ) | kFlags_32Bit );
 	
-	if ( Limit > 0xFFFFF )
-		Limit /= 0x1000;
+	if ( Limit > 0xFFFF )
+		Limit >>= 12;
 	
 	DefineEntry ( & Entries [ Index ], Limit, Base, Type, Flag );
 	

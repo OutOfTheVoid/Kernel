@@ -30,6 +30,7 @@ namespace MM
 		public:
 			
 			static void Init ( multiboot_info_t * MultibootInfo, uint32_t MultibootInfoSize, uint32_t * KVStart );
+			static void Init2 ( multiboot_info_t * MultibootInfo, uint32_t MultibootInfoSize );
 			
 			static size_t CalcMBICopySize ( multiboot_info_t * MultibootInfo );
 			static void CopyMBI ( multiboot_info_t * Old, multiboot_info_t * New );

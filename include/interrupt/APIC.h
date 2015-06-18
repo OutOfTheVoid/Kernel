@@ -46,13 +46,20 @@ namespace Interrupt
 		static void StartTimerPeriodic ( uint32_t SystemClockPeriod );
 		
 		static void SendPhysicalInitIPI ( uint8_t TargetID, bool Assert );
-		static void SendPhysicalStartUpIPI ( uint8_t TargetID );
+		static void SendPhysicalStartupIPI ( uint8_t TargetID, uint32_t EntryPageNum );
+		
+		static void ClearErrorStatus ();
+		
+		static void EndOfInterrupt ( uint8_t Level );
+		
+		static void SetTaskPriority ( uint32_t Priority );
+		
+		static bool IPIAccepted ();
 		
 	private:
 		
 		static uint8_t GetLocalLVTCount ();
 		
-		static void SetAPICBaseAddress ( uint32_t Base );
 		static uint32_t GetAPICBaseAddress ();
 		
 		static void ReadRegister ( uint32_t Offset, uint32_t * DataOut, uint32_t DWordLength );
@@ -111,10 +118,9 @@ namespace Interrupt
 		static const uint32_t kIPIDestinationMode_Logical = 0x800;
 		static const uint32_t kIPIDestinationMode_Physical = 0x000;
 		
-		static const uint32_t kIPIDeliverStatus_Idle = 0x0000;
 		static const uint32_t kIPIDeliverStatus_Pending = 0x1000;
 		
-		static const uint32_t kIPILevel_DeAssert = 0x0000;
+		static const uint32_t kIPILevel_DeAssert = 0x8000;
 		static const uint32_t kIPILevel_Assert = 0x4000;
 		
 		static const uint32_t kIPITriggerMode_Edge = 0x0000;
@@ -123,7 +129,7 @@ namespace Interrupt
 		static const uint32_t kIPIDestinationShorthand_None = 0x00000;
 		static const uint32_t kIPIDestinationShorthand_Self = 0x40000;
 		static const uint32_t kIPIDestinationShorthand_All = 0x80000;
-		static const uint32_t kIPIDestinationShorthand_AllExcludingSelf = 0x80000;
+		static const uint32_t kIPIDestinationShorthand_AllExcludingSelf = 0xC0000;
 		
 	};
 	

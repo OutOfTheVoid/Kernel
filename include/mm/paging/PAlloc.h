@@ -27,6 +27,7 @@ namespace MM
 			static const uint32_t kMakePageAllocation_Error_OutOfPhysicalMemroy = 1;
 			
 			static const uint32_t kInitFreeZone_Error_OutOfPhysicalMemroy = 1;
+			static const uint32_t kAddFreePageRange_Error_OutOfPhysicalMemroy = 1;
 			
 			static const uint32_t kError_Free_NotAllocated = 3;
 			
@@ -44,6 +45,8 @@ namespace MM
 			static uint32_t GetAllocationSize ( PageAllocZone * AllocationZone, void * Address );
 			
 			static uint32_t GetFreePages ( PageFreeZone * FreeZone );
+			
+			static void AddFreePageRange ( PageFreeZone * Zone, uint32_t InitialPhysicalBase, uint32_t InitialPhysicalLength, uint32_t * Error );
 			
 		private:
 			

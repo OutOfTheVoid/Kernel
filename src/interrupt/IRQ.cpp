@@ -41,6 +41,10 @@ void Interrupt::IRQ :: CallIRQ ( IRQFrame * Frame )
 	uint8_t IRQNumber = Frame -> IRQNumber;
 	void ( * Handler ) ( IRQFrame * );
 	
+	// APIC SPURIOUS INTERRUPT
+	if ( IRQNumber == 0xFF )
+		return;
+	
 	if ( IRQNumber > MaxIRQ )
 		system_func_panic ( "IRQ out of range called!" );
 	

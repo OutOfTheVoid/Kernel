@@ -13,20 +13,11 @@ HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: GetCurrent ()
 	
 	uint32_t APICID = Interrupt::APIC :: GetLocalID ();
 	
-	return Infos [ APICID ];
+	return & Infos [ APICID ];
 	
 };
 
-HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: GetCurrentNP ()
-{
-	
-	uint32_t APICID = Interrupt::APIC :: GetLocalIDNP ();
-	
-	return Infos [ APICID ];
-	
-};
-
-void HW::CPU::Processor :: Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength )
+HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength )
 {
 	
 	Infos [ APICID ].Flags = ( BSP ? ( kCPUFlag_ProtectedMode | kCPUFlag_Paging | kCPUFlag_BSP ) : ( kCPUFlag_RealMode | kCPUFlag_StartingUp ) ) | kCPUFlag_InitKernelStack;
@@ -35,9 +26,12 @@ void HW::CPU::Processor :: Define ( bool BSP, uint8_t APICID, void * InitStackBo
 	Infos [ APICID ].InitStackBottom = InitStackBottom;
 	Infos [ APICID ].InitStackLength = InitStackLength;
 	Infos [ APICID ].Index = CIndex;
+	Infos [ APICID ].Lock = MT::Synchronization::Spinlock :: Initializer ();
 	
 	IndexToAPICID [ CIndex ] = APICID;
 	
 	CIndex ++;
+	
+	return & Infos [ APICID ];
 	
 };

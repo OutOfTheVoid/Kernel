@@ -8,7 +8,7 @@ segment .text
 
 mm_segmentation_gdtLoad:
 
-	;sgdt [ Kernel_OLD_GDTR ]
+	sgdt [ Kernel_OLD_GDTR ]
 	lgdt [ Kernel_GDTR ]
 	
 	jmp 0x08:__gdt_flush

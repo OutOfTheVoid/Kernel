@@ -110,6 +110,7 @@ IRQ 0x1D
 IRQ 0x1E
 IRQ 0x1F
 
+IRQ 0xFF
 
 interrupt_ISRCommonHandler:
 

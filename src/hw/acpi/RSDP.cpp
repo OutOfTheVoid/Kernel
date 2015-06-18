@@ -18,6 +18,8 @@ HW::ACPI::RSDP :: RSDPTable2 * HW::ACPI::RSDP :: Table2 = NULL;
 
 const char * HW::ACPI::RSDP :: kTestString = "RSD PTR ";
 
+extern "C" void hw_cpu_hang ();
+
 void HW::ACPI::RSDP :: Locate ()
 {
 	

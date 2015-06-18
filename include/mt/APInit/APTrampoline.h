@@ -18,14 +18,16 @@ namespace MT
 			static void Init ();
 			static void SetStack ( void * Stack );
 			static void SetPagingDirectory ( uint32_t * PagingDirectory );
+			static uint32_t GetStartupPage ();
 			
 		private:
 			
 			typedef struct
 			{
 				
-				uint8_t Code [ 512 ];
+				uint8_t Code [ 508 ];
 				
+				uint32_t Signature;
 				uint32_t PModeMainPTR;
 				uint32_t InitStackTop;
 				uint32_t * PagingDirectory;
