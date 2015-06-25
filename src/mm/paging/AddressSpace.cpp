@@ -169,6 +169,8 @@ MM::Paging::AddressSpace :: AddressSpace ()
 	FreePageCount = 0;
 	TotalPageCount = 0;
 	
+	RefCount = 0;
+	
 	Kernel = false;
 	
 };
@@ -1487,5 +1489,29 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 	InsertFreeNode ( NewRange );
 	
 	* Error = kAddFreeRange_Error_None;
+	
+};
+
+void MM::Paging::AddressSpace :: Reference ()
+{
+	
+	RefCount ++;
+	
+};
+
+void MM::Paging::AddressSpace :: Dereference ()
+{
+	
+	if ( RefCount == 0 )
+		return;
+	
+	RefCount --;
+	
+};
+
+uint32_t MM::Paging::AddressSpace :: GetRefCount ()
+{
+	
+	return MM::Paging::AddressSpace :: RefCount;
 	
 };

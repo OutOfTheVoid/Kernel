@@ -1,5 +1,7 @@
 #include <mm/paging/PageTable.h>
 #include <mm/paging/PFA.h>
+#include <mm/KVMap.h>
+#include <mm/MM.h>
 
 #include <cpputil/linkage.h>
 
@@ -29,22 +31,21 @@ void MM::Paging::PageTable :: KInit ()
 	
 	Kernel_PDirectory = reinterpret_cast <PDirectory> ( & mm_paging_kernelpd );
 	
-	// Set up initial PDE's
-	uint32_t i;
+	uint32_t I;
 	
-	for ( i = 0; i < 1024; i ++ )
+	for ( I = 0; I < 1024; I ++ )
 	{
 		
-		uint32_t * DirectoryEntry = & Kernel_PDirectory [ i ];
-		SetDirectoryEntry ( DirectoryEntry, reinterpret_cast <uint32_t> ( & mm_paging_kernelpt ) + 0x1000 * i, DFlags_Present | DFlags_Writeable );
+		uint32_t * DirectoryEntry = & Kernel_PDirectory [ I ];
+		SetDirectoryEntry ( DirectoryEntry, reinterpret_cast <uint32_t> ( & mm_paging_kernelpt ) + 0x1000 * I, DFlags_Present | DFlags_Writeable );
 		
-		for ( uint32_t p = 0; p < 1024; p ++ )
-			SetKernelMapping ( i * 0x400000 + p * 0x1000, i * 0x400000 + p * 0x1000, Flags_Writeable );
+		for ( uint32_t P = 0; P < 1024; P ++ )
+			SetKernelMapping ( I * 0x400000 + P * 0x1000, I * 0x400000 + P * 0x1000, Flags_Writeable );
 	
 	}
 	
-	for ( i = 0; i < reinterpret_cast <uint32_t> ( & __kend ); i += 0x1000 )
-		SetKernelMapping ( i, i, Flags_Present | Flags_Writeable );
+	for ( I = 0; I < reinterpret_cast <uint32_t> ( & __kend ); I += 0x1000 )
+		SetKernelMapping ( I, I, Flags_Present | Flags_Writeable );
 	
 };
 
@@ -55,73 +56,149 @@ MM::Paging::PageTable :: PDirectory MM::Paging::PageTable :: GetKernelPD ()
 	
 };
 
-MM::Paging::PageTable :: PDirectory MM::Paging::PageTable :: Create ()
+MM::Paging::PageTable :: PageTable ( bool MapKernel )
 {
 	
-	MM::Paging::PageTable :: PDirectory NewDirectory;
+	uint32_t * NewDirectoryPhysical;
+	uint32_t * NewDirectoryVirtual;
 	
-	if ( ! MM::Paging::PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & NewDirectory ) ) )
+	if ( ! PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & NewDirectoryPhysical ) ) )
 		KPANIC ( "Failed to allocate new page table!" );
 	
-	for ( uint32_t i = 0; i < 1024; i ++ )
-		SetDirectoryEntry ( reinterpret_cast <uint32_t *> ( & ( NewDirectory [ i ] ) ), 0, DFlags_Writeable );
+	NewDirectoryVirtual = reinterpret_cast <uint32_t *> ( mm_kvmap ( NewDirectoryPhysical, 0x1000, Flags_Writeable ) );
 	
-	return NewDirectory;
+	if ( NewDirectoryVirtual == NULL )
+		KPANIC ( "Failed to allocate new page table!" );
 	
-};
-
-void MM::Paging::PageTable :: Destroy ( PDirectory Directory )
-{
+	 uint32_t I;
 	
-	for ( uint32_t i = 0; i < 1024; i ++ )
+	for ( I = 0; I < 1024; I ++ )
+		SetDirectoryEntry ( reinterpret_cast <uint32_t *> ( & ( NewDirectoryVirtual [ I ] ) ), 0, 0 );
+	
+	if ( MapKernel )
 	{
 		
-		uint32_t DirectoryEntry = ( Directory ) [ i ];
-		
-		if ( ( DirectoryEntry & DFlags_Present ) != 0 )
-			MM::Paging::PFA :: Free ( reinterpret_cast <void *> ( DirectoryEntry & 0xFFFFF000 ) );
+		 for ( I = 0; I < KernelVMLength; I += 0x400000 )
+		 	NewDirectoryVirtual [ I >> 22 ] = Kernel_PDirectory [ I >> 22 ];
 		
 	}
 	
-	MM::Paging::PFA :: Free ( reinterpret_cast <void *> ( Directory ) );
+	DirectoryPhysical = NewDirectoryPhysical;
+	DirectoryVirtual = NewDirectoryVirtual;
+	
+	RefCount = 0;
+	
+	Lock = MT::Synchronization::Spinlock :: Initializer ();
 	
 };
 
-void MM::Paging::PageTable :: SetMapping ( PDirectory Directory, uint32_t Virtual, uint32_t Physical, uint32_t Flags )
+MM::Paging::PageTable :: ~PageTable ()
 {
 	
-	uint32_t * DirectoryEntry = & Directory [ Virtual >> 22 ];
+	uint32_t I;
 	
-	if ( ( * DirectoryEntry & DFlags_Present ) == 0 )
+	for ( I = 0; I < 1024; I ++ )
 	{
 		
-		uint32_t * PTE;
-		
-		if ( ! MM::Paging::PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & PTE ) ) )
-			KPANIC ( "Failed to allocate paging directory entry!" );
-		
-		SetDirectoryEntry ( DirectoryEntry, reinterpret_cast <uint32_t> ( PTE ), DFlags_Present | DFlags_Writeable | ( Flags & Flags_User ) );
-		
-		for ( uint32_t i = 0; i < 1024; i ++ )
-			PTE [ i ] = Flags_Writeable;
+		if ( DirectoryVirtual [ I ] != Kernel_PDirectory [ I ] )
+		{
+			
+			uint32_t * TablePTR = reinterpret_cast <uint32_t *> ( DirectoryVirtual [ I ] & 0xFFFFF000 );
+			
+			if ( TablePTR != NULL )
+				PFA :: Free ( reinterpret_cast <void *> ( TablePTR ) );
+			
+		}
 		
 	}
 	
-	reinterpret_cast <uint32_t *> ( * DirectoryEntry & 0xFFFFF000 ) [ ( Virtual >> 12 ) & 0x3FF ] = ( Physical & 0xFFFFF000 ) | ( Flags & 0xFFF );
+	mm_kvunmap ( DirectoryVirtual );
+	
+	PFA :: Free ( reinterpret_cast <void *> ( DirectoryPhysical ) );
 	
 };
 
-void MM::Paging::PageTable :: ClearMapping ( PDirectory Directory, uint32_t Virtual )
+void MM::Paging::PageTable :: IncrementRef ()
 {
 	
-	uint32_t DirectoryEntry = Directory [ Virtual >> 22 ];
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	RefCount ++;
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+void MM::Paging::PageTable :: DecrementRef ()
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	RefCount --;
+	
+	if ( RefCount == 0 )
+	{
+	
+		delete this;
+		
+		return;
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+void MM::Paging::PageTable :: SetMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags )
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	uint32_t DirectoryEntry = DirectoryVirtual [ Virtual >> 22 ];
 	
 	if ( ( DirectoryEntry & DFlags_Present ) == 0 )
+	{
+		
+		if ( ! PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & DirectoryVirtual [ Virtual >> 22 ] ) ) )
+			KPANIC ( "Failed to allocate new directory entry!" );
+		
+		DirectoryEntry = DirectoryVirtual [ Virtual >> 22 ];
+		
+	}
+	
+	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryEntry ) & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+	
+	DirectoryVirtual [ ( Virtual >> 12 ) & 0x3FF ] = ( Physical & 0xFFFFF000 ) | ( Flags & 0xFFF );
+	
+	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryPhysical ), Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+void MM::Paging::PageTable :: ClearMapping ( uint32_t Virtual )
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	uint32_t DirectoryEntry = DirectoryVirtual [ Virtual >> 22 ];
+	
+	if ( ( DirectoryEntry & DFlags_Present ) == 0 )
+	{
+		
+		MT::Synchronization::Spinlock :: Release ( & Lock );
+		
 		return;
+		
+	}
 	
-	reinterpret_cast <uint32_t *> ( DirectoryEntry & 0xFFFFF000 ) [ ( Virtual >> 12 ) & 0x3FF ] = Flags_Writeable;
+	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryEntry ) & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
 	
-	mm_paging_invalPage ( Virtual );
+	DirectoryVirtual [ ( Virtual >> 12 ) & 0x3FF ] = 0;
+	
+	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryPhysical ), Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 

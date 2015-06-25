@@ -1,6 +1,7 @@
 #include <interrupt/APIC.h>
 #include <interrupt/IState.h>
 #include <interrupt/PIC.h>
+#include <interrupt/IRQ.h>
 
 #include <hw/cpu/CPUID.h>
 #include <hw/cpu/MSR.h>
@@ -14,7 +15,8 @@
 
 #include <mm/paging/PageTable.h>
 
-#include <cpputil/linkage.h>
+#include <cpputil/Linkage.h>
+#include <cpputil/Unused.h>
 
 C_LINKAGE uint32_t interrupt_APIC_MMIOLocation;
 
@@ -44,6 +46,8 @@ void Interrupt::APIC :: Init ()
 	
 	if ( BaseVirtual == NULL )
 		KPANIC ( "Failed to allocate virtual memory to map APIC!" );
+	
+	IRQ :: ExitMode = IRQ :: kIRQExit_APIC;
 	
 	Enable ();
 	
@@ -354,9 +358,11 @@ void Interrupt::APIC :: ClearErrorStatus ()
 void Interrupt::APIC :: EndOfInterrupt ( uint8_t Level )
 {
 	
-	uint32_t Level32 = Level;
+	UNUSED ( Level );
 	
-	WriteRegister ( kRegisterOffset_EOI, & Level32, 1 );
+	uint32_t Zero = 0;
+	
+	WriteRegister ( kRegisterOffset_EOI, & Zero, 1 );
 	
 };
 

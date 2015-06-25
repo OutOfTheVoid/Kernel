@@ -1,35 +1,40 @@
 #include <interrupt/IState.h>
 
-#include <hw/cpu/interrupt.h>
+#include <hw/cpu/Interrupt.h>
+#include <hw/cpu/Processor.h>
+#include <hw/cpu/EFlags.h>
 
 uint32_t Interrupt::IState :: BSPCount;
 
 void Interrupt::IState :: Init ()
 {
 	
-	BSPCount = 0;
+	HW::CPU::Processor :: GetCurrent () -> CurrentCLICount = 0;
 	
 };
 
 void Interrupt::IState :: IncrementBlock ()
 {
 	
-	if ( BSPCount == 0 )
-		hw_cpu_cli ();
+	hw_cpu_cli ();
 	
-	BSPCount ++;
+	HW::CPU::Processor :: CPUInfo * CPUI = HW::CPU::Processor :: GetCurrent ();
+	
+	CPUI -> CurrentCLICount ++;
 	
 };
 
 void Interrupt::IState :: DecrementBlock ()
 {
 	
-	if ( BSPCount == 0 )
+	HW::CPU::Processor :: CPUInfo * CPUI = HW::CPU::Processor :: GetCurrent ();
+	
+	if ( CPUI -> CurrentCLICount == 0 )
 		return;
 	
-	BSPCount --;
+	CPUI -> CurrentCLICount --;
 	
-	if ( BSPCount == 0 )
+	if ( CPUI -> CurrentCLICount == 0 )
 		hw_cpu_sei ();
 	
 };
@@ -37,6 +42,27 @@ void Interrupt::IState :: DecrementBlock ()
 uint32_t Interrupt::IState :: GetBlockCount ()
 {
 	
-	return BSPCount;
+	HW::CPU::Processor :: CPUInfo * CPUI = HW::CPU::Processor :: GetCurrent ();
+	
+	return CPUI -> CurrentCLICount;
+	
+};
+
+bool Interrupt::IState :: ReadAndSetBlock ()
+{
+	
+	uint32_t State = hw_cpu_readEFlags ();
+	
+	hw_cpu_cli ();
+	
+	return ( State & HW_CPU_EFLAGS_INTERRUPT ) != 0;
+	
+};
+
+void Interrupt::IState :: WriteBlock ( bool UnBlock )
+{
+	
+	if ( UnBlock )
+		hw_cpu_sei ();
 	
 };

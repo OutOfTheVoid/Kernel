@@ -1,11 +1,16 @@
 #include <interrupt/InterruptHandlers.h>
 #include <interrupt/IRQ.h>
+#include <interrupt/IState.h>
 
 #include <cpputil/linkage.h>
 
 #include <system/func/panic.h>
 
 #include <hw/cpu/IDT.h>
+#include <hw/cpu/Processor.h>
+
+#include <mt/hw/TSS.h>
+#include <mt/synchronization/Spinlock.h>
 
 #define INTERRUPT_ISR_NAME(number) interrupt_ISR##number
 #define INTERRUPT_ISR_EXTERN(number) C_LINKAGE void INTERRUPT_ISR_NAME(number) ()
@@ -162,6 +167,24 @@ void Interrupt::InterruptHandlers :: InstallSystemInterruptHandlers ()
 	HW::CPU::IDT :: DefineIDTEntry ( Interrupt::IRQ :: kIRQ_BaseInterrupt + 0x1F, & INTERRUPT_IRQ_NAME ( 0x1F ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	
 	HW::CPU::IDT :: DefineIDTEntry ( 0xFF, & INTERRUPT_IRQ_NAME ( 0xFF ), 0x08, HW::CPU::IDT :: kInterruptType_TrapGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
+	
+};
+
+void SetCPInterruptKernelStack ( void * StackTop, uint16_t SS )
+{
+	
+	HW::CPU::Processor :: CPUInfo * CurrentCPU = HW::CPU::Processor :: GetCurrent ();
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & CurrentCPU -> Lock );
+	
+	bool Block = Interrupt::IState :: ReadAndSetBlock ();
+	
+	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( StackTop );
+	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = SS;
+	
+	Interrupt::IState :: WriteBlock ( Block );
+	
+	MT::Synchronization::Spinlock :: Release ( & CurrentCPU -> Lock );
 	
 };
 

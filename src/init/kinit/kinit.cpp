@@ -33,9 +33,6 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 
 	if ( MultibootInfo == NULL )
 		KPANIC ( "Multiboot information not supplied!" );
-	
-	Interrupt::IState :: Init ();
-	Interrupt::IState :: IncrementBlock ();
 
 	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_LightBlue, HW::Video::VText :: Color_LightGrey ) );
 	
@@ -56,5 +53,7 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	MT :: Init ();
 	
 	system_func_kprintf ( "BSP Initialized!\n" );
+	
+	// hw_cpu_sei ();
 	
 };

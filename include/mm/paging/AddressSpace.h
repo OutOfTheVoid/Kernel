@@ -71,6 +71,11 @@ namespace MM
 			
 			void DebugPrint ();
 			
+			void Reference ();
+			void Dereference ();
+			
+			uint32_t GetRefCount ();
+			
 		private:
 			
 			friend class PAlloc;
@@ -136,6 +141,8 @@ namespace MM
 			
 			static const uint32_t kAddressRangePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
+			
+			uint32_t RefCount;
 			
 			AddressRange * RootFreeNode;
 			AddressRange * RootAllocatedNode;

@@ -19,6 +19,9 @@ namespace Interrupt
 		
 		static uint32_t GetBlockCount ();
 		
+		static bool ReadAndSetBlock ();
+		static void WriteBlock ( bool UnBlock );
+		
 	private:
 		
 		static uint32_t BSPCount;

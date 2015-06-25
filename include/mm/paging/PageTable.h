@@ -6,6 +6,8 @@
 #include <mm/MM.h>
 #include <mm/paging/Paging.h>
 
+#include <mt/synchronization/Spinlock.h>
+
 #include <stdint.h>
 
 namespace MM
@@ -33,11 +35,14 @@ namespace MM
 			static void KInit ();
 			static PDirectory GetKernelPD ();
 			
-			static PDirectory Create ();
-			static void Destroy ( PDirectory Table );
+			PageTable ( bool MapKernel );
+			~PageTable ();
 			
-			static void SetMapping ( PDirectory Directory, uint32_t Virtual, uint32_t Physical, uint32_t Flags );
-			static void ClearMapping ( PDirectory Directory, uint32_t Virtual );
+			void IncrementRef ();
+			void DecrementRef ();
+			
+			void SetMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags );
+			void ClearMapping ( uint32_t Virtual );
 			
 			static void SetKernelMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags );
 			static void ClearKernelMapping ( uint32_t Virtual );
@@ -54,6 +59,13 @@ namespace MM
 			static bool KPagingStatus ();
 			
 		private:
+			
+			PDirectory DirectoryPhysical;
+			PDirectory DirectoryVirtual;
+			
+			uint32_t RefCount;
+			
+			MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 			static void SetDirectoryEntry ( uint32_t * Directory, uint32_t TableAddress, uint32_t Flags );
 			

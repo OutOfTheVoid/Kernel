@@ -6,40 +6,48 @@
 
 #include <cpputil/linkage.h>
 
-C_LINKAGE void interrupt_IRQ_CommonIRQHandler ( Interrupt::IRQ :: IRQFrame * Frame );
+C_LINKAGE void interrupt_IRQ_CommonIRQHandler ( Interrupt::InterruptHandlers :: IRQFrame * Frame );
 
-void ( * Interrupt::IRQ :: IRQHandlers [ 0x20 ] ) ( IRQFrame * );
+void ( * Interrupt::IRQ :: IRQHandlers [ 0x20 ] ) ( InterruptHandlers :: IRQFrame * );
 
 uint8_t Interrupt::IRQ :: MaxIRQ = 0;
 Interrupt::IRQ :: IRQExit Interrupt::IRQ :: ExitMode = Interrupt::IRQ :: kIRQExit_None;
 
+MT::Synchronization::Spinlock :: Spinlock_t Interrupt::IRQ :: ListLocks [ 0x20 ];
+
 void Interrupt::IRQ :: Init ()
 {
 	
-	for ( uint32_t i = 0; i < 0x20; i ++ )
-		IRQHandlers [ i ] = NULL;
+	for ( uint32_t I = 0; I < 0x20; I ++ )
+	{
+		
+		IRQHandlers [ I ] = NULL;
+		
+		ListLocks [ I ] = MT::Synchronization::Spinlock :: Initializer ();
+		
+	}
 	
 };
 
-void Interrupt::IRQ :: SetIRQ ( uint8_t IRQNumber, void ( * Handler ) ( IRQFrame * ) )
+void Interrupt::IRQ :: SetIRQ ( uint8_t IRQNumber, void ( * Handler ) ( InterruptHandlers :: IRQFrame * ) )
 {
 	
 	if ( IRQNumber >= 0x10 )
 		return;
 	
-	Interrupt::IState :: IncrementBlock ();
+	bool DoSEI = Interrupt::IState :: ReadAndSetBlock ();
 	
 	IRQHandlers [ IRQNumber ] = Handler;
 	
-	Interrupt::IState :: DecrementBlock ();
+	Interrupt::IState :: WriteBlock ( DoSEI );
 	
 };
 
-void Interrupt::IRQ :: CallIRQ ( IRQFrame * Frame )
+void Interrupt::IRQ :: CallIRQ ( InterruptHandlers :: IRQFrame * Frame )
 {
 	
 	uint8_t IRQNumber = Frame -> IRQNumber;
-	void ( * Handler ) ( IRQFrame * );
+	void ( * Handler ) ( InterruptHandlers :: IRQFrame * );
 	
 	// APIC SPURIOUS INTERRUPT
 	if ( IRQNumber == 0xFF )
@@ -48,7 +56,11 @@ void Interrupt::IRQ :: CallIRQ ( IRQFrame * Frame )
 	if ( IRQNumber > MaxIRQ )
 		system_func_panic ( "IRQ out of range called!" );
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & ListLocks [ IRQNumber ] );
+	
 	Handler = IRQHandlers [ IRQNumber ];
+	
+	MT::Synchronization::Spinlock :: Release ( & ListLocks [ IRQNumber ] );
 	
 	if ( Handler != NULL )
 		( * Handler ) ( Frame );
@@ -64,6 +76,9 @@ void Interrupt::IRQ :: EndIRQ ( uint8_t Number )
 	case kIRQExit_PIC:
 		return Interrupt::PIC :: EndOfIRQ ( Number );
 		
+	case kIRQExit_APIC:
+		return Interrupt::APIC :: EndOfInterrupt ( Number );
+		
 	case kIRQExit_None:
 		return;
 		
@@ -71,7 +86,7 @@ void Interrupt::IRQ :: EndIRQ ( uint8_t Number )
 	
 };
 
-void interrupt_IRQ_CommonIRQHandler ( Interrupt::IRQ :: IRQFrame * Frame )
+void interrupt_IRQ_CommonIRQHandler ( Interrupt::InterruptHandlers :: IRQFrame * Frame )
 {
 	
 	Interrupt::IRQ :: CallIRQ ( Frame );

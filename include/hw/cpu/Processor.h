@@ -5,6 +5,7 @@
 
 #include <mt/MT.h>
 #include <mt/synchronization/Spinlock.h>
+#include <mt/hw/TSS.h>
 
 #include <stdint.h>
 
@@ -18,16 +19,20 @@ namespace HW
 		{
 		public:
 			
-			static const uint32_t kCPUFlag_RealMode = 0x01;
-			static const uint32_t kCPUFlag_V86 = 0x02;
-			static const uint32_t kCPUFlag_ProtectedMode = 0x04;
+			static const uint32_t kCPUFlag_RealMode = 0x001;
+			static const uint32_t kCPUFlag_V86 = 0x002;
+			static const uint32_t kCPUFlag_ProtectedMode = 0x004;
 			
-			static const uint32_t kCPUFlag_InitKernelStack = 0x08;
-			static const uint32_t kCPUFlag_StartingUp = 0x10;
+			static const uint32_t kCPUFlag_InitKernelStack = 0x008;
+			static const uint32_t kCPUFlag_StartingUp = 0x010;
 			
-			static const uint32_t kCPUFlag_Paging = 0x20;
+			static const uint32_t kCPUFlag_Paging = 0x020;
 			
-			static const uint32_t kCPUFlag_BSP = 0x40;
+			static const uint32_t kCPUFlag_BSP = 0x040;
+			
+			static const uint32_t kCPUFlag_Interrupts = 0x080;
+			
+			static const uint32_t kCPUFlag_Wait = 0x100;
 			
 			typedef struct
 			{
@@ -41,6 +46,8 @@ namespace HW
 				uint32_t InitStackLength;
 				
 				uint8_t Index;
+				
+				MT::HW::TSS :: TSS_t CrossPrivelegeInterruptTSS;
 				
 				MT::Synchronization::Spinlock :: Spinlock_t Lock;
 				

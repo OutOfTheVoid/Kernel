@@ -13,7 +13,7 @@ void mt_apinit_apmain ()
 	MT::Synchronization::Spinlock :: SpinAcquire ( & ThisCPU -> Lock );
 	
 	ThisCPU -> Flags &= ~ ( HW::CPU::Processor :: kCPUFlag_RealMode | HW::CPU::Processor :: kCPUFlag_StartingUp );
-	ThisCPU -> Flags |= HW::CPU::Processor :: kCPUFlag_ProtectedMode;
+	ThisCPU -> Flags |= HW::CPU::Processor :: kCPUFlag_ProtectedMode | HW::CPU::Processor :: kCPUFlag_Wait;
 	
 	uint8_t ID = ThisCPU -> Index;
 	
