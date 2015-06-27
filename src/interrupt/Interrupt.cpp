@@ -7,11 +7,22 @@
 
 #include <KernelDef.h>
 
-void Interrupt :: Init ()
+void Interrupt :: APICInitEarly ()
 {
 	
 	PIC :: Init ();
 	APIC :: Init ();
+	
+};
+
+void Interrupt :: Init ()
+{	
+};
+
+void Interrupt :: APInit ()
+{
+	
+	
 	
 };
 

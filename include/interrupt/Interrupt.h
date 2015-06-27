@@ -4,7 +4,10 @@
 namespace Interrupt
 {
 	
+	void APICInitEarly ();
+	
 	void Init ();
+	void APInit ();
 	
 };
 

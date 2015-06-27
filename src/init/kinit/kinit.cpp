@@ -34,7 +34,7 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	if ( MultibootInfo == NULL )
 		KPANIC ( "Multiboot information not supplied!" );
 
-	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_LightBlue, HW::Video::VText :: Color_LightGrey ) );
+	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_White, HW::Video::VText :: Color_Black ) );
 	
 	system_func_kprintf ( "Kernel 0.0.5 dev\n(C) Liam Taylor 2015.\n\nMM Init...\n" );
 	
@@ -44,13 +44,13 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	
 	HW::ACPI :: StaticInit ();
 	
-	system_func_kprintf ( "Interrupt Init...\n" );
-	
-	Interrupt :: Init ();
-	
 	system_func_kprintf ( "MT Init...\n" );
 	
 	MT :: Init ();
+	
+	system_func_kprintf ( "Interrupt Init...\n" );
+	
+	Interrupt :: Init ();
 	
 	system_func_kprintf ( "BSP Initialized!\n" );
 	

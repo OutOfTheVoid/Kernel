@@ -19,6 +19,21 @@ void mt_apinit_apmain ()
 	
 	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
 	
-	system_func_kprintf ( "Processor %u started!\n", ID );
+	system_func_kprintf ( "Processor %u started! Waiting for entry signal...\n", ID );
+	
+	bool Enter = false;
+	
+	while ( ! Enter )
+	{
+		
+		MT::Synchronization::Spinlock :: SpinAcquire ( & ThisCPU -> Lock );
+		
+		Enter = ( ThisCPU -> Flags & HW::CPU::Processor :: kCPUFlag_Wait ) == 0;
+		
+		MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
+		
+	}
+	
+	system_func_kprintf ( "Processor %u entered!\n", ID );
 	
 };

@@ -80,6 +80,8 @@ void MM::Paging::PFA :: Init2 ( multiboot_info_t * MultibootInfo, uint32_t Multi
 	uint32_t BaseAddr = 0;
 	uint32_t Length = 0;
 	
+	UNUSED ( MultibootInfoSize );
+	
 	multiboot_memory_map_t * MMapEntry = reinterpret_cast <multiboot_memory_map_t *> ( MultibootInfo -> mmap_addr );
 	
 	while ( reinterpret_cast <uint64_t> ( MMapEntry ) < MultibootInfo -> mmap_addr + MultibootInfo -> mmap_length )
