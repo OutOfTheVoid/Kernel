@@ -17,6 +17,7 @@ namespace MT
 		{
 		public:
 			
+			static const uint32_t kFlag_User = 0x0000;
 			static const uint32_t kFlag_Kernel = 0x0001;
 			
 			static const uint32_t kPrivelege_Exec = 0x0001;
@@ -46,6 +47,7 @@ namespace MT
 				uint32_t Privelege;
 				
 				uint32_t Priority;
+				uint32_t RunOut;
 				
 				struct Task_Struct * Next;
 				struct Task_Struct * Previous;
@@ -53,8 +55,6 @@ namespace MT
 				MM::Paging::AddressSpace * AddressSpace;
 				
 			} Task_t;
-			
-			Task_t * NewTask (  );
 			
 		private:
 			

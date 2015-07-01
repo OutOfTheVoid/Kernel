@@ -8,7 +8,7 @@
 #include <system/func/Panic.h>
 #include <system/func/KPrintf.h>
 
-C_LINKAGE void mm_segmentation_gdtLoad ();
+ASM_LINKAGE void mm_segmentation_gdtLoad ();
 
 C_LINKAGE MM::Segmentation::GDT :: GDTR Kernel_GDTR;
 C_LINKAGE MM::Segmentation::GDT :: GDTR Kernel_OLD_GDTR;

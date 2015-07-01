@@ -3,6 +3,6 @@
 
 #include <cpputil/linkage.h>
 
-C_LINKAGE void hw_cpu_hang ();
+ASM_LINKAGE void hw_cpu_hang ();
 
 #endif

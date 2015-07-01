@@ -1,17 +1,17 @@
-#include <system/func/PMalloc.h>
-#include <system/func/KPrintf.h>
-
+#include <mm/PMalloc.h>
 #include <mm/paging/AddressSpace.h>
 #include <mm/paging/PFA.h>
 #include <mm/paging/PageTable.h>
+
+#include <system/func/KPrintf.h>
 
 #include <math/bitmath.h>
 
 #include <stdint.h>
 
-void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages );
+void __mm_pmallocFailure ( void * Virtual, uint32_t Pages );
 
-void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
+void * mm_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 {
 	
 	void * Virtual = NULL;
@@ -105,7 +105,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 			if ( ! MM::Paging::PFA :: Alloc ( 0x1000, & Physical ) )
 			{
 				
-				__system_func_pmallocFailure ( VCopy, PagesCopy );
+				__mm_pmallocFailure ( VCopy, PagesCopy );
 				
 				return NULL;
 				
@@ -124,7 +124,7 @@ void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags, uint32_t Hint )
 	
 };
 
-void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
+void __mm_pmallocFailure ( void * Virtual, uint32_t Pages )
 {
 	
 	uint32_t Offset = 0;
@@ -148,7 +148,7 @@ void __system_func_pmallocFailure ( void * Virtual, uint32_t Pages )
 	
 	};
 
-void system_func_pfree ( void * Base )
+void mm_pfree ( void * Base )
 {
 	
 	MM::Paging::AddressSpace * KernelAddressSpace = MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ();
@@ -179,7 +179,7 @@ void system_func_pfree ( void * Base )
 	
 };
 
-uint32_t system_func_psize ( void * Base )
+uint32_t mm_psize ( void * Base )
 {
 	
 	MM::Paging::AddressSpace * KernelAddressSpace = MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ();

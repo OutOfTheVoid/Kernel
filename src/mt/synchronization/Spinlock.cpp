@@ -2,9 +2,9 @@
 
 #include <cpputil/Linkage.h>
 
-C_LINKAGE uint32_t mt_synchronization_tryslock ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
-C_LINKAGE void mt_synchronization_pwacquirelock ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
-C_LINKAGE void mt_synchronization_release ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
+ASM_LINKAGE uint32_t mt_synchronization_tryslock ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
+ASM_LINKAGE void mt_synchronization_pwacquirelock ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
+ASM_LINKAGE void mt_synchronization_release ( MT::Synchronization::Spinlock :: Spinlock_t * Lock );
 
 
 void MT::Synchronization::Spinlock :: SpinAcquire ( Spinlock_t * Lock )

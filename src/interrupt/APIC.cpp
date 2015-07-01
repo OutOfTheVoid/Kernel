@@ -11,6 +11,8 @@
 #include <system/func/Panic.h>
 #include <system/func/KPrintF.h>
 
+#include <mt/timing/PWaitMS.h>
+
 #include <mm/KVMap.h>
 
 #include <mm/paging/PageTable.h>
@@ -24,6 +26,8 @@ bool Interrupt::APIC :: Availible = true;
 		
 uint32_t Interrupt::APIC :: Base = 0;
 uint32_t * Interrupt::APIC :: BaseVirtual = NULL;
+
+double Interrupt::APIC :: BusFrequencey = 0.0;
 
 void Interrupt::APIC :: Init ()
 {
@@ -52,6 +56,24 @@ void Interrupt::APIC :: Init ()
 	Enable ();
 	
 	SetTaskPriority ( 0 );
+	
+	uint32_t Timeout;
+	
+	SetLocalTimerDivide ( kTimerDivision_16 );
+	StartTimerOneShot ( 0xFFFFFFFF );
+	mt_timing_pwaitms ( 20.0 );
+	Timeout = ReadTimer ();
+	
+	Timeout = 0xFFFFFFFF - Timeout;
+	
+	BusFrequencey = 320.0 * static_cast <double> ( Timeout );
+	
+};
+
+double Interrupt::APIC :: GetBusFrequencey ()
+{
+	
+	return BusFrequencey;
 	
 };
 
@@ -298,6 +320,17 @@ void Interrupt::APIC :: StartTimerPeriodic ( uint32_t SystemClockPeriod )
 		WriteRegister ( kRegisterOffset_LVTTimer, & LVTEntry, 1 );
 		
 	}
+	
+};
+
+uint32_t Interrupt::APIC :: ReadTimer ()
+{
+	
+	uint32_t TimerCountRegister;
+	
+	ReadRegister ( kRegisterOffset_TimerCurrentCount, & TimerCountRegister, 1 );
+	
+	return TimerCountRegister;
 	
 };
 

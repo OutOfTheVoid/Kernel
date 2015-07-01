@@ -18,13 +18,13 @@ MM::Paging::PageTable :: PDirectory Kernel_PDirectory = 0;
 C_LINKAGE uint32_t mm_paging_kernelpt;
 C_LINKAGE uint32_t mm_paging_kernelpd;
 
-C_LINKAGE void mm_paging_loadPageDirectory ( MM::Paging::PageTable :: PDirectory );
-C_LINKAGE void mm_paging_enable ();
-C_LINKAGE void mm_paging_disable ();
-C_LINKAGE void mm_paging_flushCR3 ();
-C_LINKAGE void mm_paging_invalPage ( uint32_t Virtual );
+ASM_LINKAGE void mm_paging_loadPageDirectory ( MM::Paging::PageTable :: PDirectory );
+ASM_LINKAGE void mm_paging_enable ();
+ASM_LINKAGE void mm_paging_disable ();
+ASM_LINKAGE void mm_paging_flushCR3 ();
+ASM_LINKAGE void mm_paging_invalPage ( uint32_t Virtual );
 
-C_LINKAGE uint32_t mm_paging_getStatus ();
+ASM_LINKAGE uint32_t mm_paging_getStatus ();
 
 void MM::Paging::PageTable :: KInit ()
 {
@@ -192,13 +192,84 @@ void MM::Paging::PageTable :: ClearMapping ( uint32_t Virtual )
 		
 	}
 	
-	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryEntry ) & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), DirectoryEntry & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
 	
 	DirectoryVirtual [ ( Virtual >> 12 ) & 0x3FF ] = 0;
 	
 	SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryPhysical ), Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
 	
 	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+void MM::Paging::PageTable :: SetRegionMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Length, uint32_t Flags )
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	for ( uint32_t Offset = 0; Offset < Length; Offset += 0x1000 )
+	{
+		
+		uint32_t DirectoryEntry = DirectoryVirtual [ ( Virtual + Offset ) >> 22 ];
+		
+		if ( ( DirectoryEntry & DFlags_Present ) == 0 )
+		{
+			
+			if ( ! PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & DirectoryVirtual [ ( Virtual + Offset ) >> 22 ] ) ) )
+				KPANIC ( "Failed to allocate new directory entry!" );
+			
+			DirectoryEntry = DirectoryVirtual [ ( Virtual + Offset ) >> 22 ];
+			
+		}
+		
+		SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), DirectoryEntry & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+		
+		DirectoryVirtual [ ( ( Virtual + Offset ) >> 12 ) & 0x3FF ] = ( ( Physical + Offset ) & 0xFFFFF000 ) | ( Flags & 0xFFF );
+	
+		SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryPhysical ), Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+void MM::Paging::PageTable :: ClearRegionMapping ( uint32_t Virtual, uint32_t Length )
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	for ( uint32_t Offset = 0; Offset < Length; Offset += 0x1000 )
+	{
+		
+		uint32_t DirectoryEntry = DirectoryVirtual [ ( Virtual + Offset ) >> 22 ];
+		
+		if ( ( DirectoryEntry & DFlags_Present ) == 0 )
+		{
+			
+			if ( ! PFA :: Alloc ( 0x1000, reinterpret_cast <void **> ( & DirectoryVirtual [ ( Virtual + Offset ) >> 22 ] ) ) )
+				KPANIC ( "Failed to allocate new directory entry!" );
+			
+			DirectoryEntry = DirectoryVirtual [ ( Virtual + Offset ) >> 22 ];
+			
+		}
+		
+		SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), DirectoryEntry & 0xFFFFF000, Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+		
+		DirectoryVirtual [ ( ( Virtual + Offset ) >> 12 ) & 0x3FF ] = 0;
+	
+		SetKernelMapping ( reinterpret_cast <uint32_t> ( DirectoryVirtual ), reinterpret_cast <uint32_t> ( DirectoryPhysical ), Flags_Present | Flags_Writeable | Flags_Cutsom_KMap );
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+};
+
+uint32_t MM::Paging::PageTable :: GetCR3 ()
+{
+	
+	return reinterpret_cast <uint32_t> ( DirectoryPhysical );
 	
 };
 

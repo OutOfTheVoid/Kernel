@@ -87,7 +87,7 @@ bool MT::Timing::PIT :: GetTimeout ()
 void mt_timing_waitms ( double MS )
 {
 	
-	if ( MS < 0 )
+	if ( MS < 0 ) // Allow 0 for deadtime callibration.
 		return;
 	
 	while ( MS > 50.0 )

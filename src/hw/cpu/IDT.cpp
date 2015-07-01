@@ -4,7 +4,7 @@
 
 #include <interrupt/IState.h>
 
-C_LINKAGE void hw_cpu_idtLoad ();
+ASM_LINKAGE void hw_cpu_idtLoad ();
 
 C_LINKAGE HW::CPU::IDT :: IDTR Kernel_IDTR;
 C_LINKAGE HW::CPU::IDT :: IDTEntry Kernel_IDTEntries [];

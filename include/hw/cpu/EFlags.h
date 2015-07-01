@@ -3,6 +3,6 @@
 
 #include <cpputil/Linkage.h>
 
-C_LINKAGE uint32_t hw_cpu_readEFlags ();
+ASM_LINKAGE uint32_t hw_cpu_readEFlags ();
 
 #endif

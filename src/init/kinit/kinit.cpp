@@ -14,6 +14,7 @@
 
 #include <interrupt/IState.h>
 #include <interrupt/Interrupt.h>
+#include <interrupt/APIC.h>
 
 #include <hw/acpi/ACPI.h>
 
@@ -52,8 +53,8 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	
 	Interrupt :: Init ();
 	
-	system_func_kprintf ( "BSP Initialized!\n" );
+	system_func_kprintf ( "System bus frequencey: %u MHz \n", static_cast <uint32_t> ( Interrupt::APIC :: GetBusFrequencey () / 1000000.0 ) );
 	
-	// hw_cpu_sei ();
+	system_func_kprintf ( "BSP Initialized!\n" );
 	
 };

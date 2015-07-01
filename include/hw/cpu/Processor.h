@@ -4,6 +4,7 @@
 #include <hw/cpu/CPU.h>
 
 #include <mt/MT.h>
+#include <mt/tasking/Task.h>
 #include <mt/synchronization/Spinlock.h>
 #include <mt/hw/TSS.h>
 
@@ -50,6 +51,8 @@ namespace HW
 				MT::HW::TSS :: TSS_t CrossPrivelegeInterruptTSS;
 				
 				MT::Synchronization::Spinlock :: Spinlock_t Lock;
+				
+				MT::Tasking::Task :: Task_t * IdleTask;
 				
 			} CPUInfo;
 			

@@ -6,6 +6,6 @@
 #include <cpputil/linkage.h>
 #include <boot/multiboot/multiboot.h>
 
-C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo );
+ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo );
 
 #endif

@@ -2,10 +2,10 @@
 
 #include <mm/paging/PFA.h>
 #include <mm/paging/PageTable.h>
+#include <mm/PMalloc.h>
 
 #include <system/func/Panic.h>
 #include <system/func/KPrintf.h>
-#include <system/func/PMalloc.h>
 
 #include <cpputil/Unused.h>
 
@@ -21,7 +21,7 @@ const char * MM::Paging::AddressSpace :: ErrorStrings [] =
 	"Allocation is unimplemented for non-kernel address spaces.",
 	"The memory freed was not allocated.",
 	"The memory referenced was not allocated.",
-	"system_func_pmalloc failed to allocate a kernel page."
+	"mm_pmalloc failed to allocate a kernel page."
 };
 
 char MM::Paging::AddressSpace :: KernelAddressSpaceMem [ sizeof ( AddressSpace ) + 4 ];
@@ -99,7 +99,7 @@ void MM::Paging::AddressSpace :: CreateAddressSpace ( AddressSpace * Space, bool
 	else
 	{
 		
-		InitialStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
+		InitialStorage = reinterpret_cast <Storage *> ( mm_pmalloc ( 1 ) );
 		
 		if ( InitialStorage == NULL )
 		{
@@ -217,7 +217,7 @@ bool MM::Paging::AddressSpace :: CheckStorage ( uint32_t * Error )
 		else
 		{
 			
-			NewStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
+			NewStorage = reinterpret_cast <Storage *> ( mm_pmalloc ( 1 ) );
 			
 			if ( NewStorage == NULL )
 			{
@@ -577,7 +577,7 @@ void MM::Paging::AddressSpace :: FreeOldRange ( AddressRange * Range )
 		else
 		{
 			
-			system_func_pfree ( reinterpret_cast <void *> ( ContainerStorage ) );
+			mm_pfree ( reinterpret_cast <void *> ( ContainerStorage ) );
 			
 			return;
 			
@@ -1375,7 +1375,7 @@ MM::Paging::AddressSpace :: ~AddressSpace ()
 		Storage * PendingFreeStorage = FreeStorageHead;
 		FreeStorageHead = PendingFreeStorage -> Next;
 		
-		system_func_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
+		mm_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
 		
 	}
 	
@@ -1385,7 +1385,7 @@ MM::Paging::AddressSpace :: ~AddressSpace ()
 		Storage * PendingFreeStorage = FreeStorageHead;
 		FreeStorageHead = PendingFreeStorage -> Next;
 		
-		system_func_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
+		mm_pfree ( reinterpret_cast <void *> ( PendingFreeStorage ) );
 		
 	}
 	
@@ -1454,7 +1454,7 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 		else
 		{
 			
-			NewStorage = reinterpret_cast <Storage *> ( system_func_pmalloc ( 1 ) );
+			NewStorage = reinterpret_cast <Storage *> ( mm_pmalloc ( 1 ) );
 			
 		}
 		

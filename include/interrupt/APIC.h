@@ -42,6 +42,7 @@ namespace Interrupt
 		
 		static void StartTimerOneShot ( uint32_t InitialValue );
 		static bool PollTimerOneShot ();
+		static uint32_t ReadTimer ();
 		
 		static void StartTimerPeriodic ( uint32_t SystemClockPeriod );
 		
@@ -56,6 +57,8 @@ namespace Interrupt
 		
 		static bool IPIAccepted ();
 		
+		static double GetBusFrequencey ();
+		
 	private:
 		
 		static uint8_t GetLocalLVTCount ();
@@ -69,6 +72,8 @@ namespace Interrupt
 		
 		static uint32_t Base;
 		static uint32_t * BaseVirtual;
+		
+		static double BusFrequencey;
 		
 		static const uint32_t kRegisterOffset_ID = 0x020;
 		static const uint32_t kRegisterOffset_Version = 0x030;

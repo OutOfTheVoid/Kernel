@@ -2,6 +2,8 @@
 #define MT_TASKING_SCHEDULER_H
 
 #include <mt/tasking/Tasking.h>
+#include <mt/tasking/Task.h>
+#include <mt/synchronization/Spinlock.h>
 
 namespace MT
 {
@@ -13,10 +15,17 @@ namespace MT
 		{
 		public:
 			
-			void Schedule ();
+			static void PInit ();
+			static void Schedule ();
 			
 		private:
 			
+			static Task :: Task_t * ProccessTable [ 0x20 ];
+			
+			static Synchronization::Spinlock :: Spinlock_t TIDLock;
+			static uint64_t MaxID;
+			
+			static uint64_t GetNewTaskID ();
 			
 		};
 		

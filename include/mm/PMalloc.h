@@ -11,9 +11,9 @@
 #define PMALLOC_PHSCHEME_BINARY 2
 #define PMALLOC_PHSCHEME_DISTRIBUTE 3
 
-void * system_func_pmalloc ( uint32_t Pages, uint32_t PTFlags = 0, uint32_t Hint = PMALLOC_PHSCHEME_DEFAULT );
-void system_func_pfree ( void * Base );
+void * mm_pmalloc ( uint32_t Pages, uint32_t PTFlags = 0, uint32_t Hint = PMALLOC_PHSCHEME_DEFAULT );
+void mm_pfree ( void * Base );
 
-uint32_t system_func_psize ( void * Base );
+uint32_t mm_psize ( void * Base );
 
 #endif

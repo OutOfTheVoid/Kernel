@@ -6,7 +6,7 @@
 
 #include <cpputil/linkage.h>
 
-C_LINKAGE void interrupt_IRQ_CommonIRQHandler ( Interrupt::InterruptHandlers :: IRQFrame * Frame );
+ASM_LINKAGE void interrupt_IRQ_CommonIRQHandler ( Interrupt::InterruptHandlers :: IRQFrame * Frame );
 
 void ( * Interrupt::IRQ :: IRQHandlers [ 0x20 ] ) ( InterruptHandlers :: IRQFrame * );
 

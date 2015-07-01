@@ -42,11 +42,17 @@ namespace MM
 			void DecrementRef ();
 			
 			void SetMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags );
+			void SetRegionMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Length, uint32_t Flags );
+			
 			void ClearMapping ( uint32_t Virtual );
+			void ClearRegionMapping ( uint32_t Virtual, uint32_t Length );
+			
+			uint32_t GetCR3 ();
 			
 			static void SetKernelMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags );
-			static void ClearKernelMapping ( uint32_t Virtual );
 			static void SetKernelRegionMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Length, uint32_t Flags );
+			
+			static void ClearKernelMapping ( uint32_t Virtual );
 			static void ClearKernelRegionMapping ( uint32_t Virtual, uint32_t Length );
 			
 			static uint32_t KernelVirtualToPhysical ( uint32_t Virtual );

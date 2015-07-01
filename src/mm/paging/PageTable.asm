@@ -15,7 +15,7 @@ mm_paging_loadPageDirectory:
 	push ebp
 	mov ebp, esp
 	
-	mov eax, [ esp + 8 ]
+	mov eax, [ ebp + 8 ]
 	mov cr3, eax
 	
 	mov esp, ebp
@@ -69,7 +69,7 @@ mm_paging_invalPage:
 	push ebp
 	mov ebp, esp
 	
-	mov eax, [ esp + 8 ]
+	mov eax, [ ebp + 8 ]
 	invlpg [eax]
 	
 	mov esp, ebp

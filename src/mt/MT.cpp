@@ -5,8 +5,8 @@
 
 #include <system/func/KPrintF.h>
 #include <system/func/Panic.h>
-#include <system/func/PMalloc.h>
 
+#include <mm/PMalloc.h>
 #include <mm/paging/PageTable.h>
 
 #include <interrupt/Interrupt.h>
@@ -23,11 +23,10 @@ void MT :: Init ()
 	
 	system_func_kprintf ( "MT :: Init ()\n" );
 	
-	Interrupt :: APICInitEarly ();
-	
 	system_func_kprintf ( "Initializiing PIT...\n" );
 	
 	Timing::PIT :: Init ();
+	Interrupt :: APICInitEarly ();
 	
 	system_func_kprintf ( "Initializiing application processors...\n" );
 	
@@ -56,7 +55,7 @@ void MT :: Init ()
 					
 					system_func_kprintf ( "Initializiing AP (ID: %u, APIC ID: %u)...\n", I, APICID );
 					
-					void * InitStackBottom = system_func_pmalloc ( 4 );
+					void * InitStackBottom = mm_pmalloc ( 4 );
 					
 					if ( InitStackBottom == NULL )
 						KPANIC ( "Failed to allocate 16KB stack for application processor!" );

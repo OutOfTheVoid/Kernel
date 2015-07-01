@@ -13,10 +13,10 @@
 #include <mt/synchronization/Spinlock.h>
 
 #define INTERRUPT_ISR_NAME(number) interrupt_ISR##number
-#define INTERRUPT_ISR_EXTERN(number) C_LINKAGE void INTERRUPT_ISR_NAME(number) ()
+#define INTERRUPT_ISR_EXTERN(number) ASM_LINKAGE void INTERRUPT_ISR_NAME(number) ()
 
 #define INTERRUPT_IRQ_NAME(number) interrupt_IRQ##number
-#define INTERRUPT_IRQ_EXTERN(number) C_LINKAGE void INTERRUPT_IRQ_NAME(number) ()
+#define INTERRUPT_IRQ_EXTERN(number) ASM_LINKAGE void INTERRUPT_IRQ_NAME(number) ()
 
 INTERRUPT_ISR_EXTERN ( 0x00 );
 INTERRUPT_ISR_EXTERN ( 0x01 );
@@ -86,7 +86,7 @@ INTERRUPT_IRQ_EXTERN ( 0x1F );
 
 INTERRUPT_IRQ_EXTERN ( 0xFF ); // For APICs
 
-C_LINKAGE void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame );
+ASM_LINKAGE void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame );
 
 void Interrupt::InterruptHandlers :: Init ()
 {
