@@ -40,7 +40,8 @@ namespace MT
 				
 				void * WaitAttribute;
 				
-				Interrupt::InterruptHandlers :: ISRFrame PState;
+				void * KStack;
+				Interrupt::InterruptHandlers :: ISRFrame * PState;
 				
 				uint32_t User;
 				

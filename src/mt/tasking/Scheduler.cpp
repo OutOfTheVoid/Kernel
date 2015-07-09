@@ -1,5 +1,9 @@
 #include <mt/tasking/Scheduler.h>
+#include <mt/tasking/Switcher.h>
 #include <mt/tasking/Task.h>
+#include <mt/tasking/Idle.h>
+
+#include <hw/cpu/EFlags.h>
 
 #include <mm/KMalloc.h>
 #include <mm/PMAlloc.h>
@@ -45,7 +49,20 @@ void MT::Tasking::Scheduler :: PInit ()
 	ThisCPU -> IdleTask -> Priority = 0xFFFFFFFF;
 	ThisCPU -> IdleTask -> Next = ThisCPU -> IdleTask;
 	
+	void * KStack = mm_pmalloc ( 1 );
+	void * TStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( KStack ) + 0x1000 );
 	
+	if ( KStack == NULL )
+		KPANIC ( "Failed to allocate idle task stack!" );
+	
+	Switcher :: SetupInitISRReturnStack ( ThisCPU -> IdleTask, KStack, 0x800 );
+	
+	ThisCPU -> IdleTask -> PState -> EIP = reinterpret_cast <uint32_t> ( & mt_tasking_idleEntry );
+	ThisCPU -> IdleTask -> PState -> UserESP = reinterpret_cast <uint32_t> ( TStack );
+	ThisCPU -> IdleTask -> PState -> EFlags = 0x200; // 0x202
+	ThisCPU -> IdleTask -> PState -> CS = 0x08;
+	ThisCPU -> IdleTask -> PState -> DS = 0x10;
+	ThisCPU -> IdleTask -> PState -> SS = 0x10;
 	
 };
 

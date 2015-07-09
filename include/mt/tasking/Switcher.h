@@ -14,9 +14,14 @@ namespace MT
 		{
 		public:
 		
-			void Init (  );
+			static void Init ();
+			static void SetupInitISRReturnStack ( Task :: Task_t * EntryTask, void * KStackBottom, uint32_t StackSize );
 			
 		private:
+			
+			static void StackPush ( void ** Stack, uint32_t Value );
+			static uint32_t StackPop ( void ** Stack );
+			static uint32_t StackPeek ( void ** Stack );
 			
 		};
 		

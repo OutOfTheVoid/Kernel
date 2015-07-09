@@ -137,8 +137,6 @@ interrupt_ISRCommonHandler:
 	
 	add esp, 8
 	
-	sti
-	
 	iret
 	
 	
