@@ -45,16 +45,27 @@ C_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootIn
 	
 	HW::ACPI :: StaticInit ();
 	
-	system_func_kprintf ( "MT Init...\n" );
+	system_func_kprintf ( "MP Init...\n" );
 	
-	MT :: Init ();
+	MT :: MPInit ();
 	
 	system_func_kprintf ( "Interrupt Init...\n" );
 	
 	Interrupt :: Init ();
 	
-	system_func_kprintf ( "System bus frequencey: %u MHz \n", static_cast <uint32_t> ( Interrupt::APIC :: GetBusFrequencey () / 1000000.0 ) );
+	system_func_kprintf ( "MT Init...\n" );
 	
-	system_func_kprintf ( "BSP Initialized!\n" );
+	MT :: MTInit ();
+	
+	system_func_kprintf ( "System bus frequecey: %i MHz", static_cast <uint32_t> ( Interrupt::APIC :: GetBusFrequencey () / 1000000.0 ) );
+	
+	while ( true )
+	{
+		
+		for ( uint32_t I = 0; I < 0x80000000; I ++ );
+			
+		system_func_kprintf ( "Tick" );
+		
+	}
 	
 };

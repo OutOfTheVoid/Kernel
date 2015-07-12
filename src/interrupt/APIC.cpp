@@ -5,6 +5,7 @@
 
 #include <hw/cpu/CPUID.h>
 #include <hw/cpu/MSR.h>
+#include <hw/cpu/TSC.h>
 
 #include <hw/acpi/MADT.h>
 
@@ -57,16 +58,11 @@ void Interrupt::APIC :: Init ()
 	
 	SetTaskPriority ( 0 );
 	
-	uint32_t Timeout;
+	uint64_t Tick = HW::CPU::TSC :: Read ();
+	mt_timing_pwaitms ( 50.0 );
+	Tick = HW::CPU::TSC :: Read () - Tick;
 	
-	SetLocalTimerDivide ( kTimerDivision_16 );
-	StartTimerOneShot ( 0xFFFFFFFF );
-	mt_timing_pwaitms ( 20.0 );
-	Timeout = ReadTimer ();
-	
-	Timeout = 0xFFFFFFFF - Timeout;
-	
-	BusFrequencey = 320.0 * static_cast <double> ( Timeout );
+	BusFrequencey = Tick * 20;
 	
 };
 

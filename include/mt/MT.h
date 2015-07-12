@@ -4,7 +4,8 @@
 namespace MT
 {
 	
-	void Init ();
+	void MPInit ();
+	void MTInit ();
 	
 };
 

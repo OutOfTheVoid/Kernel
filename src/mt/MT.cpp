@@ -2,6 +2,7 @@
 #include <mt/timing/PWaitMS.h>
 #include <mt/timing/PIT.h>
 #include <mt/apinit/APTrampoline.h>
+#include <mt/tasking/Scheduler.h>
 
 #include <system/func/KPrintF.h>
 #include <system/func/Panic.h>
@@ -18,7 +19,7 @@
 
 #include <boot/BootImage.h>
 
-void MT :: Init ()
+void MT :: MPInit ()
 {
 	
 	system_func_kprintf ( "MT :: Init ()\n" );
@@ -106,3 +107,9 @@ void MT :: Init ()
 	
 };
 
+void MT :: MTInit ()
+{
+	
+	Tasking::Scheduler :: PInit ();
+	
+};

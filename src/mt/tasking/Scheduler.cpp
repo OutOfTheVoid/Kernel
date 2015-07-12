@@ -14,10 +14,26 @@
 
 #include <util/string/String.h>
 
+#include <interrupt/InterruptHandlers.h>
+#include <interrupt/APIC.h>
+
 MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TIDLock = MT::Synchronization::Spinlock :: Initializer ();
 uint64_t MT::Tasking::Scheduler :: MaxID = 0;
 
-MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: ProccessTable [ 0x20 ];
+MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TTLock = MT::Synchronization::Spinlock :: Initializer ();
+MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: TaskTable [ 0x20 ];
+
+ASM_LINKAGE void mt_tasking_schedulerInterrupt ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+
+void MT::Tasking::Scheduler :: Init ()
+{
+	
+	for ( uint32_t I = 0; I < 0x20; I ++ )
+		TaskTable [ I ] = NULL;
+	
+	Interrupt::InterruptHandlers :: SetInterruptHandler ( 0x20, & mt_tasking_schedulerInterrupt );
+	
+};
 
 void MT::Tasking::Scheduler :: PInit ()
 {
@@ -48,28 +64,100 @@ void MT::Tasking::Scheduler :: PInit ()
 	ThisCPU -> IdleTask -> Privelege = MT::Tasking::Task :: kPrivelege_Exec | MT::Tasking::Task :: kPrivelege_IO;
 	ThisCPU -> IdleTask -> Priority = 0xFFFFFFFF;
 	ThisCPU -> IdleTask -> Next = ThisCPU -> IdleTask;
+	ThisCPU -> IdleTask -> Previous = ThisCPU -> IdleTask;
 	
-	void * KStack = mm_pmalloc ( 1 );
-	void * TStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( KStack ) + 0x1000 );
+	ThisCPU -> CurrentTask = ThisCPU -> IdleTask;
 	
-	if ( KStack == NULL )
-		KPANIC ( "Failed to allocate idle task stack!" );
+	Interrupt::APIC :: SetLocalTimerVector ( true, 0x20 );
+	Interrupt::APIC :: SetLocalTimerDivide ( Interrupt::APIC :: kTimerDivision_16 );
 	
-	Switcher :: SetupInitISRReturnStack ( ThisCPU -> IdleTask, KStack, 0x800 );
+	double SystemClockPeriod = kSchedulingQuantumMS * 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
 	
-	ThisCPU -> IdleTask -> PState -> EIP = reinterpret_cast <uint32_t> ( & mt_tasking_idleEntry );
-	ThisCPU -> IdleTask -> PState -> UserESP = reinterpret_cast <uint32_t> ( TStack );
-	ThisCPU -> IdleTask -> PState -> EFlags = 0x200; // 0x202
-	ThisCPU -> IdleTask -> PState -> CS = 0x08;
-	ThisCPU -> IdleTask -> PState -> DS = 0x10;
-	ThisCPU -> IdleTask -> PState -> SS = 0x10;
+	Interrupt::APIC :: StartTimerPeriodic ( static_cast <uint32_t> ( SystemClockPeriod ) );
 	
 };
 
 void MT::Tasking::Scheduler :: Schedule ()
 {
 	
+	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	
+	Task :: Task_t * Next = NULL;
+	uint32_t I;
+	
+	for ( I = 0; I < 0x20; I ++ )
+	{
+		
+		if ( TaskTable [ I ] != NULL )
+		{
+			
+			Next = TaskTable [ I ];
+			
+			break;
+			
+		}
+		
+	}
+	
+	if ( Next == NULL )
+		Next = ThisCPU -> IdleTask;
+	
+	if ( Next == ThisCPU -> CurrentTask )
+	{
+		
+		MT::Synchronization::Spinlock :: Release ( & TTLock );
+		
+		return;
+		
+	}
+	
+	if ( Next != ThisCPU -> IdleTask )
+	{
+		
+		if ( TaskTable [ I ] -> Next == TaskTable [ I ] )
+			TaskTable [ I ] = NULL;
+		else
+		{
+			
+			TaskTable [ I ] = Next -> Next;
+			TaskTable [ I ] -> Previous = Next -> Previous;
+			TaskTable [ I ] -> Previous -> Next = TaskTable [ I ];
+			
+		}
+		
+	}
+	
+	if ( ( ThisCPU -> CurrentTask -> State == Task :: kState_Runnable ) && ThisCPU -> CurrentTask != ThisCPU -> IdleTask )
+	{
+		
+		uint32_t OldPriority = ThisCPU -> CurrentTask -> Priority;
+		
+		if ( TaskTable [ OldPriority ] != NULL )
+		{
+			
+			TaskTable [ OldPriority ] -> Previous -> Next = ThisCPU -> CurrentTask;
+			ThisCPU -> CurrentTask -> Previous = TaskTable [ OldPriority ] -> Previous;
+			
+			TaskTable [ OldPriority ] -> Previous = ThisCPU -> CurrentTask;
+			ThisCPU -> CurrentTask -> Next = TaskTable [ OldPriority ];
+			
+		}
+		else
+		{
+			
+			TaskTable [ OldPriority ] = ThisCPU -> CurrentTask;
+			ThisCPU -> CurrentTask -> Next = ThisCPU -> CurrentTask;
+			ThisCPU -> CurrentTask -> Previous = ThisCPU -> CurrentTask;
+			
+		}
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	
+	Switcher :: SwitchTo ( Next, ThisCPU -> CurrentTask );
 	
 };
 
@@ -84,5 +172,12 @@ uint64_t MT::Tasking::Scheduler :: GetNewTaskID ()
 	MT::Synchronization::Spinlock :: Release ( & TIDLock );
 	
 	return Return;
+	
+};
+
+void mt_tasking_schedulerInterrupt ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
+{
+	
+	MT::Tasking::Scheduler :: Schedule ();
 	
 };

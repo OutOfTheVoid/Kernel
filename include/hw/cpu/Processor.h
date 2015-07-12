@@ -54,13 +54,15 @@ namespace HW
 				
 				MT::Tasking::Task :: Task_t * IdleTask;
 				
+				MT::Tasking::Task :: Task_t * CurrentTask;
+				
 			} CPUInfo;
 			
 			static CPUInfo * GetCurrent ();
 			
 		private:
 			
-			friend void MT :: Init ();
+			friend void MT :: MPInit ();
 			
 			static CPUInfo * Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength );
 			

@@ -5,6 +5,7 @@
 
 #include <interrupt/InterruptHandlers.h>
 
+#include <mm/paging/PageTable.h>
 #include <mm/paging/AddressSpace.h>
 
 namespace MT
@@ -41,6 +42,8 @@ namespace MT
 				void * WaitAttribute;
 				
 				void * KStack;
+				uint32_t KSS;
+				
 				Interrupt::InterruptHandlers :: ISRFrame * PState;
 				
 				uint32_t User;
@@ -53,7 +56,8 @@ namespace MT
 				struct Task_Struct * Next;
 				struct Task_Struct * Previous;
 				
-				MM::Paging::AddressSpace * AddressSpace;
+				MM::Paging::PageTable * MemoryMapping;
+				MM::Paging::AddressSpace * MemorySpace;
 				
 			} Task_t;
 			

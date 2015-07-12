@@ -15,12 +15,17 @@ namespace MT
 		{
 		public:
 			
+			static const double kSchedulingQuantumMS = 5.0;
+			
+			static void Init ();
+			
 			static void PInit ();
 			static void Schedule ();
 			
 		private:
 			
-			static Task :: Task_t * ProccessTable [ 0x20 ];
+			static Task :: Task_t * TaskTable [ 0x20 ];
+			static Synchronization::Spinlock :: Spinlock_t TTLock;
 			
 			static Synchronization::Spinlock :: Spinlock_t TIDLock;
 			static uint64_t MaxID;

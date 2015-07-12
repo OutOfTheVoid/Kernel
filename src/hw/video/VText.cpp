@@ -1,6 +1,10 @@
 #include <hw/video/VText.h>
+
 #include <util/string/string.h>
+
 #include <system/func/kprintf.h>
+
+#include <interrupt/InterruptHandlers.h>
 
 volatile uint16_t * HW::Video::VText :: VMem;
 size_t HW::Video::VText :: Row;
@@ -201,7 +205,7 @@ void HW::Video::VText :: PrintVAList ( const char * FormatString, va_list Args )
 			
 			if ( ! * FormatString )
 				return;
-			
+		
 			switch ( * FormatString )
 			{
 				
@@ -298,6 +302,15 @@ void HW::Video::VText :: PrintVAList ( const char * FormatString, va_list Args )
 				}
 				
 				break;
+				
+			case 'r':
+				{
+					
+					Interrupt::InterruptHandlers :: ISRFrame * Value = va_arg ( Args, Interrupt::InterruptHandlers :: ISRFrame * );
+					
+					PrintF ( "EAX: %h, EBX: %h, ECX: %h, EDX: %h\nESI: %h, EDI: %h, EBP: %h, ESP: %h\nDS: %h, CS: %h, SS: %h\nEIP: %h, EFlags: %h, UserESP: %h, Int#: %h, Error: %h", Value -> EAX, Value -> EBX, Value -> ECX, Value -> EDX, Value -> ESI, Value -> EDI, Value -> EBP, Value -> ESP, ( Value -> DS ) & 0xFFFF, ( Value -> CS ) & 0xFFFF, ( Value -> SS ) & 0xFFFF, Value -> EIP, Value -> EFlags, Value -> UserESP, Value -> InterruptNumber, Value -> ErrorCode );
+					
+				}
 				
 			default:
 			

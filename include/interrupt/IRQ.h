@@ -15,7 +15,7 @@ namespace Interrupt
 	{
 	public:
 		
-		static const uint8_t kIRQ_BaseInterrupt = 0x30;
+		static const uint8_t kIRQ_BaseInterrupt = 0x40;
 		
 		static void Init ();
 		
