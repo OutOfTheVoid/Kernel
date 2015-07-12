@@ -206,3 +206,14 @@ int32_t strncmp ( const char * Str1, const char * Str2, size_t Count )
 	
 };
 
+char * strcpy ( char * Destination, const char * Source )
+{
+	
+	char * Temp = Destination;
+	
+    while ( ( * Temp ++ = * Source ++ ) != 0 );
+    
+    return Destination;
+	
+};
+

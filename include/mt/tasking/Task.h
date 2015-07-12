@@ -61,10 +61,11 @@ namespace MT
 				
 			} Task_t;
 			
-			Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority );
+			static Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority );
 			
 		private:
 			
+			static void StackPush ( void ** Stack, uint32_t Value );
 			
 		};
 		

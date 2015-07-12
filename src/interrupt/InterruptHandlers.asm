@@ -1,9 +1,12 @@
 section .text
 
 global interrupt_ISRCommonHandler
+global interrupt_ISRCommonHandlerInjectionReturn
+
 global interrupt_IRQCommonHandler
 
 extern interrupt_InterruptHandlers_CommonISRHandler
+
 extern interrupt_IRQ_CommonIRQHandler
 
 %macro ISR_NOERRORCODE 1
@@ -160,6 +163,8 @@ interrupt_ISRCommonHandler:
 	
 	call interrupt_InterruptHandlers_CommonISRHandler
 	
+interrupt_ISRCommonHandlerInjectionReturn:
+	
 	pop eax
 	mov ds, ax
 	mov es, ax
@@ -193,7 +198,7 @@ interrupt_IRQCommonHandler:
 	
 	popad
 	
-	add esp, 4
+	add esp, 8
 	
 	iret
 	

@@ -259,11 +259,11 @@ void Interrupt::InterruptHandlers :: SetInterruptHandler ( uint32_t InterruptNum
 		
 	}
 	else
-		KPANIC ( "Attemot to set out of range interrupt handler!" );
+		KPANIC ( "Attempt to set out of range interrupt handler!" );
 	
 };
 
-void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop, uint16_t SS )
+void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop )
 {
 	
 	HW::CPU::Processor :: CPUInfo * CurrentCPU = HW::CPU::Processor :: GetCurrent ();
@@ -273,7 +273,11 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 	MT::Synchronization::Spinlock :: SpinAcquire ( & CurrentCPU -> Lock );
 	
 	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( StackTop );
-	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = SS;
+	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = 0x10;
+	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP1 = reinterpret_cast <uint32_t> ( StackTop );
+	CurrentCPU -> CrossPrivelegeInterruptTSS.SS1 = 0x10;
+	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP2 = reinterpret_cast <uint32_t> ( StackTop );
+	CurrentCPU -> CrossPrivelegeInterruptTSS.SS2 = 0x10;
 	
 	MT::Synchronization::Spinlock :: Release ( & CurrentCPU -> Lock );
 	

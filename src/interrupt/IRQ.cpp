@@ -77,7 +77,7 @@ void Interrupt::IRQ :: EndIRQ ( uint8_t Number )
 		return Interrupt::PIC :: EndOfIRQ ( Number );
 		
 	case kIRQExit_APIC:
-		return Interrupt::APIC :: EndOfInterrupt ( Number );
+		return Interrupt::APIC :: EndOfInterrupt ();
 		
 	case kIRQExit_None:
 		return;

@@ -13,7 +13,7 @@ void hw_cpu_exceptionDivideByZero ( Interrupt::InterruptHandlers :: ISRFrame * F
 void hw_cpu_exceptionDebug ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
-	system_func_kprintf ( "Debug! \n\n%r", Frame );
+	KPANIC ( "Debug! \n\n%r", Frame );
 	
 };
 

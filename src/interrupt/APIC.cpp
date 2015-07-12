@@ -290,32 +290,15 @@ void Interrupt::APIC :: StartTimerPeriodic ( uint32_t SystemClockPeriod )
 {
 	
 	uint32_t LVTEntry;
-	bool UnMask;
 	
 	ReadRegister ( kRegisterOffset_LVTTimer, & LVTEntry, 1 );
 	
-	if ( ( LVTEntry & kLVTFlag_Mask ) == 0 )
-		UnMask = true;
-	else
-		UnMask = false;
+	LVTEntry |= kLVTFlag_TimerModePeriodic;
+	LVTEntry &= ~ kLVTFlag_Mask;
 	
-	if ( ( ( LVTEntry & kLVTFlag_TimerModePeriodic ) == 0 ) || UnMask )
-	{
-		
-		LVTEntry |= ( kLVTFlag_TimerModePeriodic | kLVTFlag_Mask );
-		WriteRegister ( kRegisterOffset_LVTTimer, & LVTEntry, 1 );
-		
-	}
+	WriteRegister ( kRegisterOffset_LVTTimer, & LVTEntry, 1 );
 	
 	WriteRegister ( kRegisterOffset_TimerInitialCount, & SystemClockPeriod, 1 );
-	
-	if ( UnMask )
-	{
-		
-		LVTEntry &= ~ kLVTFlag_Mask;
-		WriteRegister ( kRegisterOffset_LVTTimer, & LVTEntry, 1 );
-		
-	}
 	
 };
 
@@ -384,10 +367,8 @@ void Interrupt::APIC :: ClearErrorStatus ()
 	
 };
 
-void Interrupt::APIC :: EndOfInterrupt ( uint8_t Level )
+void Interrupt::APIC :: EndOfInterrupt ()
 {
-	
-	UNUSED ( Level );
 	
 	uint32_t Zero = 0;
 	

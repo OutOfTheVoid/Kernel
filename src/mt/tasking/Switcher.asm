@@ -5,19 +5,16 @@ global mt_tasking_switchTaskInitial
 
 mt_tasking_switchTask:
 	
-	push ebp
-	mov ebp, esp
+	mov eax, [ esp + 4 ]
+	mov ecx, [ esp + 8 ]
 	
+	push ebp
 	push ebx
 	push esi
 	push edi
 	
-	mov ecx, [ ebp + 8 ]
-	mov eax, esp
-	mov [ ecx ], eax
-	
-	mov eax, [ ebp + 12 ]
-	mov esp, eax
+	mov [ eax ], esp
+	mov esp, edx
 	
 	pop edi
 	pop esi

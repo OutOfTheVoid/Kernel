@@ -22,6 +22,8 @@ namespace MT
 			static void PInit ();
 			static void Schedule ();
 			
+			static void AddTask ( Task :: Task_t * ToAdd );
+			
 		private:
 			
 			friend class Task;

@@ -71,7 +71,7 @@ namespace Interrupt
 		} __attribute__((packed)) IRQFrame;
 		
 		static void SetInterruptHandler ( uint32_t InterruptNumber, void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) = NULL );
-		static void SetCPInterruptKernelStack ( void * StackTop, uint16_t SS );
+		static void SetCPInterruptKernelStack ( void * StackTop );
 		
 	private:
 		

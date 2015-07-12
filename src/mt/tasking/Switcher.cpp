@@ -11,7 +11,7 @@ ASM_LINKAGE void mt_tasking_switchTaskInitial ();
 void MT::Tasking::Switcher :: SwitchTo ( Task :: Task_t * NewTask, Task :: Task_t * OldTask )
 {
 	
-	Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( NewTask -> KStack, 0x10 );
+	//Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( NewTask -> KStack );
 	mt_tasking_switchTask ( & OldTask -> KStack, NewTask -> KStack );
 	
 };

@@ -51,7 +51,7 @@ namespace Interrupt
 		
 		static void ClearErrorStatus ();
 		
-		static void EndOfInterrupt ( uint8_t Level );
+		static void EndOfInterrupt ();
 		
 		static void SetTaskPriority ( uint32_t Priority );
 		
