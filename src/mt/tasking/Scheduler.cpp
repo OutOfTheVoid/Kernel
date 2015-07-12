@@ -57,6 +57,11 @@ void MT::Tasking::Scheduler :: PInit ()
 	memcpy ( reinterpret_cast <void *> ( & ThisCPU -> IdleTask -> Name [ 11 ] ), IDN, IDNLength );
 	memcpy ( reinterpret_cast <void *> ( & ThisCPU -> IdleTask -> Name [ 11 + IDNLength ] ), " )\0", 3 );
 	
+	void * KStack = mm_pmalloc ( 4 );
+	
+	if ( KStack == NULL )
+		KPANIC ( "Failed to allocate KStack for idle task!" );
+	
 	ThisCPU -> IdleTask -> Flags = MT::Tasking::Task :: kFlag_Kernel;
 	ThisCPU -> IdleTask -> State = MT::Tasking::Task :: kState_Runnable;
 	ThisCPU -> IdleTask -> WaitAttribute = NULL;
@@ -66,12 +71,15 @@ void MT::Tasking::Scheduler :: PInit ()
 	ThisCPU -> IdleTask -> Next = ThisCPU -> IdleTask;
 	ThisCPU -> IdleTask -> Previous = ThisCPU -> IdleTask;
 	
+	ThisCPU -> IdleTask -> KStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( KStack ) + 0x4000 );
+	ThisCPU -> IdleTask -> KSS = 0x10;
+	
 	ThisCPU -> CurrentTask = ThisCPU -> IdleTask;
 	
-	Interrupt::APIC :: SetLocalTimerVector ( true, 0x20 );
+	Interrupt::APIC :: SetLocalTimerVector ( false, 0x20 );
 	Interrupt::APIC :: SetLocalTimerDivide ( Interrupt::APIC :: kTimerDivision_16 );
 	
-	double SystemClockPeriod = kSchedulingQuantumMS * 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
+	double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
 	
 	Interrupt::APIC :: StartTimerPeriodic ( static_cast <uint32_t> ( SystemClockPeriod ) );
 	

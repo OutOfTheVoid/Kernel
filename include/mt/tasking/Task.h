@@ -61,6 +61,8 @@ namespace MT
 				
 			} Task_t;
 			
+			Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority );
+			
 		private:
 			
 			

@@ -120,13 +120,13 @@ INTERRUPT_IRQ_EXTERN ( 0xFF ); // For APICs
 
 ASM_LINKAGE void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame Frame );
 
-void ( * __Interrupt_HandlerPointers [ 0x20 ] ) ( Interrupt::InterruptHandlers :: ISRFrame * );
-MT::Synchronization::Spinlock :: Spinlock_t __Interrupt_HandlerPointerLocks [ 0x20 ];
+void ( * __Interrupt_HandlerPointers [ 0x40 ] ) ( Interrupt::InterruptHandlers :: ISRFrame * );
+MT::Synchronization::Spinlock :: Spinlock_t __Interrupt_HandlerPointerLocks [ 0x40 ];
 
 void Interrupt::InterruptHandlers :: Init ()
 {
 	
-	for ( uint32_t I = 0; I < 0x20; I ++ )
+	for ( uint32_t I = 0; I < 0x40; I ++ )
 	{
 		
 		__Interrupt_HandlerPointers [ I ] = NULL;
@@ -284,7 +284,7 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers :: ISRFrame Frame )
 {
 	
-	if ( Frame.InterruptNumber < 0x20 )
+	if ( Frame.InterruptNumber < 0x40 )
 	{
 		
 		MT::Synchronization::Spinlock :: SpinAcquire ( & __Interrupt_HandlerPointerLocks [ Frame.InterruptNumber ] );

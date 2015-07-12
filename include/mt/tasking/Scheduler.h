@@ -24,6 +24,8 @@ namespace MT
 			
 		private:
 			
+			friend class Task;
+			
 			static Task :: Task_t * TaskTable [ 0x20 ];
 			static Synchronization::Spinlock :: Spinlock_t TTLock;
 			

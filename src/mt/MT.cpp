@@ -110,6 +110,7 @@ void MT :: MPInit ()
 void MT :: MTInit ()
 {
 	
+	Tasking::Scheduler :: Init ();
 	Tasking::Scheduler :: PInit ();
 	
 };
