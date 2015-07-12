@@ -53,6 +53,8 @@ boot_multiboot_StackTop:
 section .text
 _start:
 
+	cli
+
 	mov esp, boot_multiboot_StackTop
 
 	push DWORD 0
@@ -60,10 +62,8 @@ _start:
 
 	push DWORD ebx
 	push DWORD eax
-
+	
 	call init_kinit_kinit
-
-	cli
 
 	jmp hw_cpu_hang
 

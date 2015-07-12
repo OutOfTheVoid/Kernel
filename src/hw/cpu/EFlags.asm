@@ -4,7 +4,7 @@ global hw_cpu_readEFlags
 
 hw_cpu_readEFlags:
 
-	popfd
-	push eax
+	pushfd
+	pop eax
 	
 	ret
