@@ -8,7 +8,7 @@
  
  C_LINKAGE void mt_timing_waitms ( double MS );
 
-void MT::Timing::PIT :: Init ()
+void MT::Timing::PIT :: InitPWait ()
 {
 	
 	mt_timing_pwaitmsMechanism ( & mt_timing_waitms );

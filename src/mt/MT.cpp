@@ -26,7 +26,7 @@ void MT :: MPInit ()
 	
 	system_func_kprintf ( "Initializiing PIT...\n" );
 	
-	Timing::PIT :: Init ();
+	Timing::PIT :: InitPWait ();
 	Interrupt :: APICInitEarly ();
 	
 	system_func_kprintf ( "Initializiing application processors...\n" );

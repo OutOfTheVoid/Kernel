@@ -15,7 +15,7 @@ namespace MT
 		{
 		public:
 			
-			static void Init ();
+			static void InitPWait ();
 			
 			static void SetTimeoutMS ( double Time );
 			static void SetTimer ( double Frequencey );

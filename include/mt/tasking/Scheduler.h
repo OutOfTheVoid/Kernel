@@ -15,7 +15,7 @@ namespace MT
 		{
 		public:
 			
-			static const double kSchedulingQuantumMS = 5.0;
+			static const double kSchedulingQuantumMS = 10.0;
 			
 			static void Init ();
 			

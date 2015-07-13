@@ -90,7 +90,7 @@ void testKernelTask ()
 	
 		system_func_kprintf ( "B\n" );
 		
-		for ( uint32_t I = 0; I < 0x80000000; I ++ );
+		for ( uint32_t I = 0; I < 0x70000000; I ++ );
 			
 	}
 	
@@ -104,7 +104,7 @@ void testKernelTask2 ()
 	
 		system_func_kprintf ( "C\n" );
 		
-		for ( uint32_t I = 0; I < 0x80000000; I ++ );
+		for ( uint32_t I = 0; I < 0x60000000; I ++ );
 			
 	}
 	

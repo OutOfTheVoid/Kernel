@@ -25,7 +25,7 @@ namespace MT
 			static const uint32_t kPrivelege_IO = 0x0002;
 			
 			static const uint32_t kState_Runnable = 0x0001;
-			static const uint32_t kState_Sleeping = 0x0002;
+			static const uint32_t kState_Blocked = 0x0002;
 			static const uint32_t kState_KernelSelectable = 0x0004;
 			static const uint32_t kState_Dead = 0x0008;
 			static const uint32_t kState_Idle = 0x0010;
@@ -38,8 +38,6 @@ namespace MT
 				
 				uint32_t Flags;
 				uint32_t State;
-				
-				void * WaitAttribute;
 				
 				void * KStack;
 				uint32_t KSS;

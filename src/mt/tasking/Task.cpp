@@ -24,7 +24,6 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	
 	New -> Flags = kFlag_Kernel;
 	New -> State = kState_Runnable;
-	New -> WaitAttribute = NULL;
 	New -> User = 0;
 	New -> Privelege = kPrivelege_Exec | kPrivelege_IO;
 	New -> Priority = Priority;

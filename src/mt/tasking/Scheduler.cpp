@@ -66,7 +66,6 @@ void MT::Tasking::Scheduler :: PInit ()
 	
 	CPUInitTask -> Flags = MT::Tasking::Task :: kFlag_Kernel;
 	CPUInitTask -> State = MT::Tasking::Task :: kState_Runnable;
-	CPUInitTask -> WaitAttribute = NULL;
 	CPUInitTask -> User = 0;
 	CPUInitTask -> Privelege = MT::Tasking::Task :: kPrivelege_Exec | MT::Tasking::Task :: kPrivelege_IO;
 	CPUInitTask -> Priority = 0;
@@ -93,8 +92,8 @@ void MT::Tasking::Scheduler :: PInit ()
 	Interrupt::APIC :: SetLocalTimerVector ( false, 0x20 );
 	Interrupt::APIC :: SetLocalTimerDivide ( Interrupt::APIC :: kTimerDivision_16 );
 	
-	//double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
-	double SystemClockPeriod = 0.5 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
+	double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
+	//double SystemClockPeriod = 0.5 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
 	
 	Interrupt::APIC :: StartTimerPeriodic ( static_cast <uint32_t> ( SystemClockPeriod ) );
 	
@@ -110,7 +109,7 @@ void MT::Tasking::Scheduler :: Schedule ()
 	Task :: Task_t * Last = ThisCPU -> CurrentTask;
 	uint32_t Priority = Last -> Priority;
 	
-	if ( Last != ThisCPU -> IdleTask )
+	if ( ( Last != ThisCPU -> IdleTask ) && ( Last -> State == Task :: kState_Runnable ) )
 	{
 		
 		if ( TaskTable [ Priority ] != NULL )
