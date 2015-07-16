@@ -266,3 +266,58 @@ bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
 	
 };
 
+uint32_t HW::ACPI::MADT :: GetIOAPICCount ()
+{
+	
+	return IOAPICRecords -> Length ();
+	
+};
+
+uint32_t HW::ACPI::MADT :: GetIOAPICBaseAddress ( uint32_t Index )
+{
+	
+	return ( * IOAPICRecords ) [ Index ] -> Address;
+	
+};
+
+uint8_t HW::ACPI::MADT :: GetIOAPICID ( uint32_t Index )
+{
+	
+	return ( * IOAPICRecords ) [ Index ] -> ID;
+	
+};
+
+uint32_t HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( uint32_t Index )
+{
+	
+	return ( * IOAPICRecords ) [ Index ] -> GlobalSystemInterruptBase;
+	
+};
+
+uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
+{
+	
+	return InterruptSourceOverrideRecords -> Length ();
+	
+};
+
+uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( uint32_t Index )
+{
+	
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> BusSource;
+	
+};
+
+uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( uint32_t Index )
+{
+	
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> IRQSource;
+	
+};
+
+uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
+{
+	
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Flags;
+	
+};

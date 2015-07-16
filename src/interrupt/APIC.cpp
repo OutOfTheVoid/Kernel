@@ -45,7 +45,6 @@ void Interrupt::APIC :: Init ()
 	Interrupt::PIC :: Disable ();
 
 	Base = GetAPICBaseAddress ();
-	system_func_kprintf ( "APIC Base address: %h\n", Base );
 		
 	BaseVirtual = reinterpret_cast <uint32_t *> ( mm_kvmap ( reinterpret_cast <void *> ( Base ), 0x1000, MM::Paging::PageTable :: Flags_NoCache | MM::Paging::PageTable :: Flags_Writeable ) );
 	

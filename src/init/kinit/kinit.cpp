@@ -62,32 +62,13 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 	MT :: MTInit ();
 	
-	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x1000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask );
+	//MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x1000, 0 );
+	//MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
 	system_func_kprintf ( "System bus frequecey: %i MHz", static_cast <uint32_t> ( Interrupt::APIC :: GetBusFrequencey () / 1000000.0 ) );
-	
-	while ( true )
-	{
-	
-		system_func_kprintf ( "A\n" );
-		
-		for ( uint32_t I = 0; I < 0x80000000; I ++ );
-			
-	}
 	
 };
 
 void testKernelTask ()
 {
-	
-	while ( true )
-	{
-	
-		system_func_kprintf ( "B\n" );
-		
-		for ( uint32_t I = 0; I < 0x70000000; I ++ );
-			
-	}
-	
 };

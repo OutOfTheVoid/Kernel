@@ -78,12 +78,9 @@ void MT::Tasking::Scheduler :: PInit ()
 	ThisCPU -> CurrentTask = CPUInitTask;
 	
 	char Name [ 20 ];
-	uint32_t NameLength;
 	
-	memcpy ( reinterpret_cast <void *> ( Name ), reinterpret_cast <const void *> ( "CPU Idle ( " ), 11 );
-	utoa ( ThisCPU -> Index, & Name [ 11 ], 10 );
-	NameLength = strlen ( Name );
-	memcpy ( reinterpret_cast <void *> ( & Name [ NameLength ] ), reinterpret_cast <const void *> ( ")" ), 2 );
+	memcpy ( reinterpret_cast <void *> ( Name ), reinterpret_cast <const void *> ( "CPU Idle " ), 9 );
+	utoa ( ThisCPU -> Index, & Name [ 9 ], 10 );
 	
 	Task :: Task_t * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( Name ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF );
 	
@@ -171,7 +168,8 @@ void MT::Tasking::Scheduler :: Schedule ()
 	
 	MT::Synchronization::Spinlock :: Release ( & TTLock );
 	
-	Switcher :: SwitchTo ( Next, Last );
+	if ( Next != Last )
+		Switcher :: SwitchTo ( Next, Last );
 	
 };
 

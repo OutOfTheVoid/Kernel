@@ -2,6 +2,7 @@
 #include <interrupt/InterruptHandlers.h>
 #include <interrupt/PIC.h>
 #include <interrupt/APIC.h>
+#include <interrupt/IOAPIC.h>
 
 #include <hw/cpu/Exceptions.h>
 
@@ -14,6 +15,7 @@ void Interrupt :: APICInitEarly ()
 	
 	PIC :: Init ();
 	APIC :: Init ();
+	IOAPIC :: Init ();
 	
 };
 

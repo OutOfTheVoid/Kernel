@@ -36,6 +36,16 @@ namespace HW
 			static uint8_t GetProcessorID ( uint32_t Index );
 			static bool GetProcessorEnabled ( uint32_t Index );
 			
+			static uint32_t GetIOAPICCount ();
+			static uint32_t GetIOAPICBaseAddress ( uint32_t Index );
+			static uint8_t GetIOAPICID ( uint32_t Index );
+			static uint32_t GetIOAPICGlobalSystemInterruptBase ( uint32_t Index );
+			
+			static uint32_t GetInterruptSourceOverrideCount ();
+			static uint8_t GetInterruptSourceOverrideBusSource ( uint32_t Index );
+			static uint8_t GetInterruptSourceOverrideIRQSource ( uint32_t Index );
+			static uint16_t GetInterruptSourceOverrideBus ( uint32_t Index );
+			
 		private:
 			
 			typedef struct
@@ -71,6 +81,8 @@ namespace HW
 			typedef struct
 			{
 				
+				RecordHeader Header;
+				
 				uint8_t ID;
 				
 				uint8_t Reserved;
@@ -82,6 +94,8 @@ namespace HW
 			
 			typedef struct
 			{
+				
+				RecordHeader Header;
 				
 				uint8_t BusSource;
 				uint8_t IRQSource;

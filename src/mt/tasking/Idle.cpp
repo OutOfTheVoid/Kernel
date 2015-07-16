@@ -10,10 +10,7 @@ ASM_LINKAGE void mt_tasking_idle ();
 void mt_tasking_idle ()
 {
 	
-	//system_func_kprintf ( "\n* IDLE TASK: Hello world! *\n" );
-	
-	hw_cpu_cli ();
-	hw_cpu_hang ();
+	while ( true ) hw_cpu_hang ();
 	
 };
 
