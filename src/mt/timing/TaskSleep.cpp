@@ -1,4 +1,7 @@
 #include <mt/timing/TaskSleep.h>
+#include <mt/timing/PIT.h>
+
+#include <mt/tasking/Scheduler.h>
 
 #include <mm/KMalloc.h>
 
@@ -10,6 +13,11 @@
 #include <interrupt/APIC.h>
 
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: TreeRoot = NULL;
+MT::Synchronization::Spinlock :: Spinlock_t MT::Timing::TaskSleep :: TreeLock = MT::Synchronization::Spinlock :: Initializer ();
+
+MT::Synchronization::Spinlock :: Spinlock_t MT::Timing::TaskSleep :: FreeListLock = MT::Synchronization::Spinlock :: Initializer ();
+MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: FreeHead = NULL;
+uint32_t MT::Timing::TaskSleep :: FreeCount = 0;
 
 uint64_t MT::Timing::TaskSleep :: NextInterrupt;
 
@@ -51,10 +59,29 @@ inline uint64_t MT::Timing::TaskSleep :: DelayMSToNS ( double MS )
 	
 };
 
-void MT::Timing::TaskSleep :: SetNextInterrupt ( uint64_t ThresholdNS )
+void MT::Timing::TaskSleep :: SetNextInterrupt ( uint64_t TimeoutNS )
 {
 	
+	switch ( Source )
+	{
 	
+	case kTimingSource_PIT:
+		{
+			
+			if ( TimeoutNS > 50000000 )
+				TimeoutNS = 50000000;
+			
+			PIT :: SetTimeoutMS ( static_cast <double> ( TimeoutNS ) / 1000000.0 );
+			
+		}
+		
+		break;
+		
+	default:
+	
+		break;
+	
+	}
 	
 };
 
@@ -65,7 +92,8 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 		return;
 	
 	uint64_t Current = GetCurrentTimeNS ();
-	uint64_t ThresholdNS = Current + DelayMSToNS ( Milliseconds );
+	uint64_t Delay = DelayMSToNS ( Milliseconds );
+	uint64_t ThresholdNS = Current + Delay;
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
@@ -81,9 +109,13 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 	ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
 	if ( NextInterrupt > ThresholdNS )
-		SetNextInterrupt ( ThresholdNS );
+		SetNextInterrupt ( Delay );
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
 	
 	InsertNode ( NewNode );
+	
+	MT::Synchronization::Spinlock :: Release ( & TreeLock );
 	
 	Interrupt::IState :: WriteBlock ( ReInt );
 	
@@ -94,14 +126,91 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 void MT::Timing::TaskSleep :: OnInterrupt ()
 {
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
 	
+	uint64_t Time = GetCurrentTimeNS ();
+	
+	SleepInfo * WakeHead = NULL;
+	SleepInfo * LeftMost = __LeftMostNode ( TreeRoot );
+	
+	while ( LeftMost != NULL )
+	{
+		
+		if ( Time >= LeftMost -> ThresholdNS )
+		{
+			
+			DeleteNode ( LeftMost );
+			
+			if ( WakeHead == NULL )
+			{
+				
+				WakeHead = LeftMost;
+				WakeHead -> Right = NULL;
+				
+			}
+			else
+			{
+				
+				LeftMost -> Right = WakeHead;
+				WakeHead = LeftMost;
+				
+			}
+			
+		}
+		else
+		{
+			
+			SetNextInterrupt ( LeftMost -> ThresholdNS - Time );
+			
+			break;
+			
+		}
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & TreeLock );
+	
+	SleepInfo * Current;
+	
+	while ( WakeHead != NULL )
+	{
+		
+		Current = WakeHead;
+		
+		Tasking::Task :: Task_t * WakeTask = Current -> PendingTask;
+		WakeHead = Current -> Right;
+		
+		DestroyNode ( Current );
+		
+		WakeTask -> State = Tasking::Task :: kState_Runnable;
+		
+		MT::Tasking::Scheduler :: AddTask ( WakeTask );
+		
+	}
 	
 };
 
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ( Tasking::Task :: Task_t * PendingTask, uint64_t ThresholdNS )
 {
 	
-	SleepInfo * New = reinterpret_cast <SleepInfo *> ( mm_kmalloc ( sizeof ( SleepInfo ) ) );
+	SleepInfo * New = NULL;
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
+	
+	if ( FreeCount != 0 )
+	{
+		
+		New = FreeHead;
+		FreeHead = New -> Right;
+		
+		FreeCount --;
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
+	
+	if ( New == NULL )
+		New = reinterpret_cast <SleepInfo *> ( mm_kmalloc ( sizeof ( SleepInfo ) ) );
 	
 	if ( New == NULL )
 		return NULL;
@@ -122,7 +231,21 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ( Taski
 void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 {
 	
-	mm_kfree ( Node );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
+	
+	if ( FreeCount < kMaxFreeCount )
+	{
+		
+		Node -> Right = FreeHead;
+		FreeHead = Node;
+		
+		FreeCount ++;
+		
+	}
+	else
+		mm_kfree ( Node );
+	
+	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
 	
 };
 

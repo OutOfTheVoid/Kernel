@@ -30,7 +30,6 @@
 ASM_LINKAGE void hw_cpu_hang ();
 
 ASM_LINKAGE void testKernelTask ();
-ASM_LINKAGE void testKernelTask2 ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -66,9 +65,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x1000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
-	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x1000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
-	
 	system_func_kprintf ( "System bus frequecey: %i MHz", static_cast <uint32_t> ( Interrupt::APIC :: GetBusFrequencey () / 1000000.0 ) );
 	
 	while ( true )
@@ -91,20 +87,6 @@ void testKernelTask ()
 		system_func_kprintf ( "B\n" );
 		
 		for ( uint32_t I = 0; I < 0x70000000; I ++ );
-			
-	}
-	
-};
-
-void testKernelTask2 ()
-{
-	
-	while ( true )
-	{
-	
-		system_func_kprintf ( "C\n" );
-		
-		for ( uint32_t I = 0; I < 0x60000000; I ++ );
 			
 	}
 	

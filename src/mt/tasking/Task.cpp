@@ -31,39 +31,22 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	New -> MemoryMapping = NULL;
 	New -> MemorySpace = NULL;
 	
-	void * KStack = mm_pmalloc ( 4 );
-	
-	if ( KStack == NULL )
-	{
-		
-		mm_kfree ( reinterpret_cast <void *> ( New ) );
-		
-		return NULL;
-		
-	}
-	
 	StackSize += 0xFFF;
 	StackSize &= ~ 0xFFF;
 	
-	void * TStack = mm_pmalloc ( StackSize >> 12 );
+	void * Stack = mm_pmalloc ( StackSize >> 12 );
 	
-	if ( TStack == NULL )
+	if ( Stack == NULL )
 	{
 		
-		mm_pfree ( KStack );
 		mm_kfree ( reinterpret_cast <void *> ( New ) );
 		
 		return NULL;
 		
 	}
 	
-	TStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( TStack ) + StackSize );
+	New -> KStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( Stack ) + StackSize );
 	
-	New -> KStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( KStack ) + 0x4000 );
-	New -> KSS = 0x10;
-	
-	StackPush ( & New -> KStack, 0x10 ); // SS
-	StackPush ( & New -> KStack, reinterpret_cast <uint32_t> ( TStack ) ); // UserESP
 	StackPush ( & New -> KStack, 0x202 ); // EFlags
 	StackPush ( & New -> KStack, 0x08 ); // CS
 	StackPush ( & New -> KStack, reinterpret_cast <uint32_t> ( Entry ) ); // EIP

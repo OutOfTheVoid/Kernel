@@ -274,10 +274,6 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 	
 	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( StackTop );
 	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = 0x10;
-	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP1 = reinterpret_cast <uint32_t> ( StackTop );
-	CurrentCPU -> CrossPrivelegeInterruptTSS.SS1 = 0x10;
-	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP2 = reinterpret_cast <uint32_t> ( StackTop );
-	CurrentCPU -> CrossPrivelegeInterruptTSS.SS2 = 0x10;
 	
 	MT::Synchronization::Spinlock :: Release ( & CurrentCPU -> Lock );
 	

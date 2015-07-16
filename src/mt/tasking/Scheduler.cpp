@@ -8,7 +8,7 @@
 #include <mm/KMalloc.h>
 #include <mm/PMAlloc.h>
 
-#include <system/func/panic.h>
+#include <system/func/Panic.h>
 
 #include <hw/cpu/Processor.h>
 

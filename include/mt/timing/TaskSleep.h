@@ -55,7 +55,15 @@ namespace MT
 				
 			} PITControlInfo;
 			
+			static const uint32_t kMaxFreeCount = 200;
+			
+			
+			static Synchronization::Spinlock :: Spinlock_t TreeLock;
 			static SleepInfo * TreeRoot;
+			
+			static Synchronization::Spinlock :: Spinlock_t FreeListLock;
+			static SleepInfo * FreeHead;
+			static uint32_t FreeCount;
 			
 			static uint64_t NextInterrupt;
 			
