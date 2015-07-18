@@ -15,21 +15,32 @@ HW::CPU::IDT :: IDTEntry Kernel_IDTEntries [ 0x100 ];
 void HW::CPU::IDT :: LoadInterrupts ()
 {
 	
-	Interrupt::IState :: IncrementBlock ();
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	
 	Kernel_IDTR.Length = 0x100 * sizeof ( IDTEntry ) - 1;
 	Kernel_IDTR.Offset = reinterpret_cast <uint32_t> ( & Kernel_IDTEntries );
 	
 	hw_cpu_idtLoad ();
 	
-	Interrupt::IState :: DecrementBlock ();
+	Interrupt::IState :: WriteBlock ( IBlock );
+	
+};
+
+void HW::CPU::IDT :: LoadInterruptsAP ()
+{
+	
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
+	
+	hw_cpu_idtLoad ();
+	
+	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 
 void HW::CPU::IDT :: DefineIDTEntry ( uint8_t Index, void ( * Offset ) (), uint16_t Selector, InterruptType Type, PrivilegeLevel Privilege, bool Present, bool SegmentPresent )
 {
 	
-	Interrupt::IState :: IncrementBlock ();
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	
 	Kernel_IDTEntries [ Index ].OffsetLow = static_cast <uint16_t> ( reinterpret_cast <uint32_t> ( Offset ) & 0xFFFF );
 	Kernel_IDTEntries [ Index ].OffsetHigh = static_cast <uint16_t> ( reinterpret_cast <uint32_t> ( Offset ) >> 16 );
@@ -40,7 +51,7 @@ void HW::CPU::IDT :: DefineIDTEntry ( uint8_t Index, void ( * Offset ) (), uint1
 	
 	Kernel_IDTEntries [ Index ].Zero = 0;
 	
-	Interrupt::IState :: DecrementBlock ();
+	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 

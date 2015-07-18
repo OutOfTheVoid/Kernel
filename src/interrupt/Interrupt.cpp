@@ -33,7 +33,8 @@ void Interrupt :: Init ()
 void Interrupt :: APInit ()
 {
 	
-	
+	InterruptHandlers :: APInit ();
+	APIC :: APInit ();
 	
 };
 

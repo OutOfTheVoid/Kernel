@@ -76,6 +76,7 @@ void Interrupt::APIC :: APInit ()
 {
 	
 	Enable ();
+	SetTaskPriority ( 0 );
 	
 }
 

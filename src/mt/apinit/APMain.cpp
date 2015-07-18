@@ -35,7 +35,10 @@ void mt_apinit_apmain ()
 	}
 	
 	Interrupt :: APInit ();
-	
 	MT::Tasking::Scheduler :: PInit ();
+	
+	__asm__ volatile ( "int 0x20" );
+	
+	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };

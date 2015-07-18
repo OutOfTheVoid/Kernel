@@ -59,6 +59,7 @@ namespace HW
 			} PrivilegeLevel;
 			
 			static void LoadInterrupts ();
+			static void LoadInterruptsAP ();
 			
 			static void DefineIDTEntry ( uint8_t Index, void ( * Offset ) (), uint16_t Selector, InterruptType Type, PrivilegeLevel Privelege, bool Present, bool SegmentPresent );
 			

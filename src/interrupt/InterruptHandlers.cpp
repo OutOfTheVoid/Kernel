@@ -140,6 +140,13 @@ void Interrupt::InterruptHandlers :: Init ()
 	
 };
 
+void Interrupt::InterruptHandlers :: APInit ()
+{
+	
+	HW::CPU::IDT :: LoadInterruptsAP ();
+	
+};
+
 void Interrupt::InterruptHandlers :: InstallSystemInterruptHandlers ()
 {
 	
@@ -251,11 +258,13 @@ void Interrupt::InterruptHandlers :: SetInterruptHandler ( uint32_t InterruptNum
 	if ( InterruptNumber < 0x40 )
 	{
 		
+		bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 		MT::Synchronization::Spinlock :: SpinAcquire ( & __Interrupt_HandlerPointerLocks [ InterruptNumber ] );
 		
 		__Interrupt_HandlerPointers [ InterruptNumber ] = Handler;
 		
 		MT::Synchronization::Spinlock :: Release ( & __Interrupt_HandlerPointerLocks [ InterruptNumber ] );
+		Interrupt::IState :: WriteBlock ( IBlock );
 		
 	}
 	else
@@ -268,7 +277,7 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 	
 	HW::CPU::Processor :: CPUInfo * CurrentCPU = HW::CPU::Processor :: GetCurrent ();
 	
-	bool Block = Interrupt::IState :: ReadAndSetBlock ();
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & CurrentCPU -> Lock );
 	
@@ -277,7 +286,7 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 	
 	MT::Synchronization::Spinlock :: Release ( & CurrentCPU -> Lock );
 	
-	Interrupt::IState :: WriteBlock ( Block );
+	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 

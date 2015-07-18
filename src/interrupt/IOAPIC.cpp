@@ -73,14 +73,14 @@ void Interrupt::IOAPIC :: Init ()
 		
 		IOAPICs -> Push ( Info );
 		
-		system_func_kprintf ( "IOAPIC (%u): Base: %h, ID: %h, GSIBase: %h\n", I, reinterpret_cast <uint32_t> ( Info.BaseAddress ), Info.ID, Info.GlobalSystemInterruptBase );
+		//system_func_kprintf ( "IOAPIC (%u): Base: %h, ID: %h, GSIBase: %h\n", I, reinterpret_cast <uint32_t> ( Info.BaseAddress ), Info.ID, Info.GlobalSystemInterruptBase );
 		
 	}
 	
 	for ( I = 0; I < HW::ACPI::MADT :: GetInterruptSourceOverrideCount (); I ++ )
 	{
 		
-		system_func_kprintf ( "Interrupt source override: BusSource: %h, IRQSource: %h, Flags: %h\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ) );
+		//system_func_kprintf ( "Interrupt source override: BusSource: %h, IRQSource: %h, Flags: %h\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ) );
 		
 		
 		

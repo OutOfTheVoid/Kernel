@@ -15,9 +15,6 @@ namespace Interrupt
 	{
 	public:
 		
-		static void Init ();
-		static void APInit ();
-		
 		typedef struct
 		{
 			
@@ -70,7 +67,11 @@ namespace Interrupt
 			
 		} __attribute__((packed)) IRQFrame;
 		
+		static void Init ();
+		static void APInit ();
+		
 		static void SetInterruptHandler ( uint32_t InterruptNumber, void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) = NULL );
+		
 		static void SetCPInterruptKernelStack ( void * StackTop );
 		
 	private:

@@ -107,7 +107,7 @@ void MT :: MTInit ()
 	
 	::HW::CPU::Processor :: CPUInfo * TargetCPUInfo;
 	
-	/*for ( I = 0; I < ::HW::CPU::Processor :: GetProcessorCount (); I ++ )
+	for ( I = 0; I < ::HW::CPU::Processor :: GetProcessorCount (); I ++ )
 	{
 		
 		TargetCPUInfo = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
@@ -119,6 +119,6 @@ void MT :: MTInit ()
 		
 		Synchronization::Spinlock :: Release ( & TargetCPUInfo -> Lock );
 		
-	}*/
+	}
 	
 };

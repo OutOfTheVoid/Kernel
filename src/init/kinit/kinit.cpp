@@ -55,6 +55,8 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 	system_func_kprintf ( "Kernel initialized!" );
 	
+	__asm__ volatile ( "int 0x20" );
+	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };
