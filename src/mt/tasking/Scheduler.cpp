@@ -80,7 +80,6 @@ void MT::Tasking::Scheduler :: PInit ()
 	
 	char Name [ 20 ];
 	
-	memcpy ( reinterpret_cast <void *> ( Name ), reinterpret_cast <const void *> ( "CPU Idle " ), 9 );
 	utoa ( ThisCPU -> Index, & Name [ 9 ], 10 );
 	
 	Task :: Task_t * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( Name ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF );

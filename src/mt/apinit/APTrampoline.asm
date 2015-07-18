@@ -42,6 +42,8 @@ mt_apinit_protectedjump:
 	mov eax, [ mt_apinit_initstacktop ]
 	mov esp, eax
 	
+	fninit
+	
 	call [ mt_apinit_kapmain ]
 	
 mt_apinit_hang:
