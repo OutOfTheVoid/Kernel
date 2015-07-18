@@ -5,6 +5,10 @@
 
 #include <hw/cpu/Processor.h>
 
+#include <interrupt/Interrupt.h>
+
+#include <mt/tasking/Scheduler.h>
+
 void mt_apinit_apmain ()
 {
 	
@@ -15,11 +19,7 @@ void mt_apinit_apmain ()
 	ThisCPU -> Flags &= ~ ( HW::CPU::Processor :: kCPUFlag_RealMode | HW::CPU::Processor :: kCPUFlag_StartingUp );
 	ThisCPU -> Flags |= HW::CPU::Processor :: kCPUFlag_ProtectedMode | HW::CPU::Processor :: kCPUFlag_Wait;
 	
-	uint8_t ID = ThisCPU -> Index;
-	
 	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
-	
-	system_func_kprintf ( "Processor %u started! Waiting for entry signal...\n", ID );
 	
 	bool Enter = false;
 	
@@ -34,6 +34,8 @@ void mt_apinit_apmain ()
 		
 	}
 	
-	system_func_kprintf ( "Processor %u entered!\n", ID );
+	Interrupt :: APInit ();
+	
+	MT::Tasking::Scheduler :: PInit ();
 	
 };

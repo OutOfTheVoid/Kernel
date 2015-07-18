@@ -1,0 +1,26 @@
+To do List
+----------
+
+* I/O Interrupt manager
+* Multiprocessor multitasking
+* Task sleep
+* Task kill
+* User mode ?
+* System call interface ?
+* Shared memory ?
+* Process list
+* User system ?
+* VFS
+* Init ramdisk
+* ATA PIO Driver ?
+* File I/O
+* Driver Interface
+* FAT32 Driver
+* exFAT Driver
+* ELF Loading
+* Graphics driver ?
+* C Library / Support system calls
+* Shell
+* File utilities
+* System utilities
+* USB Driver ?

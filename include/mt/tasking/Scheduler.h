@@ -24,6 +24,9 @@ namespace MT
 			
 			static void AddTask ( Task :: Task_t * ToAdd );
 			
+			static void KillTask ( Task :: Task_t * ToKill );
+			static void KillCurrentTask ();
+			
 		private:
 			
 			friend class Task;

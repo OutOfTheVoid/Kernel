@@ -21,6 +21,8 @@ namespace MT
 			static const uint32_t kFlag_User = 0x0000;
 			static const uint32_t kFlag_Kernel = 0x0001;
 			
+			static const uint32_t kFlag_Scheduler_Yield = 0x0002;
+			
 			static const uint32_t kPrivelege_Exec = 0x0001;
 			static const uint32_t kPrivelege_IO = 0x0002;
 			

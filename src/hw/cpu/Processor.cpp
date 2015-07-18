@@ -35,3 +35,24 @@ HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: Define ( bool BSP, uint8_t
 	return & Infos [ APICID ];
 	
 };
+
+uint32_t HW::CPU::Processor :: GetProcessorCount ()
+{
+	
+	return CIndex;
+	
+};
+
+HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: GetProcessorByAPICID ( uint8_t ID )
+{
+	
+	return & Infos [ ID ];
+	
+};
+
+HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: GetProcessorByIndex ( uint8_t Index )
+{
+	
+	return & Infos [ IndexToAPICID [ Index ] ];
+	
+};

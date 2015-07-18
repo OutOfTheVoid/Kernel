@@ -60,6 +60,10 @@ namespace HW
 			
 			static CPUInfo * GetCurrent ();
 			
+			static uint32_t GetProcessorCount ();
+			static CPUInfo * GetProcessorByAPICID ( uint8_t ID );
+			static CPUInfo * GetProcessorByIndex ( uint8_t ID );
+			
 		private:
 			
 			friend void MT :: MPInit ();

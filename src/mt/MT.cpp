@@ -22,19 +22,11 @@
 void MT :: MPInit ()
 {
 	
-	system_func_kprintf ( "MT :: Init ()\n" );
-	
-	system_func_kprintf ( "Initializiing PIT...\n" );
-	
 	Timing::PIT :: InitPWait ();
 	Interrupt :: APICInitEarly ();
 	
-	system_func_kprintf ( "Initializiing application processors...\n" );
-	
 	if ( ::HW::ACPI::MADT :: Valid () )
 	{
-		
-		system_func_kprintf ( "Initializiing APTrampoline...\n" );
 		
 		APInit::APTrampoline :: Init ();
 		APInit::APTrampoline :: SetPagingDirectory ( MM::Paging::PageTable :: GetKernelPD () );
@@ -54,8 +46,6 @@ void MT :: MPInit ()
 				if ( ! IsBSP )
 				{
 					
-					system_func_kprintf ( "Initializiing AP (ID: %u, APIC ID: %u)...\n", I, APICID );
-					
 					void * InitStackBottom = mm_pmalloc ( 4 );
 					
 					if ( InitStackBottom == NULL )
@@ -73,11 +63,11 @@ void MT :: MPInit ()
 					
 					mt_timing_pwaitms ( 100.0 );
 					
-					MT::Synchronization::Spinlock :: SpinAcquire ( & APInfo -> Lock );
+					Synchronization::Spinlock :: SpinAcquire ( & APInfo -> Lock );
 					
 					bool Started = ( APInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_StartingUp ) == 0;
 					
-					MT::Synchronization::Spinlock :: Release ( & APInfo -> Lock );
+					Synchronization::Spinlock :: Release ( & APInfo -> Lock );
 					
 					if ( ! Started )
 						Interrupt::APIC :: SendPhysicalStartupIPI ( APICID, APInit::APTrampoline :: GetStartupPage () );
@@ -87,11 +77,11 @@ void MT :: MPInit ()
 						
 						mt_timing_pwaitms ( 0.01 );
 						
-						MT::Synchronization::Spinlock :: SpinAcquire ( & APInfo -> Lock );
+						Synchronization::Spinlock :: SpinAcquire ( & APInfo -> Lock );
 						
 						Started = ( APInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_StartingUp ) == 0;
 						
-						MT::Synchronization::Spinlock :: Release ( & APInfo -> Lock );
+						Synchronization::Spinlock :: Release ( & APInfo -> Lock );
 						
 					}
 					
@@ -110,9 +100,25 @@ void MT :: MPInit ()
 void MT :: MTInit ()
 {
 	
-	
-	
 	Tasking::Scheduler :: Init ();
 	Tasking::Scheduler :: PInit ();
+	
+	uint32_t I;
+	
+	::HW::CPU::Processor :: CPUInfo * TargetCPUInfo;
+	
+	/*for ( I = 0; I < ::HW::CPU::Processor :: GetProcessorCount (); I ++ )
+	{
+		
+		TargetCPUInfo = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
+		
+		MT::Synchronization::Spinlock :: SpinAcquire ( & TargetCPUInfo -> Lock );
+		
+		if ( ( TargetCPUInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_BSP ) == 0 )
+			TargetCPUInfo -> Flags &= ! ::HW::CPU::Processor :: kCPUFlag_Wait;
+		
+		Synchronization::Spinlock :: Release ( & TargetCPUInfo -> Lock );
+		
+	}*/
 	
 };

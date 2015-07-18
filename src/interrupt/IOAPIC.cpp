@@ -82,6 +82,8 @@ void Interrupt::IOAPIC :: Init ()
 		
 		system_func_kprintf ( "Interrupt source override: BusSource: %h, IRQSource: %h, Flags: %h\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ) );
 		
+		
+		
 	}
 	
 };

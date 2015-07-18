@@ -16,6 +16,7 @@
 
 #include <interrupt/InterruptHandlers.h>
 #include <interrupt/APIC.h>
+#include <interrupt/IState.h>
 
 #include <cpputil/Linkage.h>
 #include <cpputil/Unused.h>
@@ -106,24 +107,36 @@ void MT::Tasking::Scheduler :: Schedule ()
 	Task :: Task_t * Last = ThisCPU -> CurrentTask;
 	uint32_t Priority = Last -> Priority;
 	
-	if ( ( Last != ThisCPU -> IdleTask ) && ( Last -> State == Task :: kState_Runnable ) )
+	if ( Last != ThisCPU -> IdleTask )
 	{
 		
-		if ( TaskTable [ Priority ] != NULL )
+		if ( Last -> State == Task :: kState_Runnable )
 		{
 			
-			TaskTable [ Priority ] -> Previous -> Next = Last;
-			Last -> Previous = TaskTable [ Priority ] -> Previous;
-			TaskTable [ Priority ] -> Previous = Last;
-			Last -> Next = TaskTable [ Priority ];
+			if ( TaskTable [ Priority ] != NULL )
+			{
+				
+				TaskTable [ Priority ] -> Previous -> Next = Last;
+				Last -> Previous = TaskTable [ Priority ] -> Previous;
+				TaskTable [ Priority ] -> Previous = Last;
+				Last -> Next = TaskTable [ Priority ];
+				
+			}
+			else
+			{
+				
+				TaskTable [ Priority ] = Last;
+				Last -> Next = Last;
+				Last -> Previous = Last;
+				
+			}
 			
 		}
-		else
+		
+		if ( Last -> State == Task :: kState_Dead )
 		{
 			
-			TaskTable [ Priority ] = Last;
-			Last -> Next = Last;
-			Last -> Previous = Last;
+			// TODO: Add to the reaping list or destroy.
 			
 		}
 		
@@ -176,6 +189,7 @@ void MT::Tasking::Scheduler :: Schedule ()
 void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )
 {
 	
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
 	
 	uint32_t Priority = ToAdd -> Priority;
@@ -199,6 +213,32 @@ void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	Interrupt::IState :: WriteBlock ( IBlock );
+	
+};
+
+void MT::Tasking::Scheduler :: KillTask ( Task :: Task_t * ToKill )
+{
+	
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	
+	ToKill -> State = Task :: kState_Dead;
+	
+	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	Interrupt::IState :: WriteBlock ( IBlock );
+	
+};
+
+void MT::Tasking::Scheduler :: KillCurrentTask ()
+{
+	
+	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
+	Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
+	
+	ThisTask -> State = Task :: kState_Dead;
+	
+	Schedule ();
 	
 };
 
