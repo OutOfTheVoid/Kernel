@@ -34,7 +34,7 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	StackSize += 0xFFF;
 	StackSize &= ~ 0xFFF;
 	
-	void * Stack = mm_pmalloc ( StackSize >> 12 );
+	void * Stack = mm_pmalloc ( ( StackSize >> 12 ) + 1 );
 	
 	if ( Stack == NULL )
 	{

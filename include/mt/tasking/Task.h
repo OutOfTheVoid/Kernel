@@ -8,6 +8,8 @@
 #include <mm/paging/PageTable.h>
 #include <mm/paging/AddressSpace.h>
 
+#include <hw/cpu/Math.h>
+
 namespace MT
 {
 	
@@ -22,6 +24,9 @@ namespace MT
 			static const uint32_t kFlag_Kernel = 0x0001;
 			
 			static const uint32_t kFlag_Scheduler_Yield = 0x0002;
+			
+			static const uint32_t kFlag_Math = 0x0004;
+			static const uint32_t kFlag_MathInit = 0x0008;
 			
 			static const uint32_t kPrivelege_Exec = 0x0001;
 			static const uint32_t kPrivelege_IO = 0x0002;
@@ -45,6 +50,8 @@ namespace MT
 				uint32_t KSS;
 				
 				Interrupt::InterruptHandlers :: ISRFrame * PState;
+				
+				::HW::CPU::Math :: MathState Math;
 				
 				uint32_t User;
 				

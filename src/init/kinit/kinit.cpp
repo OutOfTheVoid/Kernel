@@ -34,8 +34,6 @@ ASM_LINKAGE void hw_cpu_hang ();
 ASM_LINKAGE void testKernelTask ();
 ASM_LINKAGE void testKernelTask2 ();
 ASM_LINKAGE void testKernelTask3 ();
-ASM_LINKAGE void testKernelTask4 ();
-ASM_LINKAGE void testKernelTask5 ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -59,10 +57,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
 	MT::Tasking::Task :: Task_t * NewTask3 = MT::Tasking::Task :: CreateKernelTask ( "Test3", reinterpret_cast <void *> ( & testKernelTask3 ), 0x1000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask3 );
-	MT::Tasking::Task :: Task_t * NewTask4 = MT::Tasking::Task :: CreateKernelTask ( "Test4", reinterpret_cast <void *> ( & testKernelTask4 ), 0x1000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask4 );
-	MT::Tasking::Task :: Task_t * NewTask5 = MT::Tasking::Task :: CreateKernelTask ( "Test5", reinterpret_cast <void *> ( & testKernelTask5 ), 0x1000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask5 );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
@@ -71,14 +65,24 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void testKernelTask ()
 {
 	
+	float F = 9000.0;
+	
 	while ( true )
 	{
 		
+		for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		{
+			
+			F = 9000.0;
+			F *= 1.1;
+			
+		}
+		
+		for ( uint32_t I = 0; I < 0x10000000; I ++ );
+		
 		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 1, CPU %i\n", ThisCPU -> Index );
-		
-		for ( uint32_t I = 0; I < 0x40000000; I ++ );
+		system_func_kprintf ( "Task 1, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 9900 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	
@@ -87,14 +91,24 @@ void testKernelTask ()
 void testKernelTask2 ()
 {
 	
+	float F = 8000.0;
+	
 	while ( true )
 	{
 		
+		for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		{
+			
+			F = 8000.0;
+			F *= 1.1;
+			
+		}
+		
+		for ( uint32_t I = 0; I < 0x10000000; I ++ );
+		
 		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 2, CPU %i\n", ThisCPU -> Index );
-		
-		for ( uint32_t I = 0; I < 0x40000000; I ++ );
+		system_func_kprintf ( "Task 2, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 8800 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	
@@ -103,46 +117,24 @@ void testKernelTask2 ()
 void testKernelTask3 ()
 {
 	
-	while ( true )
-	{
-		
-		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
-		
-		system_func_kprintf ( "Task 3, CPU %i\n", ThisCPU -> Index );
-		
-		for ( uint32_t I = 0; I < 0x40000000; I ++ );
-		
-	}
-	
-};
-
-void testKernelTask4 ()
-{
+	float F = 7000.0;
 	
 	while ( true )
 	{
 		
-		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
+		for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		{
+			
+			F = 7000.0;
+			F *= 1.1;
+			
+		}
 		
-		system_func_kprintf ( "Task 4, CPU %i\n", ThisCPU -> Index );
-		
-		for ( uint32_t I = 0; I < 0x40000000; I ++ );
-		
-	}
-	
-};
-
-void testKernelTask5 ()
-{
-	
-	while ( true )
-	{
+		for ( uint32_t I = 0; I < 0x10000000; I ++ );
 		
 		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 5, CPU %i\n", ThisCPU -> Index );
-		
-		for ( uint32_t I = 0; I < 0x40000000; I ++ );
+		system_func_kprintf ( "Task 3, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 7700 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	

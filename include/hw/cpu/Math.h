@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#define HW_CPU_MATH_CR0_TS 0x00000008
+
 namespace HW
 {
 	
@@ -89,8 +91,48 @@ namespace HW
 				
 			} __attribute__ (( packed )) MathState;
 			
-			static void SaveState ( MathState * State );
-			static void LoadState ( MathState * State );
+			static inline void SaveState ( MathState * State )
+			{
+				
+				__asm__ volatile ( "fxsave [ %0 ]" : : "r" ( State ) );
+				
+			};
+			
+			static inline void LoadState ( MathState * State )
+			{
+				
+				__asm__ volatile ( "fxrstor [ %0 ]" : : "r" ( State ) );
+				
+			};
+			
+			static inline void InitState ()
+			{
+				
+				__asm__ volatile ( "fninit" );
+				
+			};
+			
+			static inline void ClearTest ()
+			{
+				
+				uint32_t CR0;
+				
+				__asm__ volatile ( "mov %0, cr0" : "=r" ( CR0 ) );
+				CR0 &= ~ HW_CPU_MATH_CR0_TS;
+				__asm__ volatile ( "mov cr0, %0" : : "r" ( CR0 ) );
+				
+			};
+			
+			static inline bool GetTest ()
+			{
+				
+				uint32_t CR0 = 0;
+	
+	__asm__ volatile ( "mov %0, cr0" : : "r" ( CR0 ) );
+	
+	return ( CR0 & HW_CPU_MATH_CR0_TS ) != 0;
+				
+			};
 			
 		};
 		

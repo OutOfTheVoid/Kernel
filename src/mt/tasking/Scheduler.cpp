@@ -65,7 +65,7 @@ void MT::Tasking::Scheduler :: PInit ()
 	if ( KStack == NULL )
 		KPANIC ( "Failed to allocate KStack for idle task!" );
 	
-	CPUInitTask -> Flags = MT::Tasking::Task :: kFlag_Kernel;
+	CPUInitTask -> Flags = MT::Tasking::Task :: kFlag_Kernel | MT::Tasking::Task :: kFlag_Math | MT::Tasking::Task :: kFlag_MathInit;
 	CPUInitTask -> State = MT::Tasking::Task :: kState_Runnable;
 	CPUInitTask -> User = 0;
 	CPUInitTask -> Privelege = MT::Tasking::Task :: kPrivelege_Exec | MT::Tasking::Task :: kPrivelege_IO;
@@ -90,7 +90,6 @@ void MT::Tasking::Scheduler :: PInit ()
 	Interrupt::APIC :: SetLocalTimerDivide ( Interrupt::APIC :: kTimerDivision_16 );
 	
 	double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
-	//double SystemClockPeriod = 0.5 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
 	
 	Interrupt::APIC :: StartTimerPeriodic ( static_cast <uint32_t> ( SystemClockPeriod ) );
 	

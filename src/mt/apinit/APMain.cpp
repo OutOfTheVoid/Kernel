@@ -34,19 +34,8 @@ void mt_apinit_apmain ()
 		
 	}
 	
-	system_func_kprintf ( "Processor %i entered! Beginning tasking...\n", ThisCPU -> Index );
-	
 	Interrupt :: APInit ();
-	
-	system_func_kprintf ( "Processor %i enabled interrupts...\n", ThisCPU -> Index );
-	
 	MT::Tasking::Scheduler :: PInit ();
-	
-	system_func_kprintf ( "Processor %i started scheduler...\n", ThisCPU -> Index );
-	
-	__asm__ volatile ( "int 0x20" );
-	
-	system_func_kprintf ( "Processor %i scheduled, killing init task...\n", ThisCPU -> Index );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

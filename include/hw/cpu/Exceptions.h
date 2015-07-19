@@ -23,6 +23,5 @@ ASM_LINKAGE void hw_cpu_exceptionAlignmentCheck ( Interrupt::InterruptHandlers :
 ASM_LINKAGE void hw_cpu_exceptionMachineCheck ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 ASM_LINKAGE void hw_cpu_exceptionSIMDException ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 ASM_LINKAGE void hw_cpu_exceptionSecurity ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
-ASM_LINKAGE void hw_cpu_exceptionTripleFault ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 
 #endif
