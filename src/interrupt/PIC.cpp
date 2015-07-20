@@ -1,13 +1,9 @@
 #include <interrupt/PIC.h>
-#include <interrupt/IRQ.h>
 
 #include <hw/cpu/IO.h>
 
 void Interrupt::PIC :: Init ()
 {
-	
-	Interrupt::IRQ :: MaxIRQ = 0x0F;
-	Interrupt::IRQ :: ExitMode = Interrupt::IRQ :: kIRQExit_PIC;
 	
 	for ( uint8_t i = 0; i < 0x0F; i ++ )
 		SetIRQEnabled ( i, false );

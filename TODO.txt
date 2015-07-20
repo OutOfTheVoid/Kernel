@@ -2,9 +2,8 @@ To do List
 ----------
 
 * I/O Interrupt manager
-* Multiprocessor multitasking
 * Task sleep
-* Task kill
+* Task kill - Partially implemented. No current way to free up resources for the process.
 * User mode ?
 * System call interface ?
 * Shared memory ?

@@ -1,7 +1,6 @@
 #include <interrupt/APIC.h>
 #include <interrupt/IState.h>
 #include <interrupt/PIC.h>
-#include <interrupt/IRQ.h>
 
 #include <hw/cpu/CPUID.h>
 #include <hw/cpu/MSR.h>
@@ -50,8 +49,6 @@ void Interrupt::APIC :: Init ()
 	
 	if ( BaseVirtual == NULL )
 		KPANIC ( "Failed to allocate virtual memory to map APIC!" );
-	
-	IRQ :: ExitMode = IRQ :: kIRQExit_APIC;
 	
 	Enable ();
 	

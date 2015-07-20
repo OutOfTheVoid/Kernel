@@ -24,6 +24,16 @@ namespace HW
 		{
 		public:
 			
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_PolarityMask = 0x03;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_ConformsToBusPolarity = 0x00;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_ActiveHigh = 0x01;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_ActiveLow = 0x03;
+			
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_TriggerMask = 0x0C;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_ConformsToBusTrigger = 0x00;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_EdgeTriggered = 0x04;
+			static const uint16_t kInterruptSourceOverrideRecord_Flags_LevelTriggered = 0x0C;
+			
 			static void Init ();
 			static bool Valid ();
 			
@@ -42,9 +52,10 @@ namespace HW
 			static uint32_t GetIOAPICGlobalSystemInterruptBase ( uint32_t Index );
 			
 			static uint32_t GetInterruptSourceOverrideCount ();
-			static uint8_t GetInterruptSourceOverrideBusSource ( uint32_t Index );
-			static uint8_t GetInterruptSourceOverrideIRQSource ( uint32_t Index );
-			static uint16_t GetInterruptSourceOverrideBus ( uint32_t Index );
+			static uint8_t GetInterruptSourceOverrideBus ( uint32_t Index );
+			static uint8_t GetInterruptSourceOverrideSourceIRQ ( uint32_t Index );
+			static uint32_t GetInterruptSourceOverrideInterrupt ( uint32_t Index );
+			static uint16_t GetInterruptSourceOverrideFlags ( uint32_t Index );
 			
 		private:
 			
@@ -97,8 +108,8 @@ namespace HW
 				
 				RecordHeader Header;
 				
-				uint8_t BusSource;
-				uint8_t IRQSource;
+				uint8_t Bus;
+				uint8_t Source;
 				
 				uint32_t GlobalSystemInterrupt;
 				

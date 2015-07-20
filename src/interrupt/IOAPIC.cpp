@@ -73,18 +73,66 @@ void Interrupt::IOAPIC :: Init ()
 		
 		IOAPICs -> Push ( Info );
 		
-		//system_func_kprintf ( "IOAPIC (%u): Base: %h, ID: %h, GSIBase: %h\n", I, reinterpret_cast <uint32_t> ( Info.BaseAddress ), Info.ID, Info.GlobalSystemInterruptBase );
+		system_func_kprintf ( "IOAPIC (%u): Base: %h, ID: %h, GSIBase: %h\n", I, reinterpret_cast <uint32_t> ( Info.BaseAddress ), Info.ID, Info.GlobalSystemInterruptBase );
 		
 	}
 	
 	for ( I = 0; I < HW::ACPI::MADT :: GetInterruptSourceOverrideCount (); I ++ )
 	{
 		
-		//system_func_kprintf ( "Interrupt source override: BusSource: %h, IRQSource: %h, Flags: %h\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ) );
+		const char * Polarity = "Unknown";
+		const char * Trigger = "Unknown";
 		
+		switch ( HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( I ) & HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_PolarityMask )
+		{
 		
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ConformsToBusPolarity:
+			
+			Polarity = "Bus";
+			
+			break;
 		
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ActiveHigh:
+			
+			Polarity = "Active High";
+			
+			break;
+			
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ActiveLow:
+			
+			Polarity = "Active Low";
+			
+			break;
+			
+		}
+		
+		switch ( HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( I ) & HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_TriggerMask )
+		{
+		
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ConformsToBusTrigger:
+			
+			Trigger = "Bus";
+			
+			break;
+		
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_EdgeTriggered:
+			
+			Trigger = "Edge";
+			
+			break;
+			
+		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_LevelTriggered:
+			
+			Trigger = "Level";
+			
+			break;
+			
+		}
+		
+		system_func_kprintf ( "Interrupt source override: Bus: %h, IRQ: %h, Interrupt: %h, Flags: [ Polarity: %s, Trigger: %s ]\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( I ), Polarity, Trigger );
+	
 	}
+
 	
 };
 

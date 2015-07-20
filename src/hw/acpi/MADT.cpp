@@ -301,21 +301,28 @@ uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
 	
 };
 
-uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBusSource ( uint32_t Index )
+uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
 {
 	
-	return ( * InterruptSourceOverrideRecords ) [ Index ] -> BusSource;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Bus;
 	
 };
 
-uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideIRQSource ( uint32_t Index )
+uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( uint32_t Index )
 {
 	
-	return ( * InterruptSourceOverrideRecords ) [ Index ] -> IRQSource;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Source;
 	
 };
 
-uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
+uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( uint32_t Index )
+{
+	
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> GlobalSystemInterrupt;
+	
+};
+
+uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( uint32_t Index )
 {
 	
 	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Flags;

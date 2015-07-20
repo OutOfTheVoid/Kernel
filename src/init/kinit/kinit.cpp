@@ -70,19 +70,19 @@ void testKernelTask ()
 	while ( true )
 	{
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ )
-		{
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		// {
 			
-			F = 9000.0;
-			F *= 1.1;
+		// 	F = 9000.0;
+		// 	F *= 1.1;
 			
-		}
+		// }
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ );
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ );
 		
-		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
+		// HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 1, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 9900 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
+		// system_func_kprintf ( "Task 1, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 9900 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	
@@ -96,19 +96,19 @@ void testKernelTask2 ()
 	while ( true )
 	{
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ )
-		{
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		// {
 			
-			F = 8000.0;
-			F *= 1.1;
+		// 	F = 8000.0;
+		// 	F *= 1.1;
 			
-		}
+		// }
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ );
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ );
 		
-		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
+		// HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 2, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 8800 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
+		// system_func_kprintf ( "Task 2, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 8800 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	
@@ -122,19 +122,19 @@ void testKernelTask3 ()
 	while ( true )
 	{
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ )
-		{
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ )
+		// {
 			
-			F = 7000.0;
-			F *= 1.1;
+		// 	F = 7000.0;
+		// 	F *= 1.1;
 			
-		}
+		// }
 		
-		for ( uint32_t I = 0; I < 0x10000000; I ++ );
+		// for ( uint32_t I = 0; I < 0x10000000; I ++ );
 		
-		HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
+		// HW::CPU::Processor :: CPUInfo * ThisCPU = HW::CPU::Processor :: GetCurrent ();
 		
-		system_func_kprintf ( "Task 3, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 7700 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
+		// system_func_kprintf ( "Task 3, CPU %i; %s\n", ThisCPU -> Index, ( static_cast <int32_t> ( F ) == 7700 ) ? "FPU: YES!" : "FPU: NO!!!!!!" );
 		
 	}
 	
