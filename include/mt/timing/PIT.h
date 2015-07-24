@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#include <interrupt/InterruptHandlers.h>
+
 namespace MT
 {
 	
@@ -16,6 +18,9 @@ namespace MT
 		public:
 			
 			static void InitPWait ();
+			
+			static void InitTimedIRQ ( void ( * InterruptHandler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) );
+			static void SetIRQEnabled ( bool Enabled );
 			
 			static void SetTimeoutMS ( double Time );
 			static void SetTimer ( double Frequencey );
@@ -57,6 +62,8 @@ namespace MT
 			static const uint32_t kCommandFlag_ReadTimer2 = 0x06;
 			
 			static const uint32_t kStatusFlag_WaitState = 0x80;
+			
+			static const uint32_t kISAIRQ_PIT = 0x00;
 			
 		};
 		

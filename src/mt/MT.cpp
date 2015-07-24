@@ -1,7 +1,11 @@
 #include <mt/MT.h>
+
 #include <mt/timing/PWaitMS.h>
 #include <mt/timing/PIT.h>
+#include <mt/timing/TaskSleep.h>
+
 #include <mt/apinit/APTrampoline.h>
+
 #include <mt/tasking/Scheduler.h>
 
 #include <system/func/KPrintF.h>
@@ -99,6 +103,8 @@ void MT :: MPInit ()
 
 void MT :: MTInit ()
 {
+	
+	Timing::TaskSleep :: Init ();
 	
 	Tasking::Scheduler :: Init ();
 	Tasking::Scheduler :: PInit ();

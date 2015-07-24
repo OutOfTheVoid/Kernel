@@ -5,6 +5,7 @@
 #include <hw/cpu/CPUID.h>
 #include <hw/cpu/MSR.h>
 #include <hw/cpu/TSC.h>
+#include <hw/cpu/IO.h>
 
 #include <hw/acpi/MADT.h>
 
@@ -25,7 +26,7 @@ C_LINKAGE uint32_t interrupt_APIC_MMIOLocation;
 bool Interrupt::APIC :: Availible = true;
 		
 uint32_t Interrupt::APIC :: Base = 0;
-uint32_t * Interrupt::APIC :: BaseVirtual = NULL;
+volatile uint32_t * Interrupt::APIC :: BaseVirtual = NULL;
 
 double Interrupt::APIC :: BusFrequencey = 0.0;
 
@@ -42,6 +43,9 @@ void Interrupt::APIC :: Init ()
 		Interrupt::PIC :: SetIRQEnabled ( i, false );
 	
 	Interrupt::PIC :: Disable ();
+	
+	HW::CPU::IO :: Out8 ( kIMCR_SelectPort, kIMCR_SelectData );
+	HW::CPU::IO :: Out8 ( kIMCR_DataPort, kIMCR_DataData );
 
 	Base = GetAPICBaseAddress ();
 		
@@ -50,9 +54,14 @@ void Interrupt::APIC :: Init ()
 	if ( BaseVirtual == NULL )
 		KPANIC ( "Failed to allocate virtual memory to map APIC!" );
 	
-	Enable ();
+	SetLocalTimerVector ( false, 0xFF );
 	
-	SetTaskPriority ( 0 );
+	ClearErrorStatus ();
+	ClearErrorStatus ();
+	ClearErrorStatus ();
+	ClearErrorStatus ();
+	
+	Enable ();
 	
 	uint64_t Tick = HW::CPU::TSC :: Read ();
 	mt_timing_pwaitms ( 50.0 );
@@ -77,7 +86,7 @@ void Interrupt::APIC :: APInit ()
 	
 }
 
-void Interrupt::APIC :: ReadRegister ( uint32_t Offset, uint32_t * DataOut, uint32_t DWordLength )
+void Interrupt::APIC :: ReadRegister ( uint32_t Offset, volatile uint32_t * DataOut, uint32_t DWordLength )
 {
 	
 	if ( BaseVirtual == NULL )
@@ -88,7 +97,7 @@ void Interrupt::APIC :: ReadRegister ( uint32_t Offset, uint32_t * DataOut, uint
 	
 };
 
-void Interrupt::APIC :: WriteRegister ( uint32_t Offset, uint32_t * DataIn, uint8_t DWordLength )
+void Interrupt::APIC :: WriteRegister ( uint32_t Offset, volatile uint32_t * DataIn, uint8_t DWordLength )
 {
 	
 	if ( BaseVirtual == NULL )

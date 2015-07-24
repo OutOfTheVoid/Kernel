@@ -59,19 +59,21 @@ namespace Interrupt
 		
 		static double GetBusFrequencey ();
 		
+		static void ClearLatchedInterrupts ();
+		
 	private:
 		
 		static uint8_t GetLocalLVTCount ();
 		
 		static uint32_t GetAPICBaseAddress ();
 		
-		static void ReadRegister ( uint32_t Offset, uint32_t * DataOut, uint32_t DWordLength );
-		static void WriteRegister ( uint32_t Offset, uint32_t * DataIn, uint8_t DwordLength );
+		static void ReadRegister ( uint32_t Offset, volatile uint32_t * DataOut, uint32_t DWordLength );
+		static void WriteRegister ( uint32_t Offset, volatile uint32_t * DataIn, uint8_t DwordLength );
 		
 		static bool Availible;
 		
 		static uint32_t Base;
-		static uint32_t * BaseVirtual;
+		static volatile uint32_t * BaseVirtual;
 		
 		static double BusFrequencey;
 		
@@ -135,6 +137,12 @@ namespace Interrupt
 		static const uint32_t kIPIDestinationShorthand_Self = 0x40000;
 		static const uint32_t kIPIDestinationShorthand_All = 0x80000;
 		static const uint32_t kIPIDestinationShorthand_AllExcludingSelf = 0xC0000;
+		
+		static const uint16_t kIMCR_SelectPort = 0x70;
+		static const uint16_t kIMCR_DataPort = 0x01;
+		
+		static const uint8_t kIMCR_SelectData = 0x22;
+		static const uint8_t kIMCR_DataData = 0x23;
 		
 	};
 	

@@ -6,6 +6,8 @@
 
 #include <hw/cpu/Exceptions.h>
 
+#include <hw/pc/ISA.h>
+
 #include <system/func/kprintf.h>
 
 #include <KernelDef.h>
@@ -15,7 +17,6 @@ void Interrupt :: APICInitEarly ()
 	
 	PIC :: Init ();
 	APIC :: Init ();
-	IOAPIC :: Init ();
 	
 };
 
@@ -46,6 +47,10 @@ void Interrupt :: Init ()
 	InterruptHandlers :: SetInterruptHandler ( 0x13, & hw_cpu_exceptionSIMDException );
 	
 	InterruptHandlers :: SetInterruptHandler ( 0x1E, & hw_cpu_exceptionSecurity );
+	
+	IOAPIC :: Init ();
+	
+	HW::PC::ISA :: InitIOInterrupts ();
 	
 };
 

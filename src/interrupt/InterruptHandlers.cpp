@@ -623,6 +623,6 @@ void interrupt_InterruptHandlers_CommonISRHandler ( Interrupt::InterruptHandlers
 		
 	}
 	
-	KPANIC ( "Unhandled Interrupt: %i", Frame.InterruptNumber );
+	KPANIC ( "Unhandled Interrupt! [ %h ]\n", Frame.InterruptNumber );
 	
 };

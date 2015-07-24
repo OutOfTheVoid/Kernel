@@ -1208,6 +1208,15 @@ void MM::Paging::AddressSpace :: RemoveAllocatedNode ( AddressRange * Node )
 		
 	}
 	
+	if ( RootAllocatedNode == UnbalancedNode )
+	{
+		
+		RootAllocatedNode = NULL;
+		
+		return;
+		
+	}
+	
 	while ( true )
 	{
 		

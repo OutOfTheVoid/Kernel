@@ -9,8 +9,13 @@
 #include <hw/cpu/TSC.h>
 
 #include <interrupt/IState.h>
-
 #include <interrupt/APIC.h>
+#include <interrupt/InterruptHandlers.h>
+
+#include <cpputil/Linkage.h>
+
+#include <system/func/KPrintf.h>
+#include <system/func/Panic.h>
 
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: TreeRoot = NULL;
 MT::Synchronization::Spinlock :: Spinlock_t MT::Timing::TaskSleep :: TreeLock = MT::Synchronization::Spinlock :: Initializer ();
@@ -19,11 +24,13 @@ MT::Synchronization::Spinlock :: Spinlock_t MT::Timing::TaskSleep :: FreeListLoc
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: FreeHead = NULL;
 uint32_t MT::Timing::TaskSleep :: FreeCount = 0;
 
-uint64_t MT::Timing::TaskSleep :: NextInterrupt;
+uint64_t MT::Timing::TaskSleep :: NextInterrupt = 0;
 
 MT::Timing::TaskSleep :: TimingSource MT::Timing::TaskSleep :: Source;
 
 MT::Timing::TaskSleep :: TimingControl_Union MT::Timing::TaskSleep :: TimingControl;
+
+ASM_LINKAGE void mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 
 void MT::Timing::TaskSleep :: Init ()
 {
@@ -31,6 +38,11 @@ void MT::Timing::TaskSleep :: Init ()
 	Source = kTimingSource_PIT;
 	
 	TimingControl.PITControl.TSCAtInterrupt = ::HW::CPU::TSC :: Read ();
+	
+	PIT :: InitTimedIRQ ( & mt_timing_tasksleep_pitirqhandler );
+	PIT :: SetIRQEnabled ( true );
+	
+	NextInterrupt = 0xFFFFFFFFFFFFFFFF;
 	
 };
 
@@ -88,8 +100,15 @@ void MT::Timing::TaskSleep :: SetNextInterrupt ( uint64_t TimeoutNS )
 void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 {
 	
-	if ( Milliseconds >= 0.0 )
+	if ( Milliseconds <= 0.0 )
 		return;
+	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	
+	SleepInfo * NewNode = CreateNode ();
+	
+	if ( NewNode == NULL )
+		KPANIC ( "Failed to create new wait node!" );
 	
 	uint64_t Current = GetCurrentTimeNS ();
 	uint64_t Delay = DelayMSToNS ( Milliseconds );
@@ -97,29 +116,38 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
-	
 	Tasking::Task :: Task_t * PendingTask = ThisCPU -> CurrentTask;
 	PendingTask -> State = Tasking::Task :: kState_Blocked;
 	
-	Interrupt::IState :: WriteBlock ( ReInt );
-	
-	SleepInfo * NewNode = CreateNode ( ThisCPU -> CurrentTask, ThresholdNS );
-	
-	ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	NewNode -> ThresholdNS = ThresholdNS;
+	NewNode -> PendingTask = PendingTask;
 	
 	if ( NextInterrupt > ThresholdNS )
+	{
+		
+		NextInterrupt = ThresholdNS;
+		
+		MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
+		
+		InsertNode ( NewNode );
+		
+		MT::Synchronization::Spinlock :: Release ( & TreeLock );
+		
 		SetNextInterrupt ( Delay );
+		
+		Interrupt::IState :: WriteBlock ( ReInt );
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
-	
-	InsertNode ( NewNode );
-	
-	MT::Synchronization::Spinlock :: Release ( & TreeLock );
-	
-	Interrupt::IState :: WriteBlock ( ReInt );
-	
-	__asm__ volatile ( "int 0x20" );
+		__asm__ volatile ( "int 0x20" );
+			
+	}
+	else
+	{
+		
+		DestroyNode ( NewNode );
+		
+		Interrupt::IState :: WriteBlock ( ReInt );
+		
+	}
 	
 };
 
@@ -131,7 +159,7 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 	uint64_t Time = GetCurrentTimeNS ();
 	
 	SleepInfo * WakeHead = NULL;
-	SleepInfo * LeftMost = __LeftMostNode ( TreeRoot );
+	SleepInfo * LeftMost = ( TreeRoot != NULL ? __LeftMostNode ( TreeRoot ) : NULL );
 	
 	while ( LeftMost != NULL )
 	{
@@ -156,6 +184,8 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 				
 			}
 			
+			LeftMost = ( TreeRoot != NULL ? __LeftMostNode ( TreeRoot ) : NULL );
+			
 		}
 		else
 		{
@@ -168,9 +198,12 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 		
 	}
 	
+	if ( LeftMost == NULL )
+		NextInterrupt = 0xFFFFFFFFFFFFFFFF;
+	
 	MT::Synchronization::Spinlock :: Release ( & TreeLock );
 	
-	SleepInfo * Current;
+	SleepInfo * Current = NULL;
 	
 	while ( WakeHead != NULL )
 	{
@@ -190,7 +223,18 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 	
 };
 
-MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ( Tasking::Task :: Task_t * PendingTask, uint64_t ThresholdNS )
+void mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
+{
+	
+	(void) Frame;
+	
+	MT::Timing::TaskSleep :: OnInterrupt ();
+	
+	Interrupt::APIC :: EndOfInterrupt ();
+	
+};
+
+MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 {
 	
 	SleepInfo * New = NULL;
@@ -215,9 +259,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ( Taski
 	if ( New == NULL )
 		return NULL;
 	
-	New -> PendingTask = PendingTask;
-	New -> ThresholdNS = ThresholdNS;
-	
 	New -> Parent = NULL;
 	New -> Left = NULL;
 	New -> Right = NULL;
@@ -233,7 +274,7 @@ void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
 	
-	if ( FreeCount < kMaxFreeCount )
+	//if ( FreeCount < kMaxFreeCount )
 	{
 		
 		Node -> Right = FreeHead;
@@ -242,8 +283,8 @@ void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 		FreeCount ++;
 		
 	}
-	else
-		mm_kfree ( Node );
+	//else
+	//	mm_kfree ( Node );
 	
 	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
 	
@@ -637,7 +678,7 @@ inline MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: __RotateLef
 };
 
 
-inline MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: __Balance ( SleepInfo * Root )
+MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: __Balance ( SleepInfo * Root )
 {
 	
 	int32_t Balance = 0;

@@ -9,6 +9,8 @@
 
 #include <stdint.h>
 
+ASM_LINKAGE void mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+
 namespace MT
 {
 	
@@ -23,6 +25,8 @@ namespace MT
 			static void SleepCurrent ( double Milliseconds );
 			
 		private:
+			
+			friend void ::mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 			
 			typedef struct SleepInfo_Struct
 			{
@@ -57,7 +61,6 @@ namespace MT
 			
 			static const uint32_t kMaxFreeCount = 200;
 			
-			
 			static Synchronization::Spinlock :: Spinlock_t TreeLock;
 			static SleepInfo * TreeRoot;
 			
@@ -83,15 +86,15 @@ namespace MT
 			
 			static void OnInterrupt ();
 			
-			static SleepInfo * CreateNode ( Tasking::Task :: Task_t * PendingTask, uint64_t ThresholdNS );
+			static SleepInfo * CreateNode ();
 			static void DestroyNode ( SleepInfo * Node );
 			
 			static void InsertNode ( SleepInfo * Node );
 			static void DeleteNode ( SleepInfo * Node );
 			
-			static inline int32_t __AdjustHeight ( SleepInfo * Node );
+			static SleepInfo * __Balance ( SleepInfo * Root );
 			
-			static inline SleepInfo * __Balance ( SleepInfo * Root );
+			static inline int32_t __AdjustHeight ( SleepInfo * Node );
 			
 			static inline SleepInfo * __RotateLeft ( SleepInfo * Root );
 			static inline SleepInfo * __RotateRight ( SleepInfo * Root );

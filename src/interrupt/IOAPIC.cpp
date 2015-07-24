@@ -42,7 +42,7 @@ void Interrupt::IOAPIC :: Init ()
 			if ( ( Physical <= IOAPICPhysical ) && ( ( Physical + 0x1000 ) > IOAPICPhysical ) )
 			{
 				
-				IOAPICVirtual = reinterpret_cast <uint32_t> ( VBaseAddresses [ J ] ) | ( Physical & 0xFFF );
+				IOAPICVirtual = reinterpret_cast <uint32_t> ( VBaseAddresses [ J ] ) | ( IOAPICPhysical & 0xFFF );
 				Allocated = true;
 				
 				break;
@@ -54,100 +54,164 @@ void Interrupt::IOAPIC :: Init ()
 		if ( ! Allocated )
 		{
 			
-			uint32_t VPage = reinterpret_cast <uint32_t> ( mm_kvmap ( reinterpret_cast <void *> ( Physical & 0xFFFFF000 ), 0x1000, MM::Paging::PageTable :: Flags_NoCache | MM::Paging::PageTable :: Flags_Writeable ) );
+			uint32_t VPage = reinterpret_cast <uint32_t> ( mm_kvmap ( reinterpret_cast <void *> ( IOAPICPhysical & 0xFFFFF000 ), 0x1000, MM::Paging::PageTable :: Flags_NoCache | MM::Paging::PageTable :: Flags_Writeable ) );
 			
 			if ( VPage == reinterpret_cast <uint32_t> ( static_cast <void *> ( NULL ) ) )
 				KPANIC ( "Failed to allocate virtual space for I/O APIC Mapping!" );
 			
 			VBaseAddresses.Push ( VPage );
 			
-			IOAPICVirtual = VPage | ( Physical & 0xFFF );
+			IOAPICVirtual = VPage | ( IOAPICPhysical & 0xFFF );
 			
 		}
+		
+		uint32_t Version = ReadRegister ( reinterpret_cast <void *> ( IOAPICVirtual ), kRegister_Version );
+		uint32_t ID = ReadRegister ( reinterpret_cast <void *> ( IOAPICVirtual ), kRegister_ID );
 		
 		IOAPICInfo Info;
 		
 		Info.BaseAddress = reinterpret_cast <void *> ( IOAPICVirtual );
 		Info.GlobalSystemInterruptBase = HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( I );
 		Info.ID = HW::ACPI::MADT :: GetIOAPICID ( I );
+		Info.GlobalSystemInterruptCount = ( ( Version >> 16 ) & 0xFF ) + 1;
+		Info.Version = Version & 0xFF;
 		
-		IOAPICs -> Push ( Info );
+		if ( ( Info.ID == ( ( ID >> 24 ) & 0xFF ) ) )
+			IOAPICs -> Push ( Info );
 		
-		system_func_kprintf ( "IOAPIC (%u): Base: %h, ID: %h, GSIBase: %h\n", I, reinterpret_cast <uint32_t> ( Info.BaseAddress ), Info.ID, Info.GlobalSystemInterruptBase );
 		
 	}
 	
-	for ( I = 0; I < HW::ACPI::MADT :: GetInterruptSourceOverrideCount (); I ++ )
+};
+
+void Interrupt::IOAPIC :: DefineFixedRedirectionEntry ( uint32_t Interrupt, uint32_t TargetVector, uint8_t LAPICID, bool ActiveHigh, bool EdgeTriggered, bool InitiallyMasked )
+{
+	
+	uint32_t I;
+	uint32_t IOAPICGSIBase = 0;
+	
+	void * BaseAddress = NULL;
+	
+	for ( I = 0; I < IOAPICs -> Length (); I ++ )
 	{
 		
-		const char * Polarity = "Unknown";
-		const char * Trigger = "Unknown";
+		uint32_t IOAPICGSIBase = ( * IOAPICs ) [ I ].GlobalSystemInterruptBase;
 		
-		switch ( HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( I ) & HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_PolarityMask )
+		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
 		{
-		
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ConformsToBusPolarity:
 			
-			Polarity = "Bus";
-			
-			break;
-		
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ActiveHigh:
-			
-			Polarity = "Active High";
-			
-			break;
-			
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ActiveLow:
-			
-			Polarity = "Active Low";
+			BaseAddress = ( * IOAPICs ) [ I ].BaseAddress;
 			
 			break;
 			
 		}
-		
-		switch ( HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( I ) & HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_TriggerMask )
-		{
-		
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ConformsToBusTrigger:
-			
-			Trigger = "Bus";
-			
-			break;
-		
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_EdgeTriggered:
-			
-			Trigger = "Edge";
-			
-			break;
-			
-		case HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_LevelTriggered:
-			
-			Trigger = "Level";
-			
-			break;
-			
-		}
-		
-		system_func_kprintf ( "Interrupt source override: Bus: %h, IRQ: %h, Interrupt: %h, Flags: [ Polarity: %s, Trigger: %s ]\n", HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( I ), HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( I ), Polarity, Trigger );
 	
 	}
-
+	
+	if ( BaseAddress == NULL )
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
+	
+	uint32_t EntryLow = ( TargetVector & 0xFF ) | kRedirectionEntry_Low_Deliveryode_Fixed | kRedirectionEntry_Low_DestinationMode_Physical | ( ActiveHigh ? kRedirectionEntry_Low_PinPolarity_ActiveHigh : kRedirectionEntry_Low_PinPolarity_ActiveLow ) | ( EdgeTriggered ? kRedirectionEntry_Low_TriggerMode_Edge : kRedirectionEntry_Low_TriggerMode_Level ) | ( InitiallyMasked ? kRedirectionEntry_Low_Mask_Set : kRedirectionEntry_Low_Mask_Clear );
+	uint32_t EntryHigh = ( LAPICID << kRedirectionEntry_High_BitBase_PhysicalDestination ) | ( kRedirectionEntry_High_UnusedMask & ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1 ) );
+	
+	WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ), EntryLow );
+	WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1, EntryHigh );
 	
 };
 
-uint32_t Interrupt::IOAPIC :: ReadRegister ( void * BaseAddress, uint32_t Register )
+void Interrupt::IOAPIC :: DefineLowestPriorityRedirectionEntry ( uint32_t Interrupt, uint32_t TargetVector, bool ActiveHigh, bool EdgeTriggered, bool InitiallyMasked )
 {
 	
-	reinterpret_cast <uint32_t *> ( BaseAddress ) [ 0 ] = Register & 0xFF;
-	return reinterpret_cast <uint32_t *> ( BaseAddress ) [ 4 ];
+	uint32_t I;
+	uint32_t IOAPICGSIBase = 0;
+	
+	void * BaseAddress = NULL;
+	
+	for ( I = 0; I < IOAPICs -> Length (); I ++ )
+	{
+		
+		uint32_t IOAPICGSIBase = ( * IOAPICs ) [ I ].GlobalSystemInterruptBase;
+		
+		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
+		{
+			
+			BaseAddress = ( * IOAPICs ) [ I ].BaseAddress;
+			
+			break;
+			
+		}
+	
+	}
+	
+	if ( BaseAddress == NULL )
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
+	
+	uint32_t EntryLow = ( TargetVector & 0xFF ) | kRedirectionEntry_Low_Deliveryode_LowestPriority | kRedirectionEntry_Low_DestinationMode_Physical | ( ActiveHigh ? kRedirectionEntry_Low_PinPolarity_ActiveHigh : kRedirectionEntry_Low_PinPolarity_ActiveLow ) | ( EdgeTriggered ? kRedirectionEntry_Low_TriggerMode_Edge : kRedirectionEntry_Low_TriggerMode_Level ) | ( InitiallyMasked ? kRedirectionEntry_Low_Mask_Set : kRedirectionEntry_Low_Mask_Clear );
+	uint32_t EntryHigh = ( kRedirectionEntry_High_UnusedMask & ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1 ) );
+	
+	WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ), EntryLow );
+	WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1, EntryHigh );
 	
 };
 
-void Interrupt::IOAPIC :: WriteRegister ( void * BaseAddress, uint32_t Register, uint32_t Value )
+void Interrupt::IOAPIC :: SetRedirectionEntryEnabled ( uint32_t Interrupt, bool Enabled )
 {
 	
-	reinterpret_cast <uint32_t *> ( BaseAddress ) [ 0 ] = Register & 0xFF;
-	reinterpret_cast <uint32_t *> ( BaseAddress ) [ 4 ] = Value;
+	uint32_t I;
+	uint32_t IOAPICGSIBase = 0;
+	
+	void * BaseAddress = NULL;
+	
+	for ( I = 0; I < IOAPICs -> Length (); I ++ )
+	{
+		
+		uint32_t IOAPICGSIBase = ( * IOAPICs ) [ I ].GlobalSystemInterruptBase;
+		
+		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
+		{
+			
+			BaseAddress = ( * IOAPICs ) [ I ].BaseAddress;
+			
+			break;
+			
+		}
+	
+	}
+	
+	if ( BaseAddress == NULL )
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
+	
+	uint32_t EntryLow = ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) );
+	
+	if ( Enabled )
+	{
+		
+		EntryLow &= ~ kRedirectionEntry_Low_Mask_Set;
+		WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ), EntryLow );
+		
+	}
+	else
+	{
+		
+		EntryLow |= kRedirectionEntry_Low_Mask_Set;
+		WriteRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ), EntryLow );
+		
+	}
+	
+};
+
+uint32_t Interrupt::IOAPIC :: ReadRegister ( volatile void * BaseAddress, volatile uint32_t Register )
+{
+	
+	* reinterpret_cast <volatile uint32_t *> ( BaseAddress ) = Register & 0xFF;
+	return * reinterpret_cast <volatile uint32_t *> ( reinterpret_cast <volatile uint32_t> ( BaseAddress ) + 0x10 );
+	
+};
+
+void Interrupt::IOAPIC :: WriteRegister ( volatile void * BaseAddress, volatile uint32_t Register, uint32_t Value )
+{
+	
+	* reinterpret_cast <volatile uint32_t *> ( BaseAddress ) = Register & 0xFF;
+	* reinterpret_cast <volatile uint32_t *> ( reinterpret_cast <volatile uint32_t> ( BaseAddress ) + 0x10 ) = Value;
 	
 };

@@ -116,7 +116,7 @@ C_LINKAGE const char * utoa ( uint32_t Value, char * Str, int32_t Base )
 	do
 	{
 		
-		* SubString ++ = "0123456789abcdefghijklmnopqrstuvwxyz" [ Value % Base ];
+		* SubString ++ = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" [ Value % Base ];
 		
 		Value /= Base;
 

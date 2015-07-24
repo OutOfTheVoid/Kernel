@@ -164,7 +164,7 @@ void HW::ACPI::MADT :: Init ()
 		switch ( RecordBase -> Type )
 		{
 			
-			case kRecordType_ProcessorLAPICRecord:
+		case kRecordType_ProcessorLAPICRecord:
 			
 			PLRRecord = reinterpret_cast <ProcessorLAPICRecord *> ( RecordBase );
 			
@@ -172,7 +172,7 @@ void HW::ACPI::MADT :: Init ()
 			
 			break;
 			
-			case kRecordType_IOAPICRecord:
+		case kRecordType_IOAPICRecord:
 			
 			IOARecord = reinterpret_cast <IOAPICRecord *> ( RecordBase );
 			
@@ -180,7 +180,7 @@ void HW::ACPI::MADT :: Init ()
 			
 			break;
 			
-			case kRecordType_InterruptSourceOverride:
+		case kRecordType_InterruptSourceOverride:
 			
 			ISORecord = reinterpret_cast <InterruptSourceOverrideRecord *> ( RecordBase );
 			

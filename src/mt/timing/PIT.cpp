@@ -1,8 +1,11 @@
 #include <mt/timing/PIT.h>
+#include <mt/timing/PWaitMS.h>
+
 #include <hw/cpu/IO.h>
 
+#include <hw/pc/ISA.h>
+
 #include <system/func/KPrintF.h>
-#include <mt/timing/PWaitMS.h>
 
 #include <cpputil/Linkage.h>
  
@@ -12,6 +15,22 @@ void MT::Timing::PIT :: InitPWait ()
 {
 	
 	mt_timing_pwaitmsMechanism ( & mt_timing_waitms );
+	
+};
+
+void MT::Timing::PIT :: InitTimedIRQ ( void ( * InterruptHandler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) )
+{
+	
+	mt_timing_pwaitmsMechanism ( NULL );
+	
+	::HW::PC::ISA :: SetIRQHandler ( kISAIRQ_PIT, InterruptHandler );
+	
+};
+
+void MT::Timing::PIT :: SetIRQEnabled ( bool Enabled )
+{
+	
+	::HW::PC::ISA :: SetIRQEnabled ( kISAIRQ_PIT, Enabled );
 	
 };
 
@@ -34,9 +53,9 @@ void MT::Timing::PIT :: SetTimeoutMS ( double Time )
 		
 	}
 	
-	HW::CPU::IO :: Out8 ( kCommandPort, Command );
-	HW::CPU::IO :: Out8 ( kDataPort_Channel0,  IntegerDivision & 0xFF );
-	HW::CPU::IO :: Out8 ( kDataPort_Channel0, ( IntegerDivision >> 8 ) & 0xFF );
+	::HW::CPU::IO :: Out8 ( kCommandPort, Command );
+	::HW::CPU::IO :: Out8 ( kDataPort_Channel0,  IntegerDivision & 0xFF );
+	::HW::CPU::IO :: Out8 ( kDataPort_Channel0, ( IntegerDivision >> 8 ) & 0xFF );
 	
 };
 
@@ -68,9 +87,9 @@ void MT::Timing::PIT :: SetTimer ( double Frequencey )
 		
 	}
 	 
-	HW::CPU::IO :: Out8 ( kCommandPort, Command );
-	HW::CPU::IO :: Out8 ( kDataPort_Channel0,  IntegerDivider & 0xFF );
-	HW::CPU::IO :: Out8 ( kDataPort_Channel0, ( IntegerDivider >> 8 ) & 0xFF ); 
+	::HW::CPU::IO :: Out8 ( kCommandPort, Command );
+	::HW::CPU::IO :: Out8 ( kDataPort_Channel0,  IntegerDivider & 0xFF );
+	::HW::CPU::IO :: Out8 ( kDataPort_Channel0, ( IntegerDivider >> 8 ) & 0xFF ); 
 	
 };
 
@@ -79,8 +98,8 @@ bool MT::Timing::PIT :: GetTimeout ()
 	
 	uint32_t Command = kCommandFlag_ReadBack | kCommandFlag_NotLatchCount | kCommandFlag_ReadTimer0;
 	
-	HW::CPU::IO :: Out8 ( kCommandPort, Command );
-	return ( HW::CPU::IO :: In8 ( kDataPort_Channel0 ) & kStatusFlag_WaitState ) != 0;
+	::HW::CPU::IO :: Out8 ( kCommandPort, Command );
+	return ( ::HW::CPU::IO :: In8 ( kDataPort_Channel0 ) & kStatusFlag_WaitState ) != 0;
 	
 };
 

@@ -11,14 +11,12 @@ void * mm_kvmap ( void * Physical, uint32_t Length, uint32_t Flags )
 	uint32_t Error;
 	void * Virtual;
 	
-	Length += reinterpret_cast <uint32_t> ( Physical ) & 0xFFF;
-	
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Alloc ( Length, reinterpret_cast <void **> ( & Virtual ), & Error );
 	
 	if ( Error != MM::Paging::AddressSpace :: kAlloc_Error_None )
 		return NULL;
 	
-	MM::Paging::PageTable :: SetKernelRegionMapping ( reinterpret_cast <uint32_t> ( Virtual ), reinterpret_cast <uint32_t> ( Physical ) & 0xFFFFF000, Length, Flags | MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Cutsom_KMap );
+	MM::Paging::PageTable :: SetKernelRegionMapping ( reinterpret_cast <uint32_t> ( Virtual ), reinterpret_cast <uint32_t> ( Physical ) & 0xFFFFF000, Length, Flags | MM::Paging::PageTable :: Flags_Present );
 	
 	return reinterpret_cast <void *> ( ( reinterpret_cast <uint32_t> ( Virtual ) & 0xFFFFF000 ) | ( reinterpret_cast <uint32_t> ( Physical ) & 0xFFF ) );
 	

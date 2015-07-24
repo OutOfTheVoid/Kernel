@@ -17,11 +17,17 @@ namespace HW
 		{
 		public:
 			
+			static void InitIOInterrupts ();
+			
 			static void SetIRQHandler ( uint8_t IRQ, void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) );
+			static void SetIRQEnabled ( uint8_t IRQ, bool Enabled );
 			
 		private:
 			
 			static const uint8_t kIRQ_InterruptBase = 0x40;
+			static const uint8_t kIRQ_GlobalSystemInterruptBase = 0x00;
+			
+			static const uint8_t kMADT_ISABusNumber = 0x00;
 			
 		};
 		
