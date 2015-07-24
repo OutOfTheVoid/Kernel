@@ -61,6 +61,7 @@ namespace MT
 			
 			static const uint32_t kMaxFreeCount = 200;
 			
+			static Synchronization::Spinlock :: Spinlock_t TimerLock;
 			static Synchronization::Spinlock :: Spinlock_t TreeLock;
 			static SleepInfo * TreeRoot;
 			

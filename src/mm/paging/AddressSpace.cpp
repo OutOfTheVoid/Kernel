@@ -836,6 +836,7 @@ void MM::Paging::AddressSpace :: RemoveFreeNode ( AddressRange * Node )
 			{
 				
 				RootFreeNode = Node -> Left;
+				RootFreeNode -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );;
 				Node -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;
@@ -850,6 +851,7 @@ void MM::Paging::AddressSpace :: RemoveFreeNode ( AddressRange * Node )
 			{
 				
 				RootFreeNode = Node -> Right;
+				RootFreeNode -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );;
 				Node -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;
@@ -1067,6 +1069,7 @@ void MM::Paging::AddressSpace :: RemoveAllocatedNode ( AddressRange * Node )
 			{
 				
 				RootAllocatedNode = Node -> Left;
+				RootAllocatedNode -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				Node -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;
@@ -1081,6 +1084,7 @@ void MM::Paging::AddressSpace :: RemoveAllocatedNode ( AddressRange * Node )
 			{
 				
 				RootAllocatedNode = Node -> Right;
+				RootAllocatedNode -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				Node -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;

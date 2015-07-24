@@ -11,21 +11,21 @@ MT::Synchronization::Spinlock :: Spinlock_t system_func_kprintf_PrintLock = MT::
 C_LINKAGE void system_func_kprintfOutput ( void ( * Output ) ( const char *, va_list Args ) )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & system_func_kprintf_PrintLock );
 	bool IntBlock = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & system_func_kprintf_PrintLock );
 	
 	system_func_kprintfOutputFunction = Output;
 	
-	Interrupt::IState :: WriteBlock ( IntBlock );
 	MT::Synchronization::Spinlock :: Release ( & system_func_kprintf_PrintLock );
+	Interrupt::IState :: WriteBlock ( IntBlock );
 	
 }
 
 C_LINKAGE void system_func_kprintf ( const char * FormatString, ... )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & system_func_kprintf_PrintLock );
 	bool IntBlock = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & system_func_kprintf_PrintLock );
 	
 	va_list Args;
 
@@ -33,7 +33,7 @@ C_LINKAGE void system_func_kprintf ( const char * FormatString, ... )
 	( * system_func_kprintfOutputFunction ) ( FormatString, Args );
 	va_end ( Args );
 	
-	Interrupt::IState :: WriteBlock ( IntBlock );
 	MT::Synchronization::Spinlock :: Release ( & system_func_kprintf_PrintLock );
+	Interrupt::IState :: WriteBlock ( IntBlock );
 	
 };

@@ -668,6 +668,7 @@ void MM::Paging::PAlloc :: RemoveNode ( AddressRange ** Root, AddressRange * ToR
 			{
 				
 				( * Root ) = ToRemove -> Left;
+				( * Root ) -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				ToRemove -> Left = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;
@@ -682,6 +683,7 @@ void MM::Paging::PAlloc :: RemoveNode ( AddressRange ** Root, AddressRange * ToR
 			{
 				
 				( * Root ) = ToRemove -> Right;
+				( * Root ) -> Parent = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				ToRemove -> Right = reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid );
 				
 				return;
