@@ -6,7 +6,13 @@
 #include <mm/KMalloc.h>
 #include <mm/PMalloc.h>
 
+#include <mm/paging/PageTable.h>
+#include <mm/paging/PFA.h>
+#include <mm/paging/AddressSpace.h>
+
 #include <util/string/String.h>
+
+#include <hw/cpu/Processor.h>
 
 ASM_LINKAGE void interrupt_ISRCommonHandlerInjectionReturn ();
 
@@ -35,6 +41,8 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	StackSize &= ~ 0xFFF;
 	
 	void * Stack = mm_pmalloc ( ( StackSize >> 12 ) + 1 );
+	
+	New -> KStackBottom = Stack;
 	
 	if ( Stack == NULL )
 	{
@@ -75,6 +83,50 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	StackPush ( & New -> KStack, 0 ); // EDI
 	
 	return New;
+	
+};
+
+void MT::Tasking::Task :: DestroyKernelTask ( Task_t * ToDestroy )
+{
+	
+	if ( ( ToDestroy -> Flags & kFlag_CPUInitStack ) != 0 )
+	{
+		
+		uint32_t I;
+		::HW::CPU::Processor :: CPUInfo * Info;
+		
+		for ( I = 0; I < ::HW::CPU::Processor :: GetProcessorCount (); I ++ )
+		{
+			
+			Info = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
+			
+			if ( Info -> InitStackBottom == ToDestroy -> KStackBottom )
+			{
+				
+				if ( mm_psize ( ToDestroy -> KStackBottom ) != 0 )
+					mm_pfree ( ToDestroy -> KStackBottom );
+				else
+				{
+					
+					uint32_t DummyError;
+					
+					MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Info -> InitStackBottom ), Info -> InitStackLength );
+					
+					MM::Paging::PFA :: AddFreeRange ( Info -> InitStackBottom, Info -> InitStackLength );
+					
+					MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> AddFreeRange ( reinterpret_cast <uint32_t> ( Info -> InitStackBottom ), Info -> InitStackLength, & DummyError );
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	else
+		mm_pfree ( ToDestroy -> KStackBottom );
+	
+	mm_kfree ( ToDestroy );
 	
 };
 

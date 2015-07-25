@@ -17,6 +17,8 @@
 
 #include <math/bitmath.h>
 
+#include <mt/tasking/Task.h>
+
 #define PFA_DEBUG
 
 namespace MM
@@ -43,6 +45,10 @@ namespace MM
 			static uint32_t GetAllocationSize ( void * Address );
 			
 		private:
+			
+			friend void MT::Tasking::Task :: DestroyKernelTask ( MT::Tasking::Task :: Task_t * ToDestroy );
+			
+			static void AddFreeRange ( void * Address, uint32_t Length );
 			
 			static void MBEarlyAnalyze ( multiboot_info_t * MultibootInfo );
 			

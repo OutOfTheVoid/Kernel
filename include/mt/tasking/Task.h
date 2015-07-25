@@ -22,11 +22,11 @@ namespace MT
 			
 			static const uint32_t kFlag_User = 0x0000;
 			static const uint32_t kFlag_Kernel = 0x0001;
-			
 			static const uint32_t kFlag_Scheduler_Yield = 0x0002;
-			
 			static const uint32_t kFlag_Math = 0x0004;
 			static const uint32_t kFlag_MathInit = 0x0008;
+			static const uint32_t kFlag_Suspended = 0x0010;
+			static const uint32_t kFlag_CPUInitStack = 0x0020;
 			
 			static const uint32_t kPrivelege_Exec = 0x0001;
 			static const uint32_t kPrivelege_IO = 0x0002;
@@ -46,10 +46,9 @@ namespace MT
 				uint32_t Flags;
 				uint32_t State;
 				
+				void * KStackBottom;
 				void * KStack;
 				uint32_t KSS;
-				
-				Interrupt::InterruptHandlers :: ISRFrame * PState;
 				
 				::HW::CPU::Math :: MathState Math;
 				
@@ -69,6 +68,8 @@ namespace MT
 			} Task_t;
 			
 			static Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority );
+			
+			static void DestroyKernelTask ( Task_t * ToDestroy );
 			
 		private:
 			

@@ -11,6 +11,7 @@
 #include <system/func/KPrintF.h>
 #include <system/func/Panic.h>
 
+#include <mm/KMalloc.h>
 #include <mm/PMalloc.h>
 #include <mm/paging/PageTable.h>
 
@@ -108,6 +109,8 @@ void MT :: MTInit ()
 	
 	Tasking::Scheduler :: Init ();
 	Tasking::Scheduler :: PInit ();
+	
+	liballoc_switchlockmode ();
 	
 	uint32_t I;
 	

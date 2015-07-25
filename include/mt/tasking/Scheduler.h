@@ -18,14 +18,27 @@ namespace MT
 			static const double kSchedulingQuantumMS = 10.0;
 			
 			static void Init ();
-			
 			static void PInit ();
+			
 			static void Schedule ();
 			
 			static void AddTask ( Task :: Task_t * ToAdd );
+			static void AddTaskInternal ( Task :: Task_t * ToAdd );
+			
+			static void SuspendTask ( Task :: Task_t * ToSuspend );
+			static void SuspendCurrentTask ();
 			
 			static void KillTask ( Task :: Task_t * ToKill );
 			static void KillCurrentTask ();
+			
+			static Task :: Task_t * GetNextDeadTask ();
+			
+			static inline void Preemt ()
+			{
+				
+				__asm__ volatile ( "int 0x20" );
+				
+			};
 			
 		private:
 			
@@ -33,6 +46,9 @@ namespace MT
 			
 			static Task :: Task_t * TaskTable [ 0x20 ];
 			static Synchronization::Spinlock :: Spinlock_t TTLock;
+			
+			static Task :: Task_t * ReapingListHead;
+			static Synchronization::Spinlock :: Spinlock_t RLLock;
 			
 			static Synchronization::Spinlock :: Spinlock_t TIDLock;
 			static uint64_t MaxID;

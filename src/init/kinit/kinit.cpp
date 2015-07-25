@@ -39,8 +39,6 @@
 ASM_LINKAGE void hw_cpu_hang ();
 
 ASM_LINKAGE void testKernelTask ();
-ASM_LINKAGE void testKernelTask2 ();
-ASM_LINKAGE void testKernelTask3 ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -61,12 +59,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
-	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
-	
-	MT::Tasking::Task :: Task_t * NewTask3 = MT::Tasking::Task :: CreateKernelTask ( "Test3", reinterpret_cast <void *> ( & testKernelTask3 ), 0x2000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask3 );
-	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };
@@ -74,74 +66,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void testKernelTask ()
 {
 	
-	uint32_t I = 0;
-	uint64_t Offset;
 	
-	while ( true )
-	{
-		
-		system_func_kprintf ( "Task 1 [ 2.0 s ]\n", I );
-		
-		I ++;
-		
-		Offset = HW::CPU::TSC :: Read ();
-		
-		MT::Timing::TaskSleep :: SleepCurrent ( 2000.0 );
-		
-		Offset = HW::CPU::TSC :: Read () - Offset;
-		
-		system_func_kprintf ( "Task 1 reported delta: %u ms\n", static_cast <uint32_t> ( static_cast <double> ( Offset ) / Interrupt::APIC :: GetBusFrequencey () * 1000.0 ) );
-		
-	}
-	
-};
-
-void testKernelTask2 ()
-{
-	
-	uint32_t I = 0;
-	uint64_t Offset;
-	
-	while ( true )
-	{
-		
-		system_func_kprintf ( "Task 2 [ 3.0 s ]\n", I );
-		
-		I ++;
-		
-		Offset = HW::CPU::TSC :: Read ();
-		
-		MT::Timing::TaskSleep :: SleepCurrent ( 3000.0 );
-		
-		Offset = HW::CPU::TSC :: Read () - Offset;
-		
-		system_func_kprintf ( "Task 2 reported delta: %i ms\n", static_cast <uint32_t> ( static_cast <double> ( Offset ) / Interrupt::APIC :: GetBusFrequencey () * 1000.0 ) );
-		
-	}
-	
-};
-
-void testKernelTask3 ()
-{
-	
-	uint32_t I = 0;
-	uint64_t Offset;
-	
-	while ( true )
-	{
-		
-		system_func_kprintf ( "Task 3 [ 2.5 s ]\n", I );
-		
-		I ++;
-		
-		Offset = HW::CPU::TSC :: Read ();
-		
-		MT::Timing::TaskSleep :: SleepCurrent ( 2500.0 );
-		
-		Offset = HW::CPU::TSC :: Read () - Offset;
-		
-		system_func_kprintf ( "Task 3 reported delta: %i ms\n", static_cast <uint32_t> ( static_cast <double> ( Offset ) / Interrupt::APIC :: GetBusFrequencey () * 1000.0 ) );
-		
-	}
 	
 };

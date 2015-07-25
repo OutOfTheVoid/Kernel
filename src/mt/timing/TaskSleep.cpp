@@ -14,7 +14,6 @@
 
 #include <cpputil/Linkage.h>
 
-#include <system/func/KPrintf.h>
 #include <system/func/Panic.h>
 
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: TreeRoot = NULL;
@@ -107,28 +106,21 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 	if ( NewNode == NULL )
 		KPANIC ( "Failed to create new wait node!" );
 	
-	uint64_t Current = GetCurrentTimeNS ();
-	uint64_t Delay = DelayMSToNS ( Milliseconds );
-	uint64_t ThresholdNS = Current + Delay;
-	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
 	Tasking::Task :: Task_t * PendingTask = ThisCPU -> CurrentTask;
 	PendingTask -> State = Tasking::Task :: kState_Blocked;
-	
-	NewNode -> ThresholdNS = ThresholdNS;
 	NewNode -> PendingTask = PendingTask;
 	
-	system_func_kprintf ( "SC AQR Tree\n" );
+	uint64_t Current = GetCurrentTimeNS ();
+	uint64_t Delay = DelayMSToNS ( Milliseconds );
+	uint64_t ThresholdNS = Current + Delay;
+	NewNode -> ThresholdNS = ThresholdNS;
+	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
-	
-	system_func_kprintf ( "SC INS Node\n" );
 	InsertNode ( NewNode );
-	
-	system_func_kprintf ( "SC REL Tree\n" );
 	MT::Synchronization::Spinlock :: Release ( & TreeLock );
 	
-	system_func_kprintf ( "SC AQR Timer\n" );
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TimerLock );
 	
 	if ( NextInterrupt > ThresholdNS )
@@ -140,7 +132,6 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 			
 	}
 	
-	system_func_kprintf ( "SC REL Timer\n" );
 	MT::Synchronization::Spinlock :: Release ( & TimerLock );
 	
 	Interrupt::IState :: WriteBlock ( ReInt );
@@ -152,7 +143,6 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 void MT::Timing::TaskSleep :: OnInterrupt ()
 {
 	
-	system_func_kprintf ( "OI AQR Tree\n" );
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TreeLock );
 	
 	uint64_t Time = GetCurrentTimeNS ();
@@ -198,16 +188,11 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 		
 	}
 	
-	system_func_kprintf ( "OI REL Tree\n" );
 	MT::Synchronization::Spinlock :: Release ( & TreeLock );
 	
-	system_func_kprintf ( "OI AQR Timer\n" );
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TimerLock );
-	
 	SetNextInterrupt ( NextInterruptUpdated );
 	NextInterrupt = NextInterruptUpdated;
-	
-	system_func_kprintf ( "OI REL Timer\n" );
 	MT::Synchronization::Spinlock :: Release ( & TimerLock );
 	
 	SleepInfo * Current = NULL;
@@ -219,11 +204,9 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 		
 		Tasking::Task :: Task_t * WakeTask = Current -> PendingTask;
 		WakeHead = Current -> Right;
-		
 		DestroyNode ( Current );
 		
 		WakeTask -> State = Tasking::Task :: kState_Runnable;
-		
 		MT::Tasking::Scheduler :: AddTask ( WakeTask );
 		
 	}
@@ -248,7 +231,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 	
 	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
-	system_func_kprintf ( "CN AQR FreeList\n" );
 	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
 	
 	if ( FreeCount != 0 )
@@ -261,7 +243,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 		
 	}
 	
-	system_func_kprintf ( "CN REL FreeList\n" );
 	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
 	
 	Interrupt::IState :: WriteBlock ( ReInt );
@@ -287,7 +268,6 @@ void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 	
 	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
-	system_func_kprintf ( "DN AQR FreeList\n" );
 	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
 	
 	Node -> Right = FreeHead;
@@ -295,7 +275,6 @@ void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 	
 	FreeCount ++;
 	
-	system_func_kprintf ( "DN REL FreeList\n" );
 	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
 	
 	Interrupt::IState :: WriteBlock ( ReInt );
@@ -318,12 +297,8 @@ void MT::Timing::TaskSleep :: InsertNode ( SleepInfo * Node )
 	
 	SleepInfo * Current = TreeRoot;
 	
-	system_func_kprintf ( "a\n" );
-	
 	while ( true )
 	{
-		
-		system_func_kprintf ( "%h\n", Current );
 		
 		if ( Node -> ThresholdNS >= Current -> ThresholdNS )
 		{
@@ -341,7 +316,6 @@ void MT::Timing::TaskSleep :: InsertNode ( SleepInfo * Node )
 			if ( Current == Current -> Right )
 			{
 				
-				system_func_kprintf ( "Recursive tree!\n" );
 				while ( true );
 				
 			}
@@ -365,7 +339,6 @@ void MT::Timing::TaskSleep :: InsertNode ( SleepInfo * Node )
 			if ( Current == Current -> Left )
 			{
 				
-				system_func_kprintf ( "Recursive tree!\n" );
 				while ( true );
 				
 			}
@@ -376,8 +349,6 @@ void MT::Timing::TaskSleep :: InsertNode ( SleepInfo * Node )
 		}
 		
 	}
-	
-	system_func_kprintf ( "b" );
 	
 	Current = Node;
 	
@@ -390,11 +361,7 @@ void MT::Timing::TaskSleep :: InsertNode ( SleepInfo * Node )
 		if ( Current == TreeRoot )
 		{
 			
-			system_func_kprintf ( "c" );
-			
 			TreeRoot = __Balance ( Current );
-			
-			system_func_kprintf ( "d\n" );
 			
 			return;
 			

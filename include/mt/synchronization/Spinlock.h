@@ -13,7 +13,7 @@ namespace MT
 		{
 		public:
 			
-			typedef uint32_t __attribute__ (( aligned )) Spinlock_t;
+			typedef uint32_t Spinlock_t;
 			
 			static void SpinAcquire ( Spinlock_t * Lock );
 			static bool TryAcquire ( Spinlock_t * Lock );

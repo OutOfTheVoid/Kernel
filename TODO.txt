@@ -1,9 +1,7 @@
 To do List
 ----------
 
-* I/O Interrupt manager
-* Task sleep
-* Task kill - Partially implemented. No current way to free up resources for the process.
+* Mutexes
 * User mode ?
 * System call interface ?
 * Shared memory ?

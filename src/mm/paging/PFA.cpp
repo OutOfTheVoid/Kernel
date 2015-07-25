@@ -112,6 +112,23 @@ void MM::Paging::PFA :: Init2 ( multiboot_info_t * MultibootInfo, uint32_t Multi
 	
 };
 
+void MM::Paging::PFA :: AddFreeRange ( void * Address, uint32_t Length )
+{
+	
+	uint32_t PAAddr = ( reinterpret_cast <uint32_t> ( Address ) + 0xFFF ) & 0xFFFFF000;
+	uint32_t PALength = static_cast <uint32_t> ( Length ) - ( PAAddr - reinterpret_cast <uint32_t> ( Address ) );
+	
+	if ( Length >= 0x2000 )
+	{
+		
+		uint32_t DummyError;
+		
+		PAlloc :: AddFreePageRange ( GeneralPhysicalFree, PAAddr, PALength, & DummyError );
+		
+	} 
+	
+};
+
 bool MM::Paging::PFA :: Alloc ( uint32_t Length, void ** Address )
 {
 	
