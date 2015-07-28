@@ -51,6 +51,8 @@ namespace MT
 			
 		private:
 			
+			static void ReleaseFromWrongThread ( Mutex_t * Lock );
+			
 		};
 		
 	};

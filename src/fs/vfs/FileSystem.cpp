@@ -1,4 +1,5 @@
 #include <fs/vfs/FileSystem.h>
+#include <fs/FS.h>
 
 #include <cpputil/Memory.h>
 #include <cpputil/Unused.h>
@@ -9,7 +10,7 @@
 
 FS::VFS::FileSystem :: VFS_VirtualDirectory_FSNode_Struct * FS::VFS::FileSystem :: RootDirectory = NULL;
 
-FS::VFS::FileSystem :: FSFunctionBlock FS::VFS::FileSystem :: Functions;
+FS :: FSFunctionBlock FS::VFS::FileSystem :: Functions;
 
 void FS::VFS::FileSystem :: Init ()
 {
@@ -38,7 +39,7 @@ void FS::VFS::FileSystem :: Init ()
 	
 };
 
-FS::VFS::FileSystem :: FSNode * FS::VFS::FileSystem :: GetRootNode ()
+FS :: FSNode * FS::VFS::FileSystem :: GetRootNode ()
 {
 	
 	return reinterpret_cast <FSNode *> ( RootDirectory );
