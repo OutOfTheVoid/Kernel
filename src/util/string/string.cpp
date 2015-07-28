@@ -217,3 +217,11 @@ char * strcpy ( char * Destination, const char * Source )
 	
 };
 
+void memzero ( void * Destination, size_t Count )
+{
+	
+	for ( uint32_t i = 0; i < Count; i ++ )
+		reinterpret_cast <uint8_t *> ( Destination ) [ i ] = 0;
+	
+};
+

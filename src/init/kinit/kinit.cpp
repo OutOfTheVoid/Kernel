@@ -36,6 +36,8 @@
 
 #include <math/bitmath.h>
 
+#include <fs/FS.h>
+
 ASM_LINKAGE void hw_cpu_hang ();
 
 ASM_LINKAGE void testKernelTask ();
@@ -55,6 +57,7 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MPInit ();
 	Interrupt :: Init ();
 	MT :: MTInit ();
+	FS :: Init ();
 	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
@@ -66,6 +69,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void testKernelTask ()
 {
 	
-	
+	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };

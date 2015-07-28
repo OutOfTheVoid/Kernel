@@ -16,4 +16,6 @@ C_LINKAGE const char * utoa ( uint32_t Value, char * Str, int32_t Base );
 
 C_LINKAGE void * memcpy ( void * Destination, const void * Source, size_t Count );
 
+C_LINKAGE void memzero ( void * Destination, size_t Count );
+
 #endif
