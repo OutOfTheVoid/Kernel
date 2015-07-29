@@ -21,10 +21,8 @@ void FS::VFS::FileSystem :: Init ()
 	if ( RootDirectory == NULL )
 		KPANIC ( "Failed to allocate root directory structure!" );
 	
-	RootDirectory -> Lock = MT::Synchronization::Mutex :: Initializer ();
-	RootDirectory -> FSSignature = VFSSignature;
+	RootDirectory -> Lock = MT::Synchronization::RWLock :: Initializer ();
 	RootDirectory -> FSNodeType = kFSNodeType_Directory;
-	RootDirectory -> FSFunctions = & Functions;
 	
 	memzero ( reinterpret_cast <void *> ( & Functions ), sizeof ( Functions ) );
 	
@@ -35,10 +33,10 @@ void FS::VFS::FileSystem :: Init ()
 	
 	Functions.Open = & Open;
 	Functions.Close = & Close;
-	Functions.Enumerate = Enumerate;
-	Functions.Find = Find;
+	Functions.Enumerate = & Enumerate;
+	Functions.Find = & Find;
 	Functions.Add = & Add;
-	Functions.Delete = Delete;
+	Functions.Delete = & Delete;
 	
 };
 
@@ -70,16 +68,16 @@ void FS::VFS::FileSystem :: Close ( FSNode * Node, FSStatus_t * Status )
 void FS::VFS::FileSystem :: Enumerate ( FSNode * Node, uint32_t ChildIndex, const char ** ChildNamePTR, FSStatus_t * Status )
 {
 	
-	if ( Node -> FSSignature != VFSSignature )
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
 	{
 		
-		* Status = kFSStatus_Failure_WrongFS;
+		* Status = kFSStatus_Failure_NonDirectory;
 		
 		return;
 		
 	}
 	
-	MT::Synchronization::Mutex :: Acquire ( & Node -> Lock );
+	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
 	
 	if ( reinterpret_cast <VFS_VirtualDirectory_FSNode *> ( Node ) -> Children.Length () > ChildIndex )
 	{
@@ -96,23 +94,23 @@ void FS::VFS::FileSystem :: Enumerate ( FSNode * Node, uint32_t ChildIndex, cons
 		
 	}
 	
-	MT::Synchronization::Mutex :: Release ( & Node -> Lock );
+	MT::Synchronization::RWLock :: ReadRelease ( & Node -> Lock );
 	
 };
 
 void FS::VFS::FileSystem :: Find ( FSNode * Node, const char * Name, FSNode ** ChildPTR, FSStatus_t * Status )
 {
 	
-	if ( Node -> FSSignature != VFSSignature )
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
 	{
 		
-		* Status = kFSStatus_Failure_WrongFS;
+		* Status = kFSStatus_Failure_NonDirectory;
 		
 		return;
 		
 	}
 	
-	MT::Synchronization::Mutex :: Acquire ( & Node -> Lock );
+	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
 	
 	uint32_t I;
 	
@@ -135,23 +133,23 @@ void FS::VFS::FileSystem :: Find ( FSNode * Node, const char * Name, FSNode ** C
 	if ( I == reinterpret_cast <VFS_VirtualDirectory_FSNode *> ( Node ) -> Children.Length () )
 		* Status = kFSStatus_Failure_Existance;
 	
-	MT::Synchronization::Mutex :: Release ( & Node -> Lock );
+	MT::Synchronization::RWLock :: ReadRelease ( & Node -> Lock );
 	
 };
 
 void FS::VFS::FileSystem :: Add ( FSNode * Node, FSNode * ToAdd, FSStatus_t * Status )
 {
 	
-	if ( Node -> FSSignature != VFSSignature )
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
 	{
 		
-		* Status = kFSStatus_Failure_WrongFS;
+		* Status = kFSStatus_Failure_NonDirectory;
 		
 		return;
 		
 	}
 	
-	MT::Synchronization::Mutex :: Acquire ( & Node -> Lock );
+	MT::Synchronization::RWLock :: WriteAcquire ( & Node -> Lock );
 	
 	uint32_t I;
 	
@@ -178,23 +176,23 @@ void FS::VFS::FileSystem :: Add ( FSNode * Node, FSNode * ToAdd, FSStatus_t * St
 		
 	}
 	
-	MT::Synchronization::Mutex :: Release ( & Node -> Lock );
+	MT::Synchronization::RWLock :: WriteRelease ( & Node -> Lock );
 	
 };
 
 void FS::VFS::FileSystem :: Delete ( FSNode * Node, FSNode * ToDelete, FSStatus_t * Status )
 {
 	
-	if ( Node -> FSSignature != VFSSignature )
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
 	{
 		
-		* Status = kFSStatus_Failure_WrongFS;
+		* Status = kFSStatus_Failure_NonDirectory;
 		
 		return;
 		
 	}
 	
-	MT::Synchronization::Mutex :: Acquire ( & Node -> Lock );
+	MT::Synchronization::RWLock :: WriteAcquire ( & Node -> Lock );
 	
 	int32_t I = reinterpret_cast <VFS_VirtualDirectory_FSNode *> ( Node ) -> Children.IndexOf ( ToDelete );
 	
@@ -213,6 +211,6 @@ void FS::VFS::FileSystem :: Delete ( FSNode * Node, FSNode * ToDelete, FSStatus_
 		
 	}
 	
-	MT::Synchronization::Mutex :: Release ( & Node -> Lock );
+	MT::Synchronization::RWLock :: WriteRelease ( & Node -> Lock );
 	
 };

@@ -73,6 +73,8 @@ namespace FS
 				uint32_t Offset;
 				uint32_t Length;
 				
+				
+				
 			} QMFS_FileNode;
 			
 			
@@ -108,6 +110,15 @@ namespace FS
 			static FS::FSFunctionBlock FSFunctions;
 			
 			static bool EnumerateDirectoryChildren ( QMFS_Directory_FSNode * Directory, QMFS_DirectoryNode * StorageNode, HW::Storage::StorageDevice * Device );
+			
+			static void Open ( FSNode * Node, FSStatus_t * Status );
+			static void Close ( FSNode * Node, FSStatus_t * Status );
+			
+			static void Read ( FSNode * Node, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status );
+			static void Write ( FSNode * Node, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status );
+			
+			static void Enumerate ( FSNode * Node, uint32_t ChildIndex, const char ** ChildNamePTR, FSStatus_t * Status );
+			static void Find ( FSNode * Node, const char * Name, FSNode ** ChildPTR, FSStatus_t * Status );
 			
 		};
 		

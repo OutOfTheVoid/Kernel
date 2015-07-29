@@ -2,6 +2,8 @@
 
 #include <util/string/String.h>
 
+#include <cpputil/Unused.h>
+
 #include <mm/KMalloc.h>
 
 FS::FileSystemEntry FS::QMFS::FileSystem :: FSEntry;
@@ -18,8 +20,18 @@ void FS::QMFS::FileSystem :: RegisterFileSystem ()
 	FSEntry.TestStorageDevice = & TestStorageDevice;
 	FSEntry.MountStorageDevice = & MountStorageDevice;
 	
-	FSFunctions.Read = NULL;
-	FSFunctions.Write = NULL;
+	memzero ( reinterpret_cast <void *> ( & FSFunctions ), sizeof ( FSFunctions ) );
+	
+	for ( uint32_t I = 0; I < kNodeTypes; I ++ )
+		FSFunctions.NodeTypeFlags [ I ] = kFSNodeTypeFlag_IllegalNodeType;
+	
+	FSFunctions.NodeTypeFlags [ kFSNodeType_Directory ] = kFSNodeTypeFlag_OpenClose | kFSNodeTypeFlag_Enumerate | kFSNodeTypeFlag_Find;
+	FSFunctions.NodeTypeFlags [ kFSNodeType_File ] = kFSNodeTypeFlag_OpenClose | kFSNodeTypeFlag_Read | kFSNodeTypeFlag_Write;
+	
+	FSFunctions.Read = & Read;
+	FSFunctions.Write = & Write;
+	FSFunctions.Find = & Find;
+	FSFunctions.Enumerate = & Enumerate;
 	
 };
 
@@ -598,5 +610,229 @@ bool FS::QMFS::FileSystem :: EnumerateDirectoryChildren ( QMFS_Directory_FSNode 
 	}
 	
 	return true;
+	
+};
+
+void FS::QMFS::FileSystem :: Open ( FSNode * Node, FSStatus_t * Status )
+{
+	
+	UNUSED ( Node );
+	
+	* Status = kFSStatus_Success;
+	
+};
+
+void FS::QMFS::FileSystem :: Close ( FSNode * Node, FSStatus_t * Status )
+{
+	
+	UNUSED ( Node );
+	
+	* Status = kFSStatus_Success;
+	
+};
+
+void FS::QMFS::FileSystem :: Read ( FSNode * Node, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status )
+{
+	
+	if ( Node -> FSNodeType != kFSNodeType_File )
+	{
+		
+		* Status = kFSStatus_Failure_NonFile;
+		
+		return;
+		
+	}
+	
+	uint32_t Offset = reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear + Position;
+	
+	if ( Length > reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear )
+	{
+		
+		* Status = kFSStatus_Failure_Length;
+		
+		return;
+		
+	}
+	
+	if ( ( Offset < reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear ) || ( Position + Length >= reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear ) )
+	{
+		
+		* Status = kFSStatus_Failure_Position;
+		
+		return;
+		
+	}
+	
+	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
+	
+	HW::Storage::StorageDevice :: StorageStatus SStatus;
+	
+	switch ( reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device -> GetStorageType () )
+	{
+		
+	case HW::Storage::StorageDevice :: kStorageType_RamDisk:
+		reinterpret_cast <HW::Storage::RamDiskStorageDevice *> ( reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device ) -> Read ( Buffer, Offset, reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear, & SStatus );
+		break;
+		
+	default:
+		reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device -> ReadLinear ( Buffer, Offset, reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear, & SStatus );
+		
+	}
+	
+	MT::Synchronization::RWLock :: ReadRelease ( & Node -> Lock );
+	
+	if ( SStatus != HW::Storage::StorageDevice :: kStorageStatus_Success )
+	{
+		
+		* Status = kFSStatus_Failure_StorageDevice;
+		
+		return;
+		
+	}
+	
+	* Status = kFSStatus_Success;
+	
+};
+
+void FS::QMFS::FileSystem :: Write ( FSNode * Node, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status )
+{
+	
+	if ( Node -> FSNodeType != kFSNodeType_File )
+	{
+		
+		* Status = kFSStatus_Failure_NonFile;
+		
+		return;
+		
+	}
+	
+	uint32_t Offset = reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear + Position;
+	
+	if ( Length > reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear )
+	{
+		
+		* Status = kFSStatus_Failure_Length;
+		
+		return;
+		
+	}
+	
+	if ( ( Offset < reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear ) || ( Position + Length >= reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear ) )
+	{
+		
+		* Status = kFSStatus_Failure_Position;
+		
+		return;
+		
+	}
+	
+	MT::Synchronization::RWLock :: WriteAcquire ( & Node -> Lock );
+	
+	HW::Storage::StorageDevice :: StorageStatus SStatus;
+	
+	switch ( reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device -> GetStorageType () )
+	{
+		
+	case HW::Storage::StorageDevice :: kStorageType_RamDisk:
+		reinterpret_cast <HW::Storage::RamDiskStorageDevice *> ( reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device ) -> Write ( Buffer, Offset, reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear, & SStatus );
+		break;
+		
+	default:
+		reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> FSInstance -> Device -> WriteLinear ( Buffer, Offset, reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear, & SStatus );
+		
+	}
+	
+	MT::Synchronization::RWLock :: WriteRelease ( & Node -> Lock );
+	
+	if ( SStatus != HW::Storage::StorageDevice :: kStorageStatus_Success )
+	{
+		
+		* Status = kFSStatus_Failure_StorageDevice;
+		
+		return;
+		
+	}
+	
+	* Status = kFSStatus_Success;
+	
+};
+
+void FS::QMFS::FileSystem :: Enumerate ( FSNode * Node, uint32_t ChildIndex, const char ** ChildNamePTR, FSStatus_t * Status )
+{
+	
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
+	{
+		
+		* Status = kFSStatus_Failure_NonDirectory;
+		
+		return;
+		
+	}
+	
+	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
+	
+	if ( reinterpret_cast <QMFS_Directory_FSNode *> ( Node ) -> ChildNodeCount > ChildIndex )
+	{
+		
+		* ChildNamePTR = reinterpret_cast <QMFS_Directory_FSNode *> ( Node ) -> ChildNodeArray [ ChildIndex ] -> Name;
+		
+		* Status = kFSStatus_Success;
+		
+	}
+	else
+	{
+		
+		* ChildNamePTR = NULL;
+		
+		* Status = kFSStatus_Failure_Existance;
+	
+	}
+	
+	MT::Synchronization::RWLock :: ReadRelease ( & Node -> Lock );
+	
+};
+
+void FS::QMFS::FileSystem :: Find ( FSNode * Node, const char * Name, FSNode ** ChildPTR, FSStatus_t * Status )
+{
+	
+	if ( Node -> FSNodeType != kFSNodeType_Directory )
+	{
+		
+		* Status = kFSStatus_Failure_NonDirectory;
+		
+		return;
+		
+	}
+	
+	* ChildPTR = NULL;
+	
+	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
+	
+	for ( uint32_t I = 0; I < reinterpret_cast <QMFS_Directory_FSNode *> ( Node ) -> ChildNodeCount; I ++ )
+	{
+		
+		if ( strcmp ( Name, reinterpret_cast <QMFS_Directory_FSNode *> ( Node ) -> ChildNodeArray [ I ] -> Name ) == 0 )
+		{
+			
+			* ChildPTR = reinterpret_cast <QMFS_Directory_FSNode *> ( Node ) -> ChildNodeArray [ I ];
+			
+			break;
+			
+		}
+		
+	}
+	
+	MT::Synchronization::RWLock :: ReadRelease ( & Node -> Lock );
+	
+	if ( * ChildPTR == NULL )
+	{
+		
+		* Status = kFSStatus_Failure_Existance;
+		
+		return;
+		
+	}
+	
+	* Status = kFSStatus_Success;
 	
 };

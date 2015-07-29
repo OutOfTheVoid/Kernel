@@ -35,6 +35,11 @@ namespace FS
 	
 	static const FSStatus_t kFSStatus_Failure_DeviceFormat = 13;
 	
+	static const FSStatus_t kFSStatus_Failure_NonDirectory = 14;
+	static const FSStatus_t kFSStatus_Failure_NonFile = 15;
+	
+	static const FSStatus_t kFSStatus_Failure_StorageDevice = 16;
+	
 	static const uint32_t kNodeTypes = 2;
 	
 	static const uint32_t kFSNodeType_File = 0;
@@ -105,6 +110,8 @@ namespace FS
 	};
 	
 	void Init ();
+	
+	
 	
 };
 

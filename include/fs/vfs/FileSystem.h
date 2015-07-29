@@ -34,8 +34,6 @@ namespace FS
 			
 			friend class MountFS::FileSystem;
 			
-			static const uint32_t VFSSignature = 0x00000001;
-			
 			typedef struct VFS_VirtualDirectory_FSNode_Struct : public FSNode
 			{
 				
