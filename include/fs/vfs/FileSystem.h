@@ -2,6 +2,7 @@
 #define FS_VFS_FILESYSTEM_H
 
 #include <fs/vfs/VFS.h>
+
 #include <fs/FS.h>
 
 #include <stdint.h>
@@ -10,6 +11,13 @@
 
 namespace FS
 {
+	
+	namespace MountFS
+	{
+		
+		class FileSystem;
+		
+	};
 	
 	namespace VFS
 	{
@@ -23,6 +31,8 @@ namespace FS
 			static FSNode * GetRootNode ();
 			
 		private:
+			
+			friend class MountFS::FileSystem;
 			
 			static const uint32_t VFSSignature = 0x00000001;
 			

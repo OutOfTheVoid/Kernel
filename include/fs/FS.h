@@ -3,7 +3,7 @@
 
 #include <hw/storage/StorageDevice.h>
 
-#include <mt/synchronization/Mutex.h>
+#include <mt/synchronization/RWLock.h>
 
 namespace FS
 {
@@ -33,6 +33,8 @@ namespace FS
 	
 	static const FSStatus_t kFSStatus_Failure_ReplacesExisting = 12;
 	
+	static const FSStatus_t kFSStatus_Failure_DeviceFormat = 13;
+	
 	static const uint32_t kNodeTypes = 2;
 	
 	static const uint32_t kFSNodeType_File = 0;
@@ -53,12 +55,9 @@ namespace FS
 	{
 		
 		const char * Name;
-		
-		uint32_t FSSignature;
 		uint32_t FSNodeType;
-		struct FSFunctionBlock_Struct * FSFunctions;
 		
-		MT::Synchronization::Mutex :: Mutex_t Lock;
+		MT::Synchronization::RWLock :: RWLock_t Lock;
 		
 	} FSNode;
 	
@@ -80,15 +79,30 @@ namespace FS
 		
 	} FSFunctionBlock;
 	
+	struct FileSystem_Instance_Struct;
+	
+	typedef struct FileSystem_Instance_Struct FileSystem_Instance;
+	
 	typedef struct
 	{
 		
 		const char * Name;
 		
 		bool ( * TestStorageDevice ) ( HW::Storage::StorageDevice * Device );
-		FSNode * ( * MountDevice ) ( HW::Storage::StorageDevice * Device );
+		FileSystem_Instance * ( * MountStorageDevice ) ( HW::Storage::StorageDevice * Device );
 		
 	} FileSystemEntry;
+	
+	struct FileSystem_Instance_Struct
+	{
+		
+		FileSystemEntry * FSEntry;
+		HW::Storage::StorageDevice * Device;
+		
+		FSNode * RootNode;
+		FSFunctionBlock * FSFunctions;
+		
+	};
 	
 	void Init ();
 	

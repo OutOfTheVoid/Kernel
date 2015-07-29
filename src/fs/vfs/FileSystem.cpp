@@ -1,12 +1,13 @@
 #include <fs/vfs/FileSystem.h>
 #include <fs/FS.h>
 
-#include <cpputil/Memory.h>
 #include <cpputil/Unused.h>
+
+#include <mm/KMalloc.h>
 
 #include <util/string/String.h>
 
-#include <system/func/KPrintF.h>
+#include <system/func/Panic.h>
 
 FS::VFS::FileSystem :: VFS_VirtualDirectory_FSNode_Struct * FS::VFS::FileSystem :: RootDirectory = NULL;
 
@@ -15,7 +16,11 @@ FS :: FSFunctionBlock FS::VFS::FileSystem :: Functions;
 void FS::VFS::FileSystem :: Init ()
 {
 	
-	RootDirectory = new VFS_VirtualDirectory_FSNode_Struct ();
+	RootDirectory = reinterpret_cast <VFS_VirtualDirectory_FSNode_Struct *> ( mm_kmalloc ( sizeof ( VFS_VirtualDirectory_FSNode_Struct ) ) );
+	
+	if ( RootDirectory == NULL )
+		KPANIC ( "Failed to allocate root directory structure!" );
+	
 	RootDirectory -> Lock = MT::Synchronization::Mutex :: Initializer ();
 	RootDirectory -> FSSignature = VFSSignature;
 	RootDirectory -> FSNodeType = kFSNodeType_Directory;
@@ -34,8 +39,6 @@ void FS::VFS::FileSystem :: Init ()
 	Functions.Find = Find;
 	Functions.Add = & Add;
 	Functions.Delete = Delete;
-	
-	system_func_kprintf ( "vfs initialized!\n" );
 	
 };
 

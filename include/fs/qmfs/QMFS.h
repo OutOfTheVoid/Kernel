@@ -6,7 +6,12 @@
 namespace FS
 {
 	
-	namespace QMFS {};
+	namespace QMFS
+	{
+		
+		void Init ();
+		
+	};
 	
 };
 

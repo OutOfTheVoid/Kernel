@@ -1,0 +1,44 @@
+QMFS: Quick Memory File System
+==============================
+
+The QMFS is a pre-allocated uncompressed file system
+intended for use as a ram-disk in kernels. It allows
+for fast access to on-ram files in a quick but safe
+format, which should be easily compatible with most
+kernel file systems.
+
+The file system exists in contiguous memory, such 
+that it can be represented as a set of C langauge 
+structures which may enumerate and measure files and
+folders using integers and variables.
+
+The beginning of this spec defines the structure of
+the file system header, which resides at memory
+offset 0 on the disk or virtual disk that it resides
+opon.
+
+Below is the definition of the structure of the
+header:
+
+header_t:
+{
+	
+	uchar8 signature : 'q', 'm', 'f', 's', '.', 's',
+		'i', 'g';
+	
+	// This field makes up the first 8 bytes of the
+	// header, which should always be equal to
+	// "qmfs.sig"
+	
+	uchar32 root_dir_offset;
+	
+	// This field represents the offset of the fs's
+	// root direcory structure
+	
+	uchar32 checksum;
+	
+	// This field represents a checksum such that 
+	// when you add the first 16 bytes (in groups
+	// of 4) they should total 0.
+	
+}
