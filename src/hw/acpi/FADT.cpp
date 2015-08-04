@@ -71,9 +71,23 @@ void HW::ACPI::FADT :: Init ()
 };
 
 bool HW::ACPI::FADT :: Valid ()
-{=
+{
 	
 	return Validated;
+	
+};
+
+void HW::ACPI::FADT :: Discard ()
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	Validated = false;
+	
+	mm_kvunmap ( Table );
+	Table = NULL:
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 

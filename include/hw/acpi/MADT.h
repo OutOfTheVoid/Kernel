@@ -1,14 +1,14 @@
 #ifndef HW_ACPI_MADT_H
 #define HW_ACPI_MADT_H
 
+#include <stdint.h>
+
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
-#include <stdint.h>
-
 #include <util/Vector.h>
 
-#include <mt/synchronization/Spinlock.h>
+#include <mt/synchronization/RWLock.h>
 
 /* MADT.h: Contains definitions for parsing the ACPI Multiple Apic Description Table,
 * required for multi-processor interrupt support, and this, multi-processor support.
@@ -133,7 +133,7 @@ namespace HW
 			
 			static bool Validated;
 			
-			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
+			static MT::Synchronization::RWLock :: RWLock_t Lock;
 			
 		};
 		
