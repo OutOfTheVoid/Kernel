@@ -400,9 +400,9 @@ bool Interrupt::APIC :: HasAPIC ()
 	
 	uint32_t CPUIDRegs [ 4 ];
 	
-	HW::CPU::CPUID :: GetCPUID ( 0x01, CPUIDRegs );
+	HW::CPU::CPUID :: GetCPUID ( HW::CPU::CPUID :: kCode_Extensions, CPUIDRegs );
 	
-	Availible = CPUIDRegs [ HW::CPU::CPUID :: kRegister_EDX ] & HW::CPU::CPUID :: kDFlag_APIC;
+	Availible = CPUIDRegs [ HW::CPU::CPUID :: kRegister_EDX ] & HW::CPU::CPUID :: kDFlag_Extensions_APIC;
 	return Availible;
 	
 };
