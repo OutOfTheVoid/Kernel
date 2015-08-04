@@ -18,12 +18,12 @@ Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> * HW::ACPI::MADT :: ProcessorL
 Vector <HW::ACPI::MADT :: IOAPICRecord *> * HW::ACPI::MADT :: IOAPICRecords = NULL;
 Vector <HW::ACPI::MADT :: InterruptSourceOverrideRecord *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords = NULL;
 
-MT::Synchronization::RWLock :: RWLock_t HW::ACPI::MADT :: Lock = MT::Synchronization::RWLock :: Initializer ();
+MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::MADT :: Lock = MT::Synchronization::Spinlock :: Initializer ();
 
 void HW::ACPI::MADT :: Init ()
 {
 	
-	MT::Synchronization::RWLock :: WriteAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	uint32_t TableLength;
 	void * PhysAddr;
@@ -33,7 +33,7 @@ void HW::ACPI::MADT :: Init ()
 	if ( Validated || ! RSDP :: Found () )
 	{
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 			
 		return;
 	
@@ -51,7 +51,7 @@ void HW::ACPI::MADT :: Init ()
 		
 		delete ProcessorLAPICRecords;
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -65,7 +65,7 @@ void HW::ACPI::MADT :: Init ()
 		delete ProcessorLAPICRecords;
 		delete IOAPICRecords;
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -81,7 +81,7 @@ void HW::ACPI::MADT :: Init ()
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
 			
-			MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+			MT::Synchronization::Spinlock :: Release ( & Lock );
 			
 			return;
 			
@@ -100,7 +100,7 @@ void HW::ACPI::MADT :: Init ()
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
 			
-			MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+			MT::Synchronization::Spinlock :: Release ( & Lock );
 			
 			return;
 			
@@ -117,7 +117,7 @@ void HW::ACPI::MADT :: Init ()
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -132,7 +132,7 @@ void HW::ACPI::MADT :: Init ()
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -153,7 +153,7 @@ void HW::ACPI::MADT :: Init ()
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
 			
-			MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+			MT::Synchronization::Spinlock :: Release ( & Lock );
 			
 			return;
 			
@@ -170,7 +170,7 @@ void HW::ACPI::MADT :: Init ()
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -220,30 +220,30 @@ void HW::ACPI::MADT :: Init ()
 	
 	Validated = true;
 	
-	MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
 bool HW::ACPI::MADT :: Valid ()
 {
 	
-	MT::Synchronization::RWLock :: WriteAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	return Validated;
 	
-	MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
 void HW::ACPI::MADT :: Discard ()
 {
 	
-	MT::Synchronization::RWLock :: WriteAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -257,19 +257,19 @@ void HW::ACPI::MADT :: Discard ()
 	
 	Table = NULL;
 	
-	MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -277,7 +277,7 @@ uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
 	
 	uint32_t Address = Table -> LAPICAddress;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Address;
 	
@@ -286,12 +286,12 @@ uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
 uint32_t HW::ACPI::MADT :: GetProcessorCount ()
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -299,7 +299,7 @@ uint32_t HW::ACPI::MADT :: GetProcessorCount ()
 	
 	uint32_t Count = ProcessorLAPICRecords -> Length ();
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Count;
 	
@@ -308,12 +308,12 @@ uint32_t HW::ACPI::MADT :: GetProcessorCount ()
 uint8_t HW::ACPI::MADT :: GetProcessorLAPICID ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -321,7 +321,7 @@ uint8_t HW::ACPI::MADT :: GetProcessorLAPICID ( uint32_t Index )
 	
 	uint8_t ID = ( * ProcessorLAPICRecords ) [ Index ] -> APICID;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return ID;
 	
@@ -330,12 +330,12 @@ uint8_t HW::ACPI::MADT :: GetProcessorLAPICID ( uint32_t Index )
 uint8_t HW::ACPI::MADT :: GetProcessorID ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -343,7 +343,7 @@ uint8_t HW::ACPI::MADT :: GetProcessorID ( uint32_t Index )
 	
 	uint8_t ID = ( * ProcessorLAPICRecords ) [ Index ] -> APICProcessorID;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return ID;
 	
@@ -352,12 +352,12 @@ uint8_t HW::ACPI::MADT :: GetProcessorID ( uint32_t Index )
 bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return false;
 		
@@ -365,7 +365,7 @@ bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
 	
 	bool Enabled = ( ( * ProcessorLAPICRecords ) [ Index ] -> Flags & kAPICFlags_ProcessorEnabled );
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Enabled;
 	
@@ -374,12 +374,12 @@ bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
 uint32_t HW::ACPI::MADT :: GetIOAPICCount ()
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -387,7 +387,7 @@ uint32_t HW::ACPI::MADT :: GetIOAPICCount ()
 	
 	uint32_t Count = IOAPICRecords -> Length ();
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Count;
 	
@@ -396,12 +396,12 @@ uint32_t HW::ACPI::MADT :: GetIOAPICCount ()
 uint32_t HW::ACPI::MADT :: GetIOAPICBaseAddress ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -409,7 +409,7 @@ uint32_t HW::ACPI::MADT :: GetIOAPICBaseAddress ( uint32_t Index )
 	
 	uint32_t Address = ( * IOAPICRecords ) [ Index ] -> Address;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Address;
 	
@@ -418,12 +418,12 @@ uint32_t HW::ACPI::MADT :: GetIOAPICBaseAddress ( uint32_t Index )
 uint8_t HW::ACPI::MADT :: GetIOAPICID ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -431,7 +431,7 @@ uint8_t HW::ACPI::MADT :: GetIOAPICID ( uint32_t Index )
 	
 	uint8_t ID = ( * IOAPICRecords ) [ Index ] -> ID;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return ID;
 	
@@ -440,12 +440,12 @@ uint8_t HW::ACPI::MADT :: GetIOAPICID ( uint32_t Index )
 uint32_t HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -453,7 +453,7 @@ uint32_t HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( uint32_t Index )
 	
 	uint32_t InterruptBase = ( * IOAPICRecords ) [ Index ] -> GlobalSystemInterruptBase;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return InterruptBase;
 	
@@ -462,12 +462,12 @@ uint32_t HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( uint32_t Index )
 uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -475,7 +475,7 @@ uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
 	
 	uint32_t Count = InterruptSourceOverrideRecords -> Length ();
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Count;
 	
@@ -484,12 +484,12 @@ uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
 uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -497,7 +497,7 @@ uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
 	
 	uint8_t Bus = ( * InterruptSourceOverrideRecords ) [ Index ] -> Bus;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Bus;
 	
@@ -506,12 +506,12 @@ uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
 uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -519,7 +519,7 @@ uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( uint32_t Index )
 	
 	uint8_t Source = ( * InterruptSourceOverrideRecords ) [ Index ] -> Source;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Source;
 	
@@ -528,12 +528,12 @@ uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( uint32_t Index )
 uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -541,7 +541,7 @@ uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( uint32_t Index 
 	
 	uint32_t GlobalSystemInterrupt = ( * InterruptSourceOverrideRecords ) [ Index ] -> GlobalSystemInterrupt;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return GlobalSystemInterrupt;
 	
@@ -550,12 +550,12 @@ uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( uint32_t Index 
 uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( uint32_t Index )
 {
 	
-	MT::Synchronization::RWLock :: ReadAcquire ( & Lock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	if ( ! Validated )
 	{
 		
-		MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return 0;
 		
@@ -563,7 +563,7 @@ uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( uint32_t Index )
 	
 	uint16_t Flags = ( * InterruptSourceOverrideRecords ) [ Index ] -> Flags;
 	
-	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return Flags;
 	
