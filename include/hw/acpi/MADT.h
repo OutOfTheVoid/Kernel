@@ -1,10 +1,10 @@
 #ifndef HW_ACPI_MADT_H
 #define HW_ACPI_MADT_H
 
-#include <stdint.h>
-
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
+
+#include <stdint.h>
 
 #include <util/Vector.h>
 

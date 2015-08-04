@@ -4,6 +4,10 @@
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
+#include <stdint.h>
+
+#include <mt/synchronization/RWLock.h>
+
 namespace HW
 {
 	
@@ -26,8 +30,6 @@ namespace HW
 			
 			static void Init ();
 			static bool Valid ();
-			
-			static void Discard ();
 			
 			static uint8_t GetPreferredPMProfile ();
 			
@@ -83,7 +85,7 @@ namespace HW
 			
 			static FADTable * Table;
 			
-			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
+			static MT::Synchronization::RWLock :: RWLock_t Lock;
 			
 		};
 		
