@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#include <interrupt/InterruptHandlers.h>
+
 /*
 * ACPI.h: Contains all-encompasing definitions for the Advanced Control and Power Interface code.
 */
@@ -45,12 +47,22 @@ namespace HW
 		const uint32_t kACPIStatus_Success = 0x00000000;
 		const uint32_t kACPIStatus_Failure_Unknown = 0x00000001;
 		const uint32_t kACPIStatus_Failure_InvalidTable = 0x00000002;
+		const uint32_t kACPIStatus_Failure_ResourceNotFound = 0x00000002;
+		
+		const uint32_t kACPIStatus_Failiure_NoACPI = 0xFFFFFFFF;
 		
 		/* Initializes the acpi table readers, but does not start ACPI.
 		* This must be called before anything to do with ACPI, but does
 		* not require multi-tasking support.
 		*/
-		bool StaticInit ();
+		void StaticInit ( uint32_t * Status );
+		
+		void InitInterrupts ( uint32_t * Status );
+		
+		void Enable ( uint32_t * Status );
+		void Disable ( uint32_t * Status );
+		
+		void SystemControlInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 		
 	};
 	

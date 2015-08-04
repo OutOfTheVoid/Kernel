@@ -26,6 +26,13 @@ namespace HW
 			static const uint8_t kPMProfile_PerformanceServer = 7;
 			static const uint8_t kPMProfile_Tablet = 8;
 			
+			static const uint16_t kIAPCFlag_LegacyDevices = 0x0001;
+			static const uint16_t kIAPCFlag_8042 = 0x0002;
+			static const uint16_t kIAPCFlag_NoVGA = 0x0004;
+			static const uint16_t kIAPCFlag_NoMSI = 0x0008;
+			static const uint16_t kIAPCFlag_NoASPM = 0x0010;
+			static const uint16_t kIAPCFlag_RTCCMOS = 0x0020;
+			
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
@@ -62,6 +69,8 @@ namespace HW
 			
 			static ACPIAddress GetResetRegisterAddress ( uint32_t * Status );
 			static uint8_t GetResetValue ( uint32_t * Status );
+			
+			static uint16_t GetIAPCFlags ( uint32_t * Status );
 			
 		private:
 			

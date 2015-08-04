@@ -8,6 +8,8 @@
 
 #include <hw/pc/ISA.h>
 
+#include <hw/acpi/ACPI.h>
+
 #include <system/func/kprintf.h>
 
 #include <KernelDef.h>
@@ -51,6 +53,10 @@ void Interrupt :: Init ()
 	IOAPIC :: Init ();
 	
 	HW::PC::ISA :: InitIOInterrupts ();
+	
+	uint32_t ACPIStatus;
+	
+	HW::ACPI :: InitInterrupts ( & ACPIStatus );
 	
 };
 

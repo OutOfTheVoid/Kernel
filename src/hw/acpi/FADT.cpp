@@ -736,3 +736,29 @@ uint8_t HW::ACPI::FADT :: GetResetValue ( uint32_t * Status )
 	return Value;
 	
 };
+
+uint16_t HW::ACPI::FADT :: GetIAPCFlags ( uint32_t * Status )
+{
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	if ( ! Validated )
+	{
+		
+		MT::Synchronization::Spinlock :: Release ( & Lock );
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	uint32_t Value = Table -> IAPCFlags;
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+	* Status = kACPIStatus_Success;
+	
+	return Value;
+	
+};

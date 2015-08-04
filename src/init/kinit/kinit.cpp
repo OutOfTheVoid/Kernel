@@ -53,7 +53,14 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 
 	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_White, HW::Video::VText :: Color_Black ) );
 	MM :: Init ( MultibootInfo );
-	HW::ACPI :: StaticInit ();
+	
+	uint32_t ACPIStatus;
+	
+	HW::ACPI :: StaticInit ( & ACPIStatus );
+	
+	if ( ACPIStatus != HW::ACPI :: kACPIStatus_Success )
+		KPANIC ( "ACPI static init failure!" );
+	
 	MT :: MPInit ();
 	Interrupt :: Init ();
 	MT :: MTInit ();
@@ -61,6 +68,8 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
+	
+	HW::ACPI :: Enable ( & ACPIStatus );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

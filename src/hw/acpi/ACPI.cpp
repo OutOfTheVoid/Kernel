@@ -10,15 +10,23 @@
 
 #include <KernelDef.h>
 
-bool HW::ACPI :: StaticInit ()
+#include <hw/pc/ISA.h>
+
+void HW::ACPI :: StaticInit ( uint32_t * Status )
 {
 	
-	uint32_t Status;
+	uint32_t SubStatus;
 	
 	RSDP :: Locate ();
 	
 	if ( ! RSDP :: Found () )
-		return false;
+	{
+		
+		* Status = kACPIStatus_Failiure_NoACPI;
+		
+		return;
+		
+	}
 	
 	if ( RSDP :: GetACPIRevision () == RSDP :: kACPI_Revision_1 )
 	{
@@ -26,7 +34,13 @@ bool HW::ACPI :: StaticInit ()
 		RSDT :: Init ( RSDP :: GetSDTPointer () );
 		
 		if ( ! RSDT :: Valid () )
-			return false;
+		{
+			
+			* Status = kACPIStatus_Failure_InvalidTable;
+			
+			return;
+			
+		}
 		
 	}
 	else
@@ -35,15 +49,100 @@ bool HW::ACPI :: StaticInit ()
 		XSDT :: Init ( RSDP :: GetSDTPointer () );
 		
 		if ( ! XSDT :: Valid () )
-			return false;
+		{
+			
+			* Status = kACPIStatus_Failure_InvalidTable;
+			
+			return;
+			
+		}
 		
 	}
 	
 	MADT :: Init ();
 	SRAT :: Init ();
 	
-	FADT :: Init ( & Status );
+	FADT :: Init ( & SubStatus );
 	
-	return true;
+	* Status = kACPIStatus_Success;
+	
+};
+
+void HW::ACPI :: InitInterrupts ( uint32_t * Status )
+{
+	
+	uint32_t SubStatus;
+	
+	if ( FADT :: Valid () )
+	{
+		
+		uint16_t Interrupt = FADT :: GetACPISystemControlInterrupt ( & SubStatus );
+		
+		if ( SubStatus == kACPIStatus_Success )
+		{
+			
+			system_func_kprintf ( "System control IRQ: %u\n", static_cast <uint32_t> ( Interrupt ) );
+			
+			PC::ISA :: SetIRQHandler ( Interrupt, & SystemControlInterruptHandler );
+			PC::ISA :: SetIRQEnabled ( Interrupt, true );
+			
+			* Status = kACPIStatus_Success;
+			
+		}
+		else
+		{
+			
+			system_func_kprintf ( "Failed to retreive SCI Number\n" );
+			
+			* Status = kACPIStatus_Failure_ResourceNotFound;
+			
+		}
+		
+	}
+	
+};
+
+void HW::ACPI :: Enable ( uint32_t * Status )
+{
+	
+	uint32_t SubStatus;
+	
+	if ( FADT :: Valid () )
+	{
+		
+		FADT :: WriteACPIEnable ( true, & SubStatus );
+		
+		if ( SubStatus != kACPIStatus_Success )
+			* Status = kACPIStatus_Failure_ResourceNotFound;
+		
+	}
+	else
+		* Status = kACPIStatus_Failure_InvalidTable;
+	
+};
+
+void HW::ACPI :: Disable ( uint32_t * Status )
+{
+	
+	uint32_t SubStatus;
+	
+	if ( FADT :: Valid () )
+	{
+		
+		FADT :: WriteACPIEnable ( true, & SubStatus );
+		
+		if ( SubStatus != kACPIStatus_Success )
+			* Status = kACPIStatus_Failure_ResourceNotFound;
+		
+	}
+	else
+		* Status = kACPIStatus_Failure_InvalidTable;
+	
+};
+
+void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
+{
+	
+	system_func_kprintf ( "SCI!\n" );
 	
 };
