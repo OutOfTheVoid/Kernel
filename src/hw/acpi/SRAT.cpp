@@ -25,8 +25,18 @@ void HW::ACPI::SRAT :: Init ()
 	uint32_t TableLength;
 	void * PhysAddr;
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	if ( Validated || ( ! RSDP :: Found () ) )
+	{
+		
+		MT::Synchronization::Spinlock :: Release ( & Lock );
+		
 		return;
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	if ( RSDP :: GetACPIRevision () == RSDP :: kACPI_Revision_1 )
 	{
@@ -93,7 +103,11 @@ void HW::ACPI::SRAT :: Init ()
 		
 	}
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	Validated = true;
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
@@ -107,10 +121,16 @@ bool HW::ACPI::SRAT :: Valid ()
 void HW::ACPI::SRAT :: Discard ()
 {
 	
-	if ( ! Validated )
-		return;
-	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
+	if ( ! Validated )
+	{
+		
+		MT::Synchronization::Spinlock :: Release ( & Lock );
+		
+		return;
+		
+	}
 	
 	mm_kvunmap ( Table );
 	

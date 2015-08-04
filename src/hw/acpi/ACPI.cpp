@@ -4,6 +4,7 @@
 #include <hw/acpi/XSDT.h>
 #include <hw/acpi/MADT.h>
 #include <hw/acpi/SRAT.h>
+#include <hw/acpi/FADT.h>
 
 #include <system/func/kprintf.h>
 
@@ -11,6 +12,8 @@
 
 bool HW::ACPI :: StaticInit ()
 {
+	
+	uint32_t Status;
 	
 	RSDP :: Locate ();
 	
@@ -38,6 +41,8 @@ bool HW::ACPI :: StaticInit ()
 	
 	MADT :: Init ();
 	SRAT :: Init ();
+	
+	FADT :: Init ( & Status );
 	
 	return true;
 	

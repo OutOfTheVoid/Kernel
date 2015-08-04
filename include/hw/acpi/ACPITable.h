@@ -40,20 +40,6 @@ namespace HW
 				
 			} __attribute__ (( packed )) ACPITableHeader;
 			
-			typedef struct
-			{
-				
-				uint8_t AddressSpaceID;
-				
-				uint8_t RegisterBitWidth;
-				uint8_t RegisterBitOffset;
-				
-				uint8_t Reserved;
-				
-				uint64_t Address;
-				
-			} __attribute__ (( packed )) ACPIAddress;
-			
 			static bool VerifyTable ( ACPITableHeader * Header );
 			
 		};

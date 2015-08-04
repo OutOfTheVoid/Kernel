@@ -39,6 +39,8 @@ void HW::ACPI::MADT :: Init ()
 	
 	}
 	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
 	ProcessorLAPICRecords = new Vector <ProcessorLAPICRecord *> ();
 	
 	if ( ProcessorLAPICRecords == NULL )
@@ -51,8 +53,6 @@ void HW::ACPI::MADT :: Init ()
 		
 		delete ProcessorLAPICRecords;
 		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return;
 		
 	}
@@ -64,8 +64,6 @@ void HW::ACPI::MADT :: Init ()
 		
 		delete ProcessorLAPICRecords;
 		delete IOAPICRecords;
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -80,8 +78,6 @@ void HW::ACPI::MADT :: Init ()
 			delete ProcessorLAPICRecords;
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
-			
-			MT::Synchronization::Spinlock :: Release ( & Lock );
 			
 			return;
 			
@@ -100,8 +96,6 @@ void HW::ACPI::MADT :: Init ()
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
 			
-			MT::Synchronization::Spinlock :: Release ( & Lock );
-			
 			return;
 			
 		}
@@ -117,8 +111,6 @@ void HW::ACPI::MADT :: Init ()
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
 		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return;
 		
 	}
@@ -131,8 +123,6 @@ void HW::ACPI::MADT :: Init ()
 		delete ProcessorLAPICRecords;
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -153,8 +143,6 @@ void HW::ACPI::MADT :: Init ()
 			delete IOAPICRecords;
 			delete InterruptSourceOverrideRecords;
 			
-			MT::Synchronization::Spinlock :: Release ( & Lock );
-			
 			return;
 			
 		}
@@ -169,8 +157,6 @@ void HW::ACPI::MADT :: Init ()
 		delete ProcessorLAPICRecords;
 		delete IOAPICRecords;
 		delete InterruptSourceOverrideRecords;
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
 		
 		return;
 		
@@ -218,6 +204,8 @@ void HW::ACPI::MADT :: Init ()
 		
 	}
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	Validated = true;
 	
 	MT::Synchronization::Spinlock :: Release ( & Lock );
@@ -227,11 +215,7 @@ void HW::ACPI::MADT :: Init ()
 bool HW::ACPI::MADT :: Valid ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	bool IsValid = Validated;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	return IsValid;
 	
