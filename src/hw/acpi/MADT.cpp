@@ -229,9 +229,11 @@ bool HW::ACPI::MADT :: Valid ()
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
-	return Validated;
+	bool IsValid = Validated;
 	
 	MT::Synchronization::Spinlock :: Release ( & Lock );
+	
+	return IsValid;
 	
 };
 
