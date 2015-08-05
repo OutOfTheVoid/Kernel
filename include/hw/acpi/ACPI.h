@@ -47,9 +47,12 @@ namespace HW
 		const uint32_t kACPIStatus_Success = 0x00000000;
 		const uint32_t kACPIStatus_Failure_Unknown = 0x00000001;
 		const uint32_t kACPIStatus_Failure_InvalidTable = 0x00000002;
-		const uint32_t kACPIStatus_Failure_ResourceNotFound = 0x00000002;
+		const uint32_t kACPIStatus_Failure_ResourceNotFound = 0x00000003;
+		const uint32_t kACPIStatus_Failure_UnsupportedAddressSpace = 0x00000004;
 		
 		const uint32_t kACPIStatus_Failiure_NoACPI = 0xFFFFFFFF;
+		
+		const uint32_t kACPIFixedRegister_PM1_Flag_SMISCI = 0x00000001;
 		
 		/* Initializes the acpi table readers, but does not start ACPI.
 		* This must be called before anything to do with ACPI, but does

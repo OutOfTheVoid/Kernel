@@ -129,7 +129,7 @@ void HW::ACPI :: Disable ( uint32_t * Status )
 	if ( FADT :: Valid () )
 	{
 		
-		FADT :: WriteACPIEnable ( true, & SubStatus );
+		FADT :: WriteACPIEnable ( false, & SubStatus );
 		
 		if ( SubStatus != kACPIStatus_Success )
 			* Status = kACPIStatus_Failure_ResourceNotFound;

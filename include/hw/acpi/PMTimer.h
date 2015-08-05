@@ -17,7 +17,7 @@ namespace HW
 		{
 		public:
 			
-			static void Init ();
+			static void Init ( uint32_t * Status );
 			
 			static bool Exists ();
 			
@@ -30,7 +30,7 @@ namespace HW
 			
 			static void TimerEvent ();
 			
-			static bool Exists;
+			static bool Exist;
 			
 			static bool RegisterLength;
 			static uint64_t IntCount;
