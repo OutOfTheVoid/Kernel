@@ -25,19 +25,22 @@ namespace HW
 			
 		private:
 			
-			static const bool kRegisterLength_24 = false;
-			static const bool kRegisterLength_32 = true;
+			static const uint32_t kRegisterMask_24 = 0x00FFFFFF;
+			static const uint32_t kRegisterMask_32 = 0xFFFFFFFF;
 			
-			static void TimerEvent ();
+			static uint64_t TimerUpdate ();
+			static uint32_t ReadTimer ();
 			
 			static bool Exist;
 			
-			static bool RegisterLength;
-			static uint64_t IntCount;
+			static uint32_t LastTValue;
+			static uint32_t RegisterMask;
+			static uint64_t Count;
 			
-			//static MT::Synchronization::Spinlock :: Spinlock_t Lock;
+			static uint32_t Address;
+			static uint32_t AddressSpace;
 			
-			static bool IHandlerCompleted;
+			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 		};
 		

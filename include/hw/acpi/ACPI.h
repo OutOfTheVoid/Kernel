@@ -49,10 +49,15 @@ namespace HW
 		const uint32_t kACPIStatus_Failure_InvalidTable = 0x00000002;
 		const uint32_t kACPIStatus_Failure_ResourceNotFound = 0x00000003;
 		const uint32_t kACPIStatus_Failure_UnsupportedAddressSpace = 0x00000004;
+		const uint32_t kACPIStatus_Failure_System_OutOfMemory = 0x00000005;
 		
 		const uint32_t kACPIStatus_Failiure_NoACPI = 0xFFFFFFFF;
 		
-		const uint32_t kACPIFixedRegister_PM1_Flag_SMISCI = 0x00000001;
+		const uint32_t kACPIFixedRegister_PM1Control_Flag_SMISCI = 0x00000001;
+		
+		const uint32_t kACPIFixedRegister_PM1Status_Flag_PMTimerStatus = 0x00000001;
+		
+		const uint32_t kACPIFixedRegister_PM1Enable_Flag_PMTimer = 0x00000001;
 		
 		/* Initializes the acpi table readers, but does not start ACPI.
 		* This must be called before anything to do with ACPI, but does

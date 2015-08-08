@@ -5,6 +5,7 @@
 #include <hw/acpi/MADT.h>
 #include <hw/acpi/SRAT.h>
 #include <hw/acpi/FADT.h>
+#include <hw/acpi/PMTimer.h>
 
 #include <system/func/kprintf.h>
 
@@ -97,6 +98,16 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 			* Status = kACPIStatus_Failure_ResourceNotFound;
 			
 		}
+		
+	}
+	
+	if ( * Status == kACPIStatus_Success )
+	{
+		
+		HW::ACPI::PMTimer :: Init ( & SubStatus );
+		
+		if ( SubStatus == kACPIStatus_Success )
+			system_func_kprintf ( "PMTimer valid!\n" );
 		
 	}
 	

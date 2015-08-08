@@ -33,6 +33,16 @@ namespace HW
 			static const uint16_t kIAPCFlag_NoASPM = 0x0010;
 			static const uint16_t kIAPCFlag_RTCCMOS = 0x0020;
 			
+			static const uint32_t kFixedFeatureFlag_WBINVD = 0x00000001;
+			static const uint32_t kFixedFeatureFlag_WBINVDFlush = 0x00000002;
+			static const uint32_t kFixedFeatureFlag_CPUC1 = 0x00000004;
+			static const uint32_t kFixedFeatureFlag_CPUC2MP = 0x00000008;
+			static const uint32_t kFixedFeatureFlag_PowerButtonControlMethod = 0x00000010;
+			static const uint32_t kFixedFeatureFlag_SleepButtonControlMethod = 0x00000020;
+			static const uint32_t kFixedFeatureFlag_RTCWakeFixedRegister = 0x00000040;
+			static const uint32_t kFixedFeatureFlag_RTCWakeS4 = 0x00000080;
+			static const uint32_t kFixedFeatureFlag_PMTimerExtended = 0x00000100;
+			
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
@@ -71,6 +81,8 @@ namespace HW
 			static uint8_t GetResetValue ( uint32_t * Status );
 			
 			static uint16_t GetIAPCFlags ( uint32_t * Status );
+			
+			static uint32_t GetFixedFeatureFlags ( uint32_t * Status );
 			
 		private:
 			
@@ -167,8 +179,6 @@ namespace HW
 			static const char * kSearchString;
 			
 			static FADTable * Table;
-			
-			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 		};
 		
