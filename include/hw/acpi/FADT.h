@@ -86,6 +86,8 @@ namespace HW
 			
 		private:
 			
+			static const uint32_t kFADTRevision_2 = 3;
+			
 			typedef struct
 			{
 				
@@ -154,6 +156,8 @@ namespace HW
 				ACPIAddress ResetRegister;
 				
 				uint8_t ResetValue;
+				
+				uint8_t Reserved3 [ 3 ];
 				
 				uint64_t ExtendedFACSAddress;
 				uint64_t ExtendedDSDTAddress;

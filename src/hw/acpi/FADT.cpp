@@ -117,7 +117,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	Vector <uint32_t> CurrentKVMapPages;
 	
-	if ( Table -> PM1aEventBlockAddress != 0 )
+	if ( ( Table -> PM1aEventBlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedPM1aEventBlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -141,7 +141,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> PM1bEventBlockAddress != 0 )
+	if ( ( Table -> PM1bEventBlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedPM1bEventBlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -183,7 +183,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> PM1aControlBlockAddress != 0 )
+	if ( ( Table -> PM1aControlBlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedPM1aControlBlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -225,7 +225,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> PM1bControlBlockAddress != 0 )
+	if ( ( Table -> PM1bControlBlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedPM1bControlBlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -267,7 +267,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> PM2ControlBlockAddress != 0 )
+	if ( ( Table -> PM2ControlBlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedPM2ControlBlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -309,7 +309,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> PMTimerBlockAddress != 0 )
+	if ( ( Table -> PMTimerBlockAddress != 0 ) && ( ( Table -> ExtendedPMTimerBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -351,7 +351,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> GPE0BlockAddress != 0 )
+	if ( ( Table -> GPE0BlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedGPE0BlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -393,7 +393,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
-	if ( Table -> GPE1BlockAddress != 0 )
+	if ( ( Table -> GPE1BlockAddress != 0 ) && ( ( Table -> Header.Revision < kFADTRevision_2 ) || ( Table -> ExtendedGPE1BlockAddress.Address == 0 ) ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -481,7 +481,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPM1aEventBlockAddress
 	
-	if ( ( Table -> PM1aEventBlockAddress == 0 ) && ( Table -> ExtendedPM1aEventBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1aEventBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPM1aEventBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1aEventBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -525,7 +525,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPM1bEventBlockAddress
 	
-	if ( ( Table -> PM1bEventBlockAddress == 0 ) && ( Table -> ExtendedPM1bEventBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1bEventBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPM1bEventBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1bEventBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -569,7 +569,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPM1aControlBlockAddress
 	
-	if ( ( Table -> PM1aControlBlockAddress == 0 ) && ( Table -> ExtendedPM1aControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1aControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPM1aControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1aControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -613,7 +613,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPM1bControlBlockAddress
 	
-	if ( ( Table -> PM1bControlBlockAddress == 0 ) && ( Table -> ExtendedPM1bControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1bControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPM1bControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM1bControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -657,7 +657,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPM2ControlBlockAddress
 	
-	if ( ( Table -> PM2ControlBlockAddress == 0 ) && ( Table -> ExtendedPM2ControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM2ControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPM2ControlBlockAddress.Address != 0 ) && ( Table -> ExtendedPM2ControlBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -701,7 +701,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedPMTimerBlockAddress
 	
-	if ( ( Table -> PMTimerBlockAddress == 0 ) && ( Table -> ExtendedPMTimerBlockAddress.Address != 0 ) && ( Table -> ExtendedPMTimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedPMTimerBlockAddress.Address != 0 ) && ( Table -> ExtendedPMTimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -745,7 +745,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedGPE0BlockAddress
 	
-	if ( ( Table -> GPE0BlockAddress == 0 ) && ( Table -> ExtendedGPE0BlockAddress.Address != 0 ) && ( Table -> ExtendedGPE0BlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedGPE0BlockAddress.Address != 0 ) && ( Table -> ExtendedGPE0BlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -789,7 +789,7 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 	
 	// ExtendedGPE1BlockAddress
 	
-	if ( ( Table -> GPE1BlockAddress == 0 ) && ( Table -> ExtendedGPE1BlockAddress.Address != 0 ) && ( Table -> ExtendedGPE1BlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
+	if ( ( Table -> Header.Revision >= kFADTRevision_2 ) && ( Table -> ExtendedGPE1BlockAddress.Address != 0 ) && ( Table -> ExtendedGPE1BlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
 	{
 		
 		void * MappedRegister = NULL;
@@ -1036,18 +1036,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPM1aEventBlockAddress ( uint32_t * 
 		
 	}
 	
-	Address.Address = Table -> PM1aEventBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPM1aEventBlockAddress;
-	else
+	if ( ( Table -> ExtendedPM1aEventBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PM1aEventBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPM1aEventBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1069,18 +1068,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPM1bEventBlockAddress ( uint32_t * 
 		
 	}
 	
-	Address.Address = Table -> PM1bEventBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPM1bEventBlockAddress;
-	else
+	if ( ( Table -> ExtendedPM1bEventBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PM1bEventBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPM1bEventBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1122,18 +1120,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPM1aControlBlockAddress ( uint32_t 
 		
 	}
 	
-	Address.Address = Table -> PM1aControlBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPM1aControlBlockAddress;
-	else
+	if ( ( Table -> ExtendedPM1aControlBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PM1aControlBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPM1aControlBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1155,18 +1152,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPM1bControlBlockAddress ( uint32_t 
 		
 	}
 	
-	Address.Address = Table -> PM1bControlBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPM1bControlBlockAddress;
-	else
+	if ( ( Table -> ExtendedPM1bControlBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PM1bControlBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPM1bControlBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1208,18 +1204,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPM2ControlBlockAddress ( uint32_t *
 		
 	}
 	
-	Address.Address = Table -> PM2ControlBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPM2ControlBlockAddress;
-	else
+	if ( ( Table -> ExtendedPM2ControlBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PM2ControlBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPM2ControlBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1261,18 +1256,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPMTimerBlockAddress ( uint32_t * St
 		
 	}
 	
-	Address.Address = Table -> PMTimerBlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedPMTimerBlockAddress;
-	else
+	if ( ( Table -> ExtendedPMTimerBlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> PMTimerBlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedPMTimerBlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1314,18 +1308,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetGeneralPurposeEvent0BlockAddress ( 
 		
 	}
 	
-	Address.Address = Table -> GPE0BlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedGPE0BlockAddress;
-	else
+	if ( ( Table -> ExtendedGPE0BlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> GPE0BlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedGPE0BlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	
@@ -1347,18 +1340,17 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetGeneralPurposeEvent1BlockAddress ( 
 		
 	}
 	
-	Address.Address = Table -> GPE1BlockAddress;
-	
-	if ( Address.Address == 0 )
-		Address = Table -> ExtendedGPE1BlockAddress;
-	else
+	if ( ( Table -> ExtendedGPE1BlockAddress.Address == 0 ) || ( Table -> Header.Revision < kFADTRevision_2 ) )
 	{
 		
+		Address.Address = Table -> GPE1BlockAddress;
 		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		
 	}
+	else
+		Address = Table -> ExtendedGPE1BlockAddress;
 	
 	* Status = kACPIStatus_Success;
 	

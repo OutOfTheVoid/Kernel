@@ -27,6 +27,8 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 	
 	bool FailA;
 	
+	* Status = kACPIStatus_Success;
+	
 	if ( FADT :: Valid () )
 	{
 		
@@ -76,7 +78,7 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				
 			case kACPIAddress_AddressSpaceID_Memory:
 				
-				Value = * reinterpret_cast <uint16_t *> ( PM1aEventAddress.Address + EventBlockSize / 2 );
+				Value = * reinterpret_cast <uint16_t *> ( PM1aEventAddress.Address + ( EventBlockSize / 2 ) );
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
 				* reinterpret_cast <uint16_t *> ( PM1aEventAddress.Address + EventBlockSize / 2 ) = Value;
 				
@@ -84,9 +86,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
 				
-				Value = HW::CPU::IO :: In16 ( PM1aEventAddress.Address + EventBlockSize / 2 );
+				Value = HW::CPU::IO :: In16 ( PM1aEventAddress.Address + ( EventBlockSize / 2 ) );
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
-				HW::CPU::IO :: Out16 ( PM1aEventAddress.Address + EventBlockSize / 2, Value );
+				HW::CPU::IO :: Out16 ( PM1aEventAddress.Address + ( EventBlockSize / 2 ), Value );
 				
 				break;
 				
@@ -106,17 +108,17 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				
 			case kACPIAddress_AddressSpaceID_Memory:
 				
-				Value = * reinterpret_cast <uint16_t *> ( PM1bEventAddress.Address + EventBlockSize / 2 );
-				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
-				* reinterpret_cast <uint16_t *> ( PM1bEventAddress.Address + EventBlockSize / 2 ) = Value;
+				Value = * reinterpret_cast <uint16_t *> ( PM1bEventAddress.Address + ( EventBlockSize / 2 ) );
+				Value &= ~ kACPIFixedRegister_PM1Enable_Flag_PMTimer;
+				* reinterpret_cast <uint16_t *> ( PM1bEventAddress.Address + ( EventBlockSize / 2 ) ) = Value;
 				
 				break;
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
 				
-				Value = HW::CPU::IO :: In16 ( PM1bEventAddress.Address + EventBlockSize / 2 );
+				Value = HW::CPU::IO :: In16 ( PM1bEventAddress.Address + ( EventBlockSize / 2 ) );
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
-				HW::CPU::IO :: Out16 ( PM1bEventAddress.Address + EventBlockSize / 2, Value );
+				HW::CPU::IO :: Out16 ( PM1bEventAddress.Address + ( EventBlockSize / 2 ), Value );
 				
 				break;
 				
@@ -163,21 +165,10 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 		case kACPIAddress_AddressSpaceID_Memory:
 			{
 				
-				void * TimerBlockAddressVirtual = mm_kvmap ( reinterpret_cast <void *> ( TimerBlockAddress.Address ), 0x1000, MM::Paging::PageTable :: Flags_NoCache );
-				
-				if ( TimerBlockAddressVirtual == NULL )
-				{
-					
-					* Status = kACPIStatus_Failure_System_OutOfMemory;
-					
-					return;
-					
-				}
-				
-				Address = reinterpret_cast <uint32_t> ( TimerBlockAddressVirtual );
+				Address = TimerBlockAddress.Address;
 				AddressSpace = kACPIAddress_AddressSpaceID_Memory;
 				
-				LastTValue = ( * reinterpret_cast <uint32_t *> ( TimerBlockAddressVirtual ) ) & RegisterMask;
+				LastTValue = ( * reinterpret_cast <volatile uint32_t *> ( Address ) ) & RegisterMask;
 				
 			}
 			break;
@@ -205,6 +196,8 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 		
 		Exist = true;
 		
+		system_func_kprintf ( "PM Timer Address: %h, AddressSpace: %h\n", Address, AddressSpace );
+		
 	}
 	
 };
@@ -222,7 +215,7 @@ uint64_t HW::ACPI::PMTimer :: GetTimeNS ()
 	if ( ! Exist )
 		return 0;
 	
-	return TimerUpdate ();
+	return ( ( TimerUpdate () * 1000000000 ) / 3579545 );
 	
 };
 
@@ -240,7 +233,7 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	{
 	
 	case kACPIAddress_AddressSpaceID_Memory:
-		Current = * reinterpret_cast <uint32_t *> ( Address ) & RegisterMask;
+		Current = * reinterpret_cast <volatile uint32_t *> ( Address ) & RegisterMask;
 		break;
 		
 	case kACPIAddress_AddressSpaceID_SystemIO:

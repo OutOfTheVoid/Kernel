@@ -18,6 +18,7 @@
 #include <interrupt/APIC.h>
 
 #include <hw/acpi/ACPI.h>
+#include <hw/acpi/PMTimer.h>
 
 #include <hw/cpu/Processor.h>
 #include <hw/cpu/TSC.h>
@@ -66,10 +67,10 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MTInit ();
 	FS :: Init ();
 	
+	HW::ACPI :: Enable ( & ACPIStatus );
+	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
-	
-	HW::ACPI :: Enable ( & ACPIStatus );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
@@ -77,6 +78,16 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 
 void testKernelTask ()
 {
+	
+	uint64_t A = HW::ACPI::PMTimer :: GetTimeNS ();
+	
+	MT::Timing::TaskSleep :: SleepCurrent ( 500 );
+	
+	uint64_t B = HW::ACPI::PMTimer :: GetTimeNS ();
+	
+	B -= A;
+	
+	system_func_kprintf ( "wait 500 MS, PMTimer delta: %u NS\n", static_cast <uint32_t> ( B & 0xFFFFFFFF ) );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

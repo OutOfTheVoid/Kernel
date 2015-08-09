@@ -51,7 +51,7 @@ namespace HW
 				
 				uint16_t Ret;
 				
-				__asm__ volatile ( "inw AX, DX" : "=AX" ( Ret ) : "dN" ( Port ) );
+				__asm__ volatile ( "inw %0, %1" : "=a" ( Ret ) : "d" ( Port ) );
 				
 				return Ret;
 				
@@ -62,7 +62,7 @@ namespace HW
 				
 				uint32_t Ret;
 				
-				__asm__ volatile ( "in EAX, DX" : "=EAX" ( Ret ) : "dN" ( Port ) );
+				__asm__ volatile ( "in %0, %1" : "=a" ( Ret ) : "d" ( Port ) );
 				
 				return Ret;
 				

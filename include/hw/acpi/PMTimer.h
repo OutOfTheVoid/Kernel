@@ -28,8 +28,9 @@ namespace HW
 			static const uint32_t kRegisterMask_24 = 0x00FFFFFF;
 			static const uint32_t kRegisterMask_32 = 0xFFFFFFFF;
 			
+			static const uint64_t kTimerFrequencey = 3579545;
+			
 			static uint64_t TimerUpdate ();
-			static uint32_t ReadTimer ();
 			
 			static bool Exist;
 			

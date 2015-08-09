@@ -13,6 +13,8 @@
 
 #include <hw/pc/ISA.h>
 
+#include <interrupt/APIC.h>
+
 void HW::ACPI :: StaticInit ( uint32_t * Status )
 {
 	
@@ -155,5 +157,7 @@ void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers ::
 {
 	
 	system_func_kprintf ( "SCI!\n" );
+	
+	Interrupt::APIC :: EndOfInterrupt ();
 	
 };
