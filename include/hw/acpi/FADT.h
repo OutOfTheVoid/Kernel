@@ -43,6 +43,12 @@ namespace HW
 			static const uint32_t kFixedFeatureFlag_RTCWakeS4 = 0x00000080;
 			static const uint32_t kFixedFeatureFlag_PMTimerExtended = 0x00000100;
 			
+			static const uint32_t kRegister_PM1Control_Flag_SMISCI = 0x00000001;
+			
+			static const uint32_t kRegister_PM1Event_Flag_PMTimerStatus = 0x00000001;
+			
+			static const uint32_t kRegister_PM1Enable_Flag_PMTimer = 0x00000001;
+			
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			

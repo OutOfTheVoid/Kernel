@@ -79,15 +79,20 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void testKernelTask ()
 {
 	
-	uint64_t A = HW::ACPI::PMTimer :: GetTimeNS ();
-	
-	MT::Timing::TaskSleep :: SleepCurrent ( 500 );
-	
-	uint64_t B = HW::ACPI::PMTimer :: GetTimeNS ();
-	
-	B -= A;
-	
-	system_func_kprintf ( "wait 500 MS, PMTimer delta: %u NS\n", static_cast <uint32_t> ( B & 0xFFFFFFFF ) );
+	while ( true )
+	{
+		
+		uint64_t A = HW::ACPI::PMTimer :: GetTimeNS ();
+		
+		MT::Timing::TaskSleep :: SleepCurrent ( 500 );
+		
+		uint64_t B = HW::ACPI::PMTimer :: GetTimeNS ();
+		
+		B -= A;
+		
+		system_func_kprintf ( "wait 500 MS, PMTimer delta: %u NS\n", static_cast <uint32_t> ( B & 0xFFFFFFFF ) );
+		
+	}
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

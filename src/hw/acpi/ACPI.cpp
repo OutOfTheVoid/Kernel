@@ -14,6 +14,12 @@
 #include <hw/pc/ISA.h>
 
 #include <interrupt/APIC.h>
+#include <interrupt/IState.h>
+
+#include <mt/synchronization/Spinlock.h>
+
+HW::ACPI :: SCIHandlerHook * _hw_acpi_RootSCIHook = NULL;
+MT::Synchronization::Spinlock :: Spinlock_t _hw_acpi_SCIHookLock = MT::Synchronization::Spinlock :: Initializer ();
 
 void HW::ACPI :: StaticInit ( uint32_t * Status )
 {
@@ -156,8 +162,139 @@ void HW::ACPI :: Disable ( uint32_t * Status )
 void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
+	(void) Frame;
+	
 	system_func_kprintf ( "SCI!\n" );
 	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
+	
+	if ( _hw_acpi_RootSCIHook != NULL )
+	{
+		
+		bool Continue = true;
+		
+		while ( Continue )
+		{
+			
+			SCIHandlerHook * Current = _hw_acpi_RootSCIHook;
+			
+			do
+			{
+				
+				bool Remove = Current -> Handler ();
+				
+				if ( Remove )
+				{
+					
+					if ( Current -> Next == Current )
+					{
+						
+						_hw_acpi_RootSCIHook = NULL;
+						
+						break;
+						
+					}
+					
+					if ( Current == _hw_acpi_RootSCIHook )
+					{
+						
+						_hw_acpi_RootSCIHook = Current -> Next;
+						_hw_acpi_RootSCIHook -> Last = Current -> Last;
+						Current -> Last -> Next = _hw_acpi_RootSCIHook;
+						
+						continue;
+						
+					}
+					
+				}
+				
+			}
+			while ( Current -> Next != _hw_acpi_RootSCIHook );
+			
+			Continue = false;
+			
+		}
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
+	
 	Interrupt::APIC :: EndOfInterrupt ();
+	
+};
+
+void HW::ACPI :: InitSCIHandlerHook ( SCIHandlerHook * Hook, bool ( * Handler ) () )
+{
+	
+	Hook -> Next = NULL;
+	Hook -> Last = NULL;
+	
+	Hook -> Handler = Handler;
+	
+};
+
+void HW::ACPI :: AddSCIHandlerHook ( SCIHandlerHook * Hook )
+{
+	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
+	
+	if ( _hw_acpi_RootSCIHook == NULL )
+	{
+		
+		_hw_acpi_RootSCIHook = Hook;
+		
+		Hook -> Next = Hook;
+		Hook -> Last = Hook;
+		
+	}
+	else
+	{
+		
+		Hook -> Next = _hw_acpi_RootSCIHook;
+		Hook -> Last = _hw_acpi_RootSCIHook -> Last;
+		
+		_hw_acpi_RootSCIHook -> Last -> Next = Hook;
+		_hw_acpi_RootSCIHook -> Last = Hook;
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
+	Interrupt::IState :: WriteBlock ( ReInt );
+	
+};
+
+void HW::ACPI :: RemoveSCIHandlerHook ( SCIHandlerHook * Hook )
+{
+	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
+	
+	if ( Hook == _hw_acpi_RootSCIHook )
+	{
+		
+		if ( Hook -> Next == Hook )
+			_hw_acpi_RootSCIHook = NULL;
+		else
+		{
+			
+			Hook -> Next -> Last = Hook -> Last;
+			Hook -> Last -> Next = Hook -> Next;
+			
+			_hw_acpi_RootSCIHook = Hook -> Next;
+			
+		}
+		
+	}
+	else
+	{
+		
+		Hook -> Next -> Last = Hook -> Last;
+		Hook -> Last -> Next = Hook -> Next;
+		
+	}
+	
+	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };

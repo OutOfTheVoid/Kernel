@@ -15,10 +15,17 @@ uint32_t HW::ACPI::PMTimer :: LastTValue = 0;
 uint32_t HW::ACPI::PMTimer :: RegisterMask = 0;
 uint64_t HW::ACPI::PMTimer :: Count = 0;
 
-uint32_t HW::ACPI::PMTimer :: AddressSpace = false;
-uint32_t HW::ACPI::PMTimer :: Address = 0;
+uint32_t HW::ACPI::PMTimer :: TimerAddressSpace = false;
+uint32_t HW::ACPI::PMTimer :: TimerAddress = 0;
+
+uint32_t HW::ACPI::PMTimer :: EventAddressA = 0;
+uint32_t HW::ACPI::PMTimer :: EventAddressB = 0;
+uint32_t HW::ACPI::PMTimer :: EventAddressSpaceA = 0;
+uint32_t HW::ACPI::PMTimer :: EventAddressSpaceB = 0;
 
 MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::PMTimer :: Lock = MT::Synchronization::Spinlock :: Initializer ();
+
+HW::ACPI :: SCIHandlerHook HW::ACPI::PMTimer :: TimerIntHook;
 
 void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 {
@@ -82,6 +89,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
 				* reinterpret_cast <uint16_t *> ( PM1aEventAddress.Address + EventBlockSize / 2 ) = Value;
 				
+				EventAddressA = PM1aEventAddress.Address;
+				EventAddressSpaceA = kACPIAddress_AddressSpaceID_Memory;
+				
 				break;
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
@@ -89,6 +99,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				Value = HW::CPU::IO :: In16 ( PM1aEventAddress.Address + ( EventBlockSize / 2 ) );
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
 				HW::CPU::IO :: Out16 ( PM1aEventAddress.Address + ( EventBlockSize / 2 ), Value );
+				
+				EventAddressA = PM1aEventAddress.Address;
+				EventAddressSpaceA = kACPIAddress_AddressSpaceID_SystemIO;
 				
 				break;
 				
@@ -112,6 +125,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				Value &= ~ kACPIFixedRegister_PM1Enable_Flag_PMTimer;
 				* reinterpret_cast <uint16_t *> ( PM1bEventAddress.Address + ( EventBlockSize / 2 ) ) = Value;
 				
+				EventAddressB = PM1bEventAddress.Address;
+				EventAddressSpaceB = kACPIAddress_AddressSpaceID_Memory;
+				
 				break;
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
@@ -119,6 +135,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 				Value = HW::CPU::IO :: In16 ( PM1bEventAddress.Address + ( EventBlockSize / 2 ) );
 				Value |= kACPIFixedRegister_PM1Enable_Flag_PMTimer;
 				HW::CPU::IO :: Out16 ( PM1bEventAddress.Address + ( EventBlockSize / 2 ), Value );
+				
+				EventAddressB = PM1bEventAddress.Address;
+				EventAddressSpaceB = kACPIAddress_AddressSpaceID_SystemIO;
 				
 				break;
 				
@@ -165,10 +184,10 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 		case kACPIAddress_AddressSpaceID_Memory:
 			{
 				
-				Address = TimerBlockAddress.Address;
-				AddressSpace = kACPIAddress_AddressSpaceID_Memory;
+				TimerAddress = TimerBlockAddress.Address;
+				TimerAddressSpace= kACPIAddress_AddressSpaceID_Memory;
 				
-				LastTValue = ( * reinterpret_cast <volatile uint32_t *> ( Address ) ) & RegisterMask;
+				LastTValue = ( * reinterpret_cast <volatile uint32_t *> ( TimerAddress ) ) & RegisterMask;
 				
 			}
 			break;
@@ -176,10 +195,10 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 		case kACPIAddress_AddressSpaceID_SystemIO:
 			{
 				
-				Address = TimerBlockAddress.Address;
-				AddressSpace = kACPIAddress_AddressSpaceID_SystemIO;
+				TimerAddress = TimerBlockAddress.Address;
+				TimerAddressSpace= kACPIAddress_AddressSpaceID_SystemIO;
 				
-				LastTValue = HW::CPU::IO :: In32 ( Address ) & RegisterMask;
+				LastTValue = HW::CPU::IO :: In32 ( TimerAddress ) & RegisterMask;
 				
 			}
 			break;
@@ -194,9 +213,12 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			
 		}
 		
+		InitSCIHandlerHook ( & TimerIntHook, & Interrupt );
+		AddSCIHandlerHook ( & TimerIntHook );
+		
 		Exist = true;
 		
-		system_func_kprintf ( "PM Timer Address: %h, AddressSpace: %h\n", Address, AddressSpace );
+		system_func_kprintf ( "PM Timer Address: %h, AddressSpace: %h\n", TimerAddress, TimerAddressSpace);
 		
 	}
 	
@@ -219,6 +241,98 @@ uint64_t HW::ACPI::PMTimer :: GetTimeNS ()
 	
 };
 
+bool HW::ACPI::PMTimer :: Interrupt ()
+{
+	
+	uint16_t EventValue = 0;
+	
+	if ( EventAddressA != 0 )
+	{
+		
+		switch ( EventAddressSpaceA )
+		{
+		
+		case kACPIAddress_AddressSpaceID_Memory:
+			EventValue |= * reinterpret_cast <volatile uint16_t *> ( EventAddressA );
+			break;
+			
+		case kACPIAddress_AddressSpaceID_SystemIO:
+			EventValue |= HW::CPU::IO :: In16 ( EventAddressA );
+			break;
+			
+		}
+		
+	}
+	
+	if ( EventAddressB != 0 )
+	{
+		
+		switch ( EventAddressSpaceB )
+		{
+		
+		case kACPIAddress_AddressSpaceID_Memory:
+			EventValue |= * reinterpret_cast <volatile uint16_t *> ( EventAddressB );
+			break;
+			
+		case kACPIAddress_AddressSpaceID_SystemIO:
+			EventValue |= HW::CPU::IO :: In16 ( EventAddressB );
+			break;
+			
+		}
+		
+	}
+	
+	if ( EventValue & FADT :: kRegister_PM1Event_Flag_PMTimerStatus )
+	{
+		
+		system_func_kprintf ( "PMTimer SCI!\n" );
+		
+		TimerUpdate ();
+		
+		EventValue &= ~ FADT :: kRegister_PM1Event_Flag_PMTimerStatus;
+		
+		if ( EventAddressA != 0 )
+		{
+			
+			switch ( EventAddressSpaceA )
+			{
+			
+			case kACPIAddress_AddressSpaceID_Memory:
+				* reinterpret_cast <volatile uint16_t *> ( EventAddressA ) = EventValue;
+				break;
+				
+			case kACPIAddress_AddressSpaceID_SystemIO:
+				HW::CPU::IO :: Out16 ( EventAddressA, EventValue );
+				break;
+				
+			}
+			
+		}
+		
+		if ( EventAddressB != 0 )
+		{
+			
+			switch ( EventAddressSpaceB )
+			{
+			
+			case kACPIAddress_AddressSpaceID_Memory:
+				* reinterpret_cast <volatile uint16_t *> ( EventAddressB ) = EventValue;
+				break;
+				
+			case kACPIAddress_AddressSpaceID_SystemIO:
+				HW::CPU::IO :: Out16 ( EventAddressB, EventValue );
+				break;
+				
+			}
+			
+		}
+		
+	}
+	
+	return false;
+	
+};
+
 uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 {
 	
@@ -229,15 +343,15 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	
 	uint32_t Current;
 	
-	switch ( AddressSpace )
+	switch ( TimerAddressSpace)
 	{
 	
 	case kACPIAddress_AddressSpaceID_Memory:
-		Current = * reinterpret_cast <volatile uint32_t *> ( Address ) & RegisterMask;
+		Current = * reinterpret_cast <volatile uint32_t *> ( TimerAddress ) & RegisterMask;
 		break;
 		
 	case kACPIAddress_AddressSpaceID_SystemIO:
-		Current = HW::CPU::IO :: In32 ( Address ) & RegisterMask;
+		Current = HW::CPU::IO :: In32 ( TimerAddress ) & RegisterMask;
 		break;
 		
 	default:

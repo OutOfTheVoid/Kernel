@@ -7,6 +7,7 @@
 
 #include <hw/cpu/Processor.h>
 #include <hw/cpu/TSC.h>
+#include <hw/acpi/PMTimer.h>
 
 #include <interrupt/IState.h>
 #include <interrupt/APIC.h>
@@ -26,14 +27,20 @@ uint32_t MT::Timing::TaskSleep :: FreeCount = 0;
 
 uint64_t MT::Timing::TaskSleep :: NextInterrupt = 0;
 
-MT::Timing::TaskSleep :: TimingSource MT::Timing::TaskSleep :: Source;
+MT::Timing::TaskSleep :: TimingSource MT::Timing::TaskSleep :: TimeSource;
+MT::Timing::TaskSleep :: InterruptSource MT::Timing::TaskSleep :: IntSource;
 
 ASM_LINKAGE void mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 
 void MT::Timing::TaskSleep :: Init ()
 {
 	
-	Source = kTimingSource_PIT;
+	if ( ::HW::ACPI::PMTimer :: Exists () )
+		TimeSource = kTimingSource_PMTimer;
+	else
+		TimeSource = kTimingSource_TSC;
+	
+	IntSource = kInterruptSource_PIT;
 	
 	PIT :: InitTimedIRQ ( & mt_timing_tasksleep_pitirqhandler );
 	PIT :: SetIRQEnabled ( true );
@@ -45,15 +52,16 @@ void MT::Timing::TaskSleep :: Init ()
 uint64_t MT::Timing::TaskSleep ::  GetCurrentTimeNS ()
 {
 	
-	switch ( Source )
+	switch ( TimeSource )
 	{
 	
-	case kTimingSource_PIT:
-			return static_cast <uint64_t> ( ::HW::CPU::TSC :: Read () / ( Interrupt::APIC :: GetBusFrequencey () / 1000000000.0 ) );
-		break;
+	case kTimingSource_TSC:
+		return static_cast <uint64_t> ( ::HW::CPU::TSC :: Read () / ( Interrupt::APIC :: GetBusFrequencey () / 1000000000.0 ) );
+		
+	case kTimingSource_PMTimer:
+		return ::HW::ACPI::PMTimer :: GetTimeNS ();
 		
 	default:
-		
 		return 0;
 		
 	}
@@ -70,10 +78,10 @@ inline uint64_t MT::Timing::TaskSleep :: DelayMSToNS ( double MS )
 void MT::Timing::TaskSleep :: SetNextInterrupt ( uint64_t TimeoutNS )
 {
 	
-	switch ( Source )
+	switch ( IntSource )
 	{
 	
-	case kTimingSource_PIT:
+	case kInterruptSource_PIT:
 		{
 			
 			if ( TimeoutNS > 50000000 )

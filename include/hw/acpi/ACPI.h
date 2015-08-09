@@ -31,6 +31,16 @@ namespace HW
 			
 		} __attribute__ (( packed )) ACPIAddress;
 		
+		typedef struct SCIHandlerHook_Struct
+		{
+			
+			struct SCIHandlerHook_Struct * Next;
+			struct SCIHandlerHook_Struct * Last;
+			
+			bool ( * Handler ) ();
+			
+		} SCIHandlerHook;
+		
 		const uint8_t kACPIAddress_AddressSpaceID_Memory = 0x00;
 		const uint8_t kACPIAddress_AddressSpaceID_SystemIO = 0x01;
 		const uint8_t kACPIAddress_AddressSpaceID_PCIConfiguration = 0x02;
@@ -53,10 +63,6 @@ namespace HW
 		
 		const uint32_t kACPIStatus_Failiure_NoACPI = 0xFFFFFFFF;
 		
-		const uint32_t kACPIFixedRegister_PM1Control_Flag_SMISCI = 0x00000001;
-		
-		const uint32_t kACPIFixedRegister_PM1Status_Flag_PMTimerStatus = 0x00000001;
-		
 		const uint32_t kACPIFixedRegister_PM1Enable_Flag_PMTimer = 0x00000001;
 		
 		/* Initializes the acpi table readers, but does not start ACPI.
@@ -71,6 +77,11 @@ namespace HW
 		void Disable ( uint32_t * Status );
 		
 		void SystemControlInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+		
+		void InitSCIHandlerHook ( SCIHandlerHook * Hook, bool ( * Handler ) () );
+		
+		void AddSCIHandlerHook ( SCIHandlerHook * Hook );
+		void RemoveSCIHandlerHook ( SCIHandlerHook * Hook );
 		
 	};
 	

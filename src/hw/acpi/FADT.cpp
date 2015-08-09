@@ -1260,7 +1260,7 @@ HW::ACPI :: ACPIAddress HW::ACPI::FADT :: GetPMTimerBlockAddress ( uint32_t * St
 	{
 		
 		Address.Address = Table -> PMTimerBlockAddress;
-		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_Memory;
+		Address.AddressSpaceID = kACPIAddress_AddressSpaceID_SystemIO;
 		Address.RegisterBitWidth = 0;
 		Address.RegisterBitOffset = 0;
 		

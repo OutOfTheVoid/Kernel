@@ -1,5 +1,5 @@
-#ifndef MT_TIMING_TASKSLEEP_H
-#define MT_TIMING_TASKSLEEP_H
+#ifndef MT_TIMING_TIMER_H
+#define MT_TIMING_TIMER_H
 
 #include <mt/timing/Timing.h>
 
@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-ASM_LINKAGE void mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+ASM_LINKAGE void mt_timing_timer_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 
 namespace MT
 {
@@ -22,26 +22,27 @@ namespace MT
 		public:
 			
 			static void Init ();
-			static void SleepCurrent ( double Milliseconds );
+			static void RegisterTimeout ( uint64_t Timeout, void ( * Callback ) ( void * Data ), void * Data );
 			
 		private:
 			
-			friend void ::mt_timing_tasksleep_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+			friend void ::mt_timing_timer_pitirqhandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 			
-			typedef struct SleepInfo_Struct
+			typedef struct TimerEvent_Struct
 			{
-				
-				Tasking::Task :: Task_t * PendingTask;
 				
 				uint64_t ThresholdNS;
 				
+				void ( * Callback ) ( void * Data );
+				void * Data;
+				
 				int32_t Height;
 				
-				struct SleepInfo_Struct * Parent;
-				struct SleepInfo_Struct * Left;
-				struct SleepInfo_Struct * Right;
+				struct TimerEvent_Struct * Parent;
+				struct TimerEvent_Struct * Left;
+				struct TimerEvent_Struct * Right;
 				
-			} SleepInfo;
+			} TimerEvent;
 			
 			typedef enum
 			{
@@ -103,5 +104,3 @@ namespace MT
 	};
 	
 };
-
-#endif

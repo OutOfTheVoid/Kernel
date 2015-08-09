@@ -25,6 +25,10 @@ namespace HW
 			
 		private:
 			
+			static bool Interrupt ();
+			
+			static SCIHandlerHook TimerIntHook;
+			
 			static const uint32_t kRegisterMask_24 = 0x00FFFFFF;
 			static const uint32_t kRegisterMask_32 = 0xFFFFFFFF;
 			
@@ -38,8 +42,13 @@ namespace HW
 			static uint32_t RegisterMask;
 			static uint64_t Count;
 			
-			static uint32_t Address;
-			static uint32_t AddressSpace;
+			static uint32_t TimerAddress;
+			static uint32_t TimerAddressSpace;
+			
+			static uint32_t EventAddressA;
+			static uint32_t EventAddressB;
+			static uint32_t EventAddressSpaceA;
+			static uint32_t EventAddressSpaceB;
 			
 			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
