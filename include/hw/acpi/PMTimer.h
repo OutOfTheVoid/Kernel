@@ -36,19 +36,29 @@ namespace HW
 			
 			static uint64_t TimerUpdate ();
 			
+			// Tells whether we've detected and intialized a valid PM Timer.
+			
 			static bool Exist;
+			
+			// These deal with emulating a larger timer.
 			
 			static uint32_t LastTValue;
 			static uint32_t RegisterMask;
 			static uint64_t Count;
 			
+			// Actual address of the timer value register.
+			
 			static uint32_t TimerAddress;
 			static uint32_t TimerAddressSpace;
+			
+			// Address of the event/status register that contains TMR_STS
 			
 			static uint32_t EventAddressA;
 			static uint32_t EventAddressB;
 			static uint32_t EventAddressSpaceA;
 			static uint32_t EventAddressSpaceB;
+			
+			// Lock to prevent corruption of timer values.
 			
 			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			

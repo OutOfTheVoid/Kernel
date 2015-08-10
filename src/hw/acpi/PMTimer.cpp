@@ -36,8 +36,12 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 	
 	* Status = kACPIStatus_Success;
 	
+	// Check that the FADT is valid before using it.
+	
 	if ( FADT :: Valid () )
 	{
+		
+		// Is the PM Timer 32 or 24 bits wide?
 		
 		RegisterMask = ( ( FADT :: GetFixedFeatureFlags ( & SubStatus ) & FADT :: kFixedFeatureFlag_PMTimerExtended ) != 0 ) ? kRegisterMask_32 : kRegisterMask_24;
 		
@@ -49,6 +53,8 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			return;
 			
 		}
+		
+		// Get the address of the PM Timer value register, and record it's "initial" value.
 		
 		ACPIAddress TimerBlockAddress = FADT :: GetPMTimerBlockAddress ( & SubStatus );
 		
@@ -105,6 +111,8 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			
 		}
 		
+		// Below deals with getting the PM1a/b event/status register address.
+		
 		ACPIAddress PM1aEventAddress = FADT :: GetPM1aEventBlockAddress ( & SubStatus );
 		
 		FailA = ( ( PM1aEventAddress.Address == 0 ) || ( SubStatus != kACPIStatus_Success ) );
@@ -120,9 +128,6 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			
 		}
 		
-		InitSCIHandlerHook ( & TimerIntHook, & Interrupt );
-		AddSCIHandlerHook ( & TimerIntHook );
-		
 		uint16_t Value;
 		uint32_t EventBlockSize = FADT :: GetPM1EventBlockByteCount ( & SubStatus );
 		
@@ -134,6 +139,13 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			return;
 			
 		}
+		
+		// We're at a point now where everything /should/ succeed, so add the APCI event hook.
+		
+		InitSCIHandlerHook ( & TimerIntHook, & Interrupt );
+		AddSCIHandlerHook ( & TimerIntHook );
+		
+		// Now enable the timer
 		
 		if ( ( PM1aEventAddress.Address != 0 ) && ( ! FailA ) )
 		{
@@ -232,10 +244,14 @@ uint64_t HW::ACPI::PMTimer :: GetTimeNS ()
 	
 };
 
+// ACPI Event handler. First checks if this event was a PMTimer event, and if so, handle it!
+
 bool HW::ACPI::PMTimer :: Interrupt ()
 {
 	
 	uint16_t EventValue = 0;
+	
+	// Check if TMR_STS was set. If so, this was a PM Timer event.
 	
 	if ( EventAddressA != 0 )
 	{
@@ -272,6 +288,8 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 		}
 		
 	}
+	
+	// This was a PM Timer event. Handle it, then clear the status register.
 	
 	if ( EventValue & FADT :: kRegister_PM1Event_Flag_PMTimerStatus )
 	{
@@ -335,6 +353,8 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 	return false;
 	
 };
+
+// Updates the grand timer tick value. This is the actual timer read.
 
 uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 {

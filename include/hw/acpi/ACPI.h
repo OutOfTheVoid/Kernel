@@ -71,14 +71,24 @@ namespace HW
 		*/
 		void StaticInit ( uint32_t * Status );
 		
+		// Initializes the ACPI Event Interrupt
+		
 		void InitInterrupts ( uint32_t * Status );
+		
+		// Enables or disables ACPI.
 		
 		void Enable ( uint32_t * Status );
 		void Disable ( uint32_t * Status );
 		
+		// Actual interrupt handler.
+		
 		void SystemControlInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 		
+		// Initializes a "Hook" into the ACPI event.
+		
 		void InitSCIHandlerHook ( SCIHandlerHook * Hook, bool ( * Handler ) () );
+		
+		// Adds or removes a hook.
 		
 		void AddSCIHandlerHook ( SCIHandlerHook * Hook );
 		void RemoveSCIHandlerHook ( SCIHandlerHook * Hook );
