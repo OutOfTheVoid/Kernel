@@ -1,14 +1,13 @@
 To do List
 ----------
 
-* Mutexes
 * User mode ?
 * System call interface ?
 * Shared memory ?
 * Process list
 * User system ?
-* VFS
-* Init ramdisk
+* VFS - Partial
+* Init ramdisk - Partial
 * ATA PIO Driver ?
 * File I/O
 * Driver Interface
