@@ -39,7 +39,62 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 	if ( FADT :: Valid () )
 	{
 		
-		FADT :: WriteACPIEnable ( true, & SubStatus );
+		RegisterMask = ( ( FADT :: GetFixedFeatureFlags ( & SubStatus ) & FADT :: kFixedFeatureFlag_PMTimerExtended ) != 0 ) ? kRegisterMask_32 : kRegisterMask_24;
+		
+		if ( SubStatus != kACPIStatus_Success )
+		{
+			
+			* Status = kACPIStatus_Failure_ResourceNotFound;
+			
+			return;
+			
+		}
+		
+		ACPIAddress TimerBlockAddress = FADT :: GetPMTimerBlockAddress ( & SubStatus );
+		
+		if ( ( SubStatus != kACPIStatus_Success ) || ( TimerBlockAddress.Address == 0 ) )
+		{
+			
+			* Status = kACPIStatus_Failure_ResourceNotFound;
+			
+			return;
+			
+		}
+		
+		switch ( TimerBlockAddress.AddressSpaceID )
+		{
+			
+		case kACPIAddress_AddressSpaceID_Memory:
+			{
+				
+				TimerAddress = TimerBlockAddress.Address;
+				TimerAddressSpace= kACPIAddress_AddressSpaceID_Memory;
+				
+				LastTValue = ( * reinterpret_cast <volatile uint32_t *> ( TimerAddress ) ) & RegisterMask;
+				
+			}
+			break;
+			
+		case kACPIAddress_AddressSpaceID_SystemIO:
+			{
+				
+				TimerAddress = TimerBlockAddress.Address;
+				TimerAddressSpace= kACPIAddress_AddressSpaceID_SystemIO;
+				
+				LastTValue = HW::CPU::IO :: In32 ( TimerAddress ) & RegisterMask;
+				
+			}
+			break;
+			
+		default:
+			
+			* Status = kACPIStatus_Failure_UnsupportedAddressSpace;
+			
+			return;
+			
+			break;
+			
+		}
 		
 		if ( SubStatus != kACPIStatus_Success )
 		{
@@ -64,6 +119,9 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			return;
 			
 		}
+		
+		InitSCIHandlerHook ( & TimerIntHook, & Interrupt );
+		AddSCIHandlerHook ( & TimerIntHook );
 		
 		uint16_t Value;
 		uint32_t EventBlockSize = FADT :: GetPM1EventBlockByteCount ( & SubStatus );
@@ -149,78 +207,11 @@ void HW::ACPI::PMTimer :: Init ( uint32_t * Status )
 			
 		}
 		
+		Exist = true;
+		
 	}
 	else
 		* Status = kACPIStatus_Failure_InvalidTable;
-	
-	if ( * Status == kACPIStatus_Success )
-	{
-		
-		RegisterMask = ( ( FADT :: GetFixedFeatureFlags ( & SubStatus ) & FADT :: kFixedFeatureFlag_PMTimerExtended ) != 0 ) ? kRegisterMask_32 : kRegisterMask_24;
-		
-		if ( SubStatus != kACPIStatus_Success )
-		{
-			
-			* Status = kACPIStatus_Failure_ResourceNotFound;
-			
-			return;
-			
-		}
-		
-		ACPIAddress TimerBlockAddress = FADT :: GetPMTimerBlockAddress ( & SubStatus );
-		
-		if ( ( SubStatus != kACPIStatus_Success ) || ( TimerBlockAddress.Address == 0 ) )
-		{
-			
-			* Status = kACPIStatus_Failure_ResourceNotFound;
-			
-			return;
-			
-		}
-		
-		switch ( TimerBlockAddress.AddressSpaceID )
-		{
-			
-		case kACPIAddress_AddressSpaceID_Memory:
-			{
-				
-				TimerAddress = TimerBlockAddress.Address;
-				TimerAddressSpace= kACPIAddress_AddressSpaceID_Memory;
-				
-				LastTValue = ( * reinterpret_cast <volatile uint32_t *> ( TimerAddress ) ) & RegisterMask;
-				
-			}
-			break;
-			
-		case kACPIAddress_AddressSpaceID_SystemIO:
-			{
-				
-				TimerAddress = TimerBlockAddress.Address;
-				TimerAddressSpace= kACPIAddress_AddressSpaceID_SystemIO;
-				
-				LastTValue = HW::CPU::IO :: In32 ( TimerAddress ) & RegisterMask;
-				
-			}
-			break;
-			
-		default:
-			
-			* Status = kACPIStatus_Failure_UnsupportedAddressSpace;
-			
-			return;
-			
-			break;
-			
-		}
-		
-		InitSCIHandlerHook ( & TimerIntHook, & Interrupt );
-		AddSCIHandlerHook ( & TimerIntHook );
-		
-		Exist = true;
-		
-		system_func_kprintf ( "PM Timer Address: %h, AddressSpace: %h\n", TimerAddress, TimerAddressSpace);
-		
-	}
 	
 };
 
@@ -285,14 +276,16 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 	if ( EventValue & FADT :: kRegister_PM1Event_Flag_PMTimerStatus )
 	{
 		
-		system_func_kprintf ( "PMTimer SCI!\n" );
-		
 		TimerUpdate ();
+		
+		system_func_kprintf ( "PMTimer SCI!\n" );
 		
 		EventValue &= ~ FADT :: kRegister_PM1Event_Flag_PMTimerStatus;
 		
 		if ( EventAddressA != 0 )
 		{
+			
+			system_func_kprintf ( "Clear A!\n" );
 			
 			switch ( EventAddressSpaceA )
 			{
@@ -305,12 +298,18 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 				HW::CPU::IO :: Out16 ( EventAddressA, EventValue );
 				break;
 				
+			default:
+				system_func_kprintf ( "Failed!\n" );
+				break;
+				
 			}
 			
 		}
 		
 		if ( EventAddressB != 0 )
 		{
+			
+			system_func_kprintf ( "Clear B!\n" );
 			
 			switch ( EventAddressSpaceB )
 			{
@@ -321,6 +320,10 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
 				HW::CPU::IO :: Out16 ( EventAddressB, EventValue );
+				break;
+				
+			default:
+				system_func_kprintf ( "Failed!\n" );
 				break;
 				
 			}
@@ -343,7 +346,7 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	
 	uint32_t Current;
 	
-	switch ( TimerAddressSpace)
+	switch ( TimerAddressSpace )
 	{
 	
 	case kACPIAddress_AddressSpaceID_Memory:
@@ -362,6 +365,8 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	
 	Count += static_cast <uint64_t> ( ( Current - LastTValue ) & RegisterMask );
 	LastTValue = Current;
+	
+	//system_func_kprintf ( "PMTimer Value: %h\n", Current );
 	
 	Return = Count;
 	

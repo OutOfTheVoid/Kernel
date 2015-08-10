@@ -90,8 +90,6 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 		if ( SubStatus == kACPIStatus_Success )
 		{
 			
-			system_func_kprintf ( "System control IRQ: %u\n", static_cast <uint32_t> ( Interrupt ) );
-			
 			PC::ISA :: SetIRQHandler ( Interrupt, & SystemControlInterruptHandler );
 			PC::ISA :: SetIRQEnabled ( Interrupt, true );
 			
@@ -99,13 +97,7 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 			
 		}
 		else
-		{
-			
-			system_func_kprintf ( "Failed to retreive SCI Number\n" );
-			
 			* Status = kACPIStatus_Failure_ResourceNotFound;
-			
-		}
 		
 	}
 	
@@ -185,6 +177,8 @@ void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers ::
 				
 				if ( Remove )
 				{
+					
+					system_func_kprintf ( "Remove\n" );
 					
 					if ( Current -> Next == Current )
 					{

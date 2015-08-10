@@ -6,6 +6,8 @@
 #include <mm/KVMap.h>
 #include <mm/paging/PageTable.h>
 
+#include <system/func/kprintf.h>
+
 #include <util/Vector.h>
 
 #include <hw/cpu/IO.h>
@@ -114,6 +116,11 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		return;
 		
 	}
+	
+	system_func_kprintf ( "PM1a_EVT_BLK: %h\n", Table -> PM1aEventBlockAddress );
+	system_func_kprintf ( "PM1b_EVT_BLK: %h\n", Table -> PM1bEventBlockAddress );
+	system_func_kprintf ( "EX_PM1a_EVT_BLK: %h (AS: %i)\n", Table -> ExtendedPM1aEventBlockAddress.Address, Table -> ExtendedPM1aEventBlockAddress.AddressSpaceID );
+	system_func_kprintf ( "EX_PM1b_EVT_BLK: %h (AS: %i)\n", Table -> ExtendedPM1bEventBlockAddress.Address, Table -> ExtendedPM1bEventBlockAddress.AddressSpaceID );
 	
 	Vector <uint32_t> CurrentKVMapPages;
 	
