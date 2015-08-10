@@ -67,8 +67,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MTInit ();
 	FS :: Init ();
 	
-	HW::ACPI :: Enable ( & ACPIStatus );
-	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
@@ -90,7 +88,7 @@ void testKernelTask ()
 		
 		B -= A;
 		
-		//system_func_kprintf ( "wait 500 MS, PMTimer delta: %u NS\n", static_cast <uint32_t> ( B & 0xFFFFFFFF ) );
+		system_func_kprintf ( "wait 900 MS, PMTimer delta: %u NS\n", static_cast <uint32_t> ( B & 0xFFFFFFFF ) );
 		
 	}
 	
