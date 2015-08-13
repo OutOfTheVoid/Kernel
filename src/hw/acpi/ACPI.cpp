@@ -70,16 +70,16 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	}
 	
 	MADT :: Init ();
-	//SRAT :: Init ();
+	SRAT :: Init ();
 	
-	//FADT :: Init ( & SubStatus );
+	FADT :: Init ( & SubStatus );
 	
-	//HPET :: Init ( & SubStatus );
+	HPET :: Init ( & SubStatus );
 	
-	/*if ( SubStatus == kACPIStatus_Success )
+	if ( SubStatus == kACPIStatus_Success )
 		system_func_kprintf ( "HPET Count: %i\n", HPET :: GetHPETCount () );
 	else
-		system_func_kprintf ( "HPET Failure! (%s)\n", GetErrorString ( SubStatus ) );*/
+		system_func_kprintf ( "HPET Failure! (%s)\n", GetErrorString ( SubStatus ) );
 	
 	* Status = kACPIStatus_Success;
 	

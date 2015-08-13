@@ -175,15 +175,11 @@ uint32_t HW::ACPI::XSDT :: CountTables ( const char * Name )
 	
 	ACPITable :: ACPITableHeader * SearchTable;
 	
-	system_func_kprintf ( "TableCount: %u\n", TableCount );
-	
 	for ( I = 0; I < TableCount; I ++ )
 	{
 		
 		if ( Table -> SDTableBase [ I ] > 0xFFFFFFFF )
 		{
-			
-			system_func_kprintf ( "Table above 4GB!\n" );
 			
 			continue;
 			
@@ -193,8 +189,6 @@ uint32_t HW::ACPI::XSDT :: CountTables ( const char * Name )
 		
 		if ( SearchTable == NULL )
 			return Count;
-		
-		system_func_kprintf ( "Test table %u: \"%c%c%c%c\" with \"%s\"\n", I, SearchTable -> Signature [ 0 ], SearchTable -> Signature [ 1 ], SearchTable -> Signature [ 2 ], SearchTable -> Signature [ 3 ], Name );
 		
 		if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
 			Count ++;
