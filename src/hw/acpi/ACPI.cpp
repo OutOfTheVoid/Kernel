@@ -6,6 +6,7 @@
 #include <hw/acpi/SRAT.h>
 #include <hw/acpi/FADT.h>
 #include <hw/acpi/PMTimer.h>
+#include <hw/acpi/HPET.h>
 
 #include <system/func/kprintf.h>
 
@@ -69,9 +70,16 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	}
 	
 	MADT :: Init ();
-	SRAT :: Init ();
+	//SRAT :: Init ();
 	
-	FADT :: Init ( & SubStatus );
+	//FADT :: Init ( & SubStatus );
+	
+	//HPET :: Init ( & SubStatus );
+	
+	/*if ( SubStatus == kACPIStatus_Success )
+		system_func_kprintf ( "HPET Count: %i\n", HPET :: GetHPETCount () );
+	else
+		system_func_kprintf ( "HPET Failure! (%s)\n", GetErrorString ( SubStatus ) );*/
 	
 	* Status = kACPIStatus_Success;
 	
@@ -105,9 +113,6 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 	{
 		
 		HW::ACPI::PMTimer :: Init ( & SubStatus );
-		
-		if ( SubStatus == kACPIStatus_Success )
-			system_func_kprintf ( "PMTimer valid!\n" );
 		
 	}
 	
@@ -290,5 +295,29 @@ void HW::ACPI :: RemoveSCIHandlerHook ( SCIHandlerHook * Hook )
 	
 	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
 	Interrupt::IState :: WriteBlock ( ReInt );
+	
+};
+
+const char * _hw_acpi_ErrorStrings [] =
+{
+	
+	"Success",
+	"Unknown failure",
+	"Invalid table",
+	"Resource not found",
+	"Unsupported address space",
+	"System memory allocation failure"
+	
+};
+
+const uint32_t _hw_acpi_ErrorStringArrayLength = 6;
+
+const char * HW::ACPI :: GetErrorString ( uint32_t ACPIError )
+{
+	
+	if ( ACPIError < _hw_acpi_ErrorStringArrayLength )
+		return _hw_acpi_ErrorStrings [ ACPIError ];
+	
+	return " [ GetErrorString failed: Out of range error! ] ";
 	
 };

@@ -3,8 +3,6 @@
 
 #include <hw/cpu/IO.h>
 
-#include <system/func/kprintf.h>
-
 #include <mm/kvmap.h>
 
 #include <interrupt/IState.h>
@@ -289,21 +287,15 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 		
 	}
 	
-	// This was a PM Timer event. Handle it, then clear the status register.
+	// This was a PM Timer event. Handle it, then reset the status register.
 	
 	if ( EventValue & FADT :: kRegister_PM1Event_Flag_PMTimerStatus )
 	{
 		
 		TimerUpdate ();
 		
-		system_func_kprintf ( "PMTimer SCI!\n" );
-		
-		EventValue &= ~ FADT :: kRegister_PM1Event_Flag_PMTimerStatus;
-		
 		if ( EventAddressA != 0 )
 		{
-			
-			system_func_kprintf ( "Clear A!\n" );
 			
 			switch ( EventAddressSpaceA )
 			{
@@ -316,18 +308,12 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 				HW::CPU::IO :: Out16 ( EventAddressA, EventValue );
 				break;
 				
-			default:
-				system_func_kprintf ( "Failed!\n" );
-				break;
-				
 			}
 			
 		}
 		
 		if ( EventAddressB != 0 )
 		{
-			
-			system_func_kprintf ( "Clear B!\n" );
 			
 			switch ( EventAddressSpaceB )
 			{
@@ -338,10 +324,6 @@ bool HW::ACPI::PMTimer :: Interrupt ()
 				
 			case kACPIAddress_AddressSpaceID_SystemIO:
 				HW::CPU::IO :: Out16 ( EventAddressB, EventValue );
-				break;
-				
-			default:
-				system_func_kprintf ( "Failed!\n" );
 				break;
 				
 			}
@@ -385,8 +367,6 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	
 	Count += static_cast <uint64_t> ( ( Current - LastTValue ) & RegisterMask );
 	LastTValue = Current;
-	
-	//system_func_kprintf ( "PMTimer Value: %h\n", Current );
 	
 	Return = Count;
 	

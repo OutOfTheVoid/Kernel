@@ -35,6 +35,8 @@ namespace HW
 			
 			static const uint32_t kCPUFlag_Wait = 0x100;
 			
+			static const uint32_t kCPUFlag_Scheduling = 0x200;
+			
 			typedef struct
 			{
 				

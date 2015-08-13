@@ -26,9 +26,10 @@ void liballoc_switchlockmode ()
 	
 	liballoc_reint = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & liballoc_spinlock );
-	Interrupt::IState :: WriteBlock ( liballoc_reint );
 	
 	liballoc_lockmode = true;
+	
+	Interrupt::IState :: WriteBlock ( liballoc_reint );
 	
 };
 
@@ -52,7 +53,7 @@ int liballoc_lock ()
 int liballoc_unlock ()
 {
 	
-	if ( liballoc_lockmode )
+	if ( liballoc_lockmode && ( ! liballoc_reint ) )
 		MT::Synchronization::Mutex :: Release ( & liballoc_mutex );
 	else
 	{

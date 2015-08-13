@@ -53,20 +53,6 @@ void HW::ACPI::XSDT :: Init ( void * XSDTAddress )
 	
 };
 
-void HW::ACPI::XSDT :: Discard ()
-{
-	
-	if ( ! Validated )
-		return;
-	
-	mm_kvunmap ( Table );
-	
-	Validated = false;
-	
-	Table = NULL;
-	
-};
-
 bool HW::ACPI::XSDT :: Valid ()
 {
 	
@@ -77,7 +63,7 @@ bool HW::ACPI::XSDT :: Valid ()
 void * HW::ACPI::XSDT :: FindTable ( const char * Name )
 {
 	
-	HW::ACPI::ACPITable :: ACPITableHeader * SearchTable;
+	ACPITable :: ACPITableHeader * SearchTable;
 	uint32_t SearchTableLength;
 	
 	for ( uint32_t I = 0; I < TableCount; I ++ )
@@ -87,6 +73,10 @@ void * HW::ACPI::XSDT :: FindTable ( const char * Name )
 			continue;
 		
 		SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ I ] ), 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
+		
+		if ( SearchTable == NULL )
+			return NULL;
+		
 		SearchTableLength = ( reinterpret_cast <uint32_t> ( SearchTable ) + SearchTable -> Length ) - ( reinterpret_cast <uint32_t> ( SearchTable ) & 0xFFFFF000 );
 		
 		if ( SearchTableLength > 0x2000 )
@@ -115,5 +105,104 @@ void * HW::ACPI::XSDT :: FindTable ( const char * Name )
 	}
 	
 	return NULL;
+	
+};
+
+void HW::ACPI::XSDT :: FindTables ( const char * Name, void * Addresses [], uint32_t Max )
+{
+	
+	if ( Max == 0 )
+		return;
+	
+	ACPITable :: ACPITableHeader * SearchTable;
+	uint32_t SearchTableLength;
+	
+	uint32_t Index = 0;
+	
+	uint32_t I;
+	
+	for ( I = 0; I < Max; I ++ )
+		Addresses [ I ] = NULL;
+	
+	for ( I = 0; I < TableCount; I ++ )
+	{
+		
+		if ( Table -> SDTableBase [ I ] > 0xFFFFFFFF )
+			continue;
+		
+		SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ I ] ), 0x2000, MM::Paging::PageTable :: Flags_Writeable ) );
+		
+		if ( SearchTable == NULL )
+			return;
+		
+		SearchTableLength = ( reinterpret_cast <uint32_t> ( SearchTable ) + SearchTable -> Length ) - ( reinterpret_cast <uint32_t> ( SearchTable ) & 0xFFFFF000 );
+		
+		if ( SearchTableLength > 0x2000 )
+		{
+			
+			mm_kvunmap ( SearchTable );
+			
+			SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ I ] ), SearchTableLength, MM::Paging::PageTable :: Flags_Writeable ) );
+			
+			if ( SearchTable == NULL )
+				return;
+			
+		}
+		
+		if ( ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 ) && ( SearchTable -> Length > sizeof ( HW::ACPI::ACPITable :: ACPITableHeader ) ) )
+		{
+			
+			Addresses [ Index ] = reinterpret_cast <void *> ( Table -> SDTableBase [ I ] );
+			Index ++;
+			
+			if ( Index == Max )
+				return;
+			
+		}
+		
+		mm_kvunmap ( SearchTable );
+		
+	}
+	
+};
+			
+uint32_t HW::ACPI::XSDT :: CountTables ( const char * Name )
+{
+	
+	uint32_t Count = 0;
+	
+	uint32_t I;
+	
+	ACPITable :: ACPITableHeader * SearchTable;
+	
+	system_func_kprintf ( "TableCount: %u\n", TableCount );
+	
+	for ( I = 0; I < TableCount; I ++ )
+	{
+		
+		if ( Table -> SDTableBase [ I ] > 0xFFFFFFFF )
+		{
+			
+			system_func_kprintf ( "Table above 4GB!\n" );
+			
+			continue;
+			
+		}
+		
+		SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ I ] ), 0x1000, MM::Paging::PageTable :: Flags_Writeable ) );
+		
+		if ( SearchTable == NULL )
+			return Count;
+		
+		system_func_kprintf ( "Test table %u: \"%c%c%c%c\" with \"%s\"\n", I, SearchTable -> Signature [ 0 ], SearchTable -> Signature [ 1 ], SearchTable -> Signature [ 2 ], SearchTable -> Signature [ 3 ], Name );
+		
+		if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
+			Count ++;
+		
+		mm_kvunmap ( SearchTable );
+		
+	}
+	
+	return Count;
 	
 };

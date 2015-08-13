@@ -54,9 +54,8 @@ void Interrupt :: Init ()
 	
 	HW::PC::ISA :: InitIOInterrupts ();
 	
-	uint32_t ACPIStatus;
-	
-	HW::ACPI :: InitInterrupts ( & ACPIStatus );
+	//uint32_t ACPIStatus;
+	//HW::ACPI :: InitInterrupts ( & ACPIStatus );
 	
 };
 

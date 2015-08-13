@@ -17,6 +17,7 @@
 
 #include <interrupt/Interrupt.h>
 #include <interrupt/APIC.h>
+#include <interrupt/IState.h>
 
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/MADT.h>
@@ -110,8 +111,6 @@ void MT :: MTInit ()
 	Tasking::Scheduler :: Init ();
 	Tasking::Scheduler :: PInit ();
 	
-	liballoc_switchlockmode ();
-	
 	uint32_t I;
 	
 	::HW::CPU::Processor :: CPUInfo * TargetCPUInfo;
@@ -121,13 +120,40 @@ void MT :: MTInit ()
 		
 		TargetCPUInfo = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
 		
+		bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 		MT::Synchronization::Spinlock :: SpinAcquire ( & TargetCPUInfo -> Lock );
 		
 		if ( ( TargetCPUInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_BSP ) == 0 )
 			TargetCPUInfo -> Flags &= ! ::HW::CPU::Processor :: kCPUFlag_Wait;
 		
 		Synchronization::Spinlock :: Release ( & TargetCPUInfo -> Lock );
+		Interrupt::IState :: WriteBlock ( ReInt );
 		
 	}
+	
+	bool InitSchedulersUnintialized = true;
+	
+	while ( InitSchedulersUnintialized )
+	{
+		
+		InitSchedulersUnintialized = false;
+		
+		I = 0;
+		
+		while ( I < ::HW::CPU::Processor :: GetProcessorCount () )
+		{
+			
+			TargetCPUInfo = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
+			
+			if ( ( TargetCPUInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_Scheduling ) == 0 )
+				InitSchedulersUnintialized = true;
+			
+			I ++;
+			
+		}
+		
+	}
+	
+	liballoc_switchlockmode ();
 	
 };

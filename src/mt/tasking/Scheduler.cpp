@@ -95,9 +95,17 @@ void MT::Tasking::Scheduler :: PInit ()
 	Interrupt::APIC :: SetLocalTimerVector ( false, 0x20 );
 	Interrupt::APIC :: SetLocalTimerDivide ( Interrupt::APIC :: kTimerDivision_16 );
 	
-	double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
+	double SystemClockPeriod = kSchedulingQuantumMS / 1000.0 * Interrupt::APIC :: GetBusFrequencey () / 16.0;
 	Interrupt::APIC :: StartTimerPeriodic ( static_cast <uint32_t> ( SystemClockPeriod ) );
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & ThisCPU -> Lock );
+	
+	ThisCPU -> Flags |= ::HW::CPU::Processor :: kCPUFlag_Scheduling;
+	
+	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
@@ -353,12 +361,14 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 uint64_t MT::Tasking::Scheduler :: GetNewTaskID ()
 {
 	
+	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TIDLock );
 	
 	uint64_t Return = MaxID;
 	MaxID ++;
 	
 	MT::Synchronization::Spinlock :: Release ( & TIDLock );
+	Interrupt::IState :: WriteBlock ( IBlock );
 	
 	return Return;
 	

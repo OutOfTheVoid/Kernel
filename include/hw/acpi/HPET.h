@@ -4,6 +4,8 @@
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
+#include <hw/cpu/IO.h>
+
 namespace HW
 {
 	
@@ -14,10 +16,36 @@ namespace HW
 		{
 		public:
 			
-			static void Init ();
+			static const uint32_t kRequirement_LegacyReplacement_PIT = 0x00000001;
+			static const uint32_t kRequirement_LegacyReplacement_RTC = 0x00000002;
+			static const uint32_t kRequirement_FSBDelivery = 0x00000004;
+			static const uint32_t kRequirement_Periodic = 0x00000008;
+			
+			typedef struct
+			{
+				
+				void * HPET;
+				uint8_t Counter;
+				
+				uint32_t GlobalInterrupt;
+				
+				uint32_t Capabilities;
+				
+			} HPETCounterHandle;
+			
+			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
-			static void Discard ();
+			static uint32_t GetHPETCount ();
+			static void * GetHPETHandle ( uint32_t Index );
+			
+			static bool AllocCounter ( uint32_t GlobalInterrupt, HPETCounterHandle * CounterHandle, uint32_t Requirements );
+			static void FreeCounter ( HPETCounterHandle * CounterHandle );
+			
+			static void SetCounter32Bits ( HPETCounterHandle * Counter );
+			static void SetCounter64Bits ( HPETCounterHandle * Counter );
+			
+			//static void 
 			
 		private:
 			
@@ -28,22 +56,151 @@ namespace HW
 				
 				uint8_t HardwareRevision;
 				
-				uint8_t ComparatorCount : 5;
+				uint8_t ComparratorCount : 5;
 				uint8_t CounterSize : 1;
 				uint8_t Reserved : 1;
-				uint8_t LegacyReplacement : 1;
+				uint8_t LegacyReplacementCapable : 1;
 				
 				uint16_t PCIVendor;
 				
-				ACPITable :: ACPIAddress Address;
+				ACPIAddress TimerBlockAddress;
 				
 				uint8_t HPETNumber;
 				
-				uint16_t MinimumTick;
+				uint16_t MinimumClockTick;
 				
 				uint8_t PageProtection;
 				
 			} __attribute__ (( packed )) HPETTable;
+			
+			typedef struct
+			{
+				
+				uint32_t Address;
+				uint8_t AddressSpaceID;
+				
+				uint8_t Index;
+				uint8_t ComparratorCount;
+				
+				uint16_t MinimumClockTick;
+				bool WideCounter;
+				
+				bool LegacyIRQ;
+				
+				uint32_t AllocationBitmap;
+				
+			} HPETInfo;
+			
+			static const uint32_t kRegsiter_Capabilities = 0x0000;
+			static const uint32_t kRegister_Configuration = 0x0010;
+			static const uint32_t kRegister_InterruptStatus = 0x0020;
+			static const uint32_t kRegister_MainCounter = 0x00F0;
+			
+			static const uint32_t kRegister_TimerNConfigurationCapabilitiesBase = 0x0100;
+			static const uint32_t kRegister_TimerNComparratorBase = 0x0108;
+			static const uint32_t kRegister_TimerNFSBInterruptRouteBase = 0x0110;
+			
+			static const uint32_t kRegisterStride_TimerN = 0x0020;
+			
+			static const uint32_t kRegisterFlags_Capabilities_Low_Revision_Mask = 0x000000FF;
+			static const uint32_t kRefisterFlags_Capabilities_low_Revision_Shift = 0;
+			static const uint32_t kRegisterFlags_Capabilities_Low_TimerCount_Mask = 0x00001F00;
+			static const uint32_t kRefisterFlags_Capabilities_Low_TimerCount_Shift = 8;
+			static const uint32_t kRegisterFlags_Capabilities_Low_CounterSize = 0x00002000;
+			static const uint32_t kRefisterFlags_Capabilities_Low_LegacyReplacement = 0x00008000;
+			static const uint32_t kRefisterFlags_Capabilities_Low_PCIVendor_Mask = 0xFFFF0000;
+			static const uint32_t kRefisterFlags_Capabilities_Low_PCIVendor_Shift = 16;
+			static const uint32_t kRefisterFlags_Capabilities_High_CounterPeriod_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_Capabilities_High_CounterPeriod_Shift = 0;
+			
+			static const uint32_t kRegisterFlags_Configuration_Low_GlobalEnable = 0x00000001;
+			static const uint32_t kRegisterFlags_Configuration_Low_LegacyReplacement = 0x00000002;
+			
+			static const uint32_t kRegisterFlags_InterruptStatus_Low_Timer00STSBitBase = 0x00000001;
+			static const uint32_t kRegisterFlags_InterruptStatis_Low_TimerNNSTSBitShiftMultiplier = 1;
+			
+			static const uint32_t kRegisterFlags_MainCounter_Low_ValueLow_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_MainCounter_Low_ValueLow_Shift = 0;
+			static const uint32_t kRegisterFlags_MainCounter_High_ValueHigh_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_MainCounter_High_ValueHigh_Shift = 0;
+			
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptType_Edge = 0x00000000;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptType_Level = 0x00000002;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptEnable = 0x00000004;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_NonPeriodic = 0x00000000;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_Periodic = 0x00000008;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_PeriodicCapable = 0x00000010;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_WideComparrator = 0x00000020;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableAccumulatorSet = 0x00000040;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_Force32Bit = 0x00000100;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Mask = 0x0000001F;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Shift = 9;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableFSBDelivery = 0x00004000;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableFSBDeliveryCapable = 0x00008000;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_High_InterruptCapableBitfield_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_High_InterruptCapableBitfield_Shift = 0;
+			
+			static const uint32_t kRegisterFlags_TimerNComparratorValue_Low_ComparratorValueLow_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_TimerNComparratorValue_Low_ComparratorValueLow_Shift = 0;
+			static const uint32_t kRegisterFlags_TimerNComparratorValue_High_ComparratorValueHigh_Mask = 0xFFFFFFFF;
+			static const uint32_t kRegisterFlags_TimerNComparratorValue_High_ComparratorValueHigh_Shift = 0;
+			
+			static const char * kTableSignature;
+			
+			static HPETInfo * HPETs;
+			static uint32_t HPETCount;
+			
+			static bool Validated;
+			
+			
+			
+			inline static void ReadRegister ( uint32_t Address, uint8_t AddressSpace, uint32_t Register, uint32_t * Low, uint32_t * High )
+			{
+				
+				switch ( AddressSpace )
+				{
+					
+				case kACPIAddress_AddressSpaceID_Memory:
+				
+					* Low = * reinterpret_cast <uint32_t *> ( Address + Register );
+					* High = * reinterpret_cast <uint32_t *> ( Address + Register + 0x04 );
+					
+					break;
+					
+				case kACPIAddress_AddressSpaceID_SystemIO:
+					
+					* Low = HW::CPU::IO :: In32 ( Address + Register );
+					* High = HW::CPU::IO :: In32 ( Address + Register + 0x04 );
+					
+					break;
+					
+				}
+				
+			};
+			
+			inline static void WriteRegister ( uint32_t Address, uint8_t AddressSpace, uint32_t Register, uint32_t Low, uint32_t High )
+			{
+				
+				switch ( AddressSpace )
+				{
+					
+				case kACPIAddress_AddressSpaceID_Memory:
+				
+					* reinterpret_cast <uint32_t *> ( Address + Register ) = Low;
+					* reinterpret_cast <uint32_t *> ( Address + Register + 0x04 ) = High;
+					
+					break;
+					
+				case kACPIAddress_AddressSpaceID_SystemIO:
+					
+					HW::CPU::IO :: Out32 ( Address + Register, Low );
+					HW::CPU::IO :: Out32 ( Address + Register + 0x04, High );
+					
+					break;
+					
+				}
+				
+			};
 			
 		};
 		

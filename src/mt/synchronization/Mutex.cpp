@@ -22,7 +22,7 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 	{
 		
 		if ( Lock -> Owner == CurrentTask )
-			KPANIC ( "Mutex acquired twice!" );
+			KPANIC ( "Mutex acquired twice! Task: %h", Lock -> Owner );
 		
 		Lock -> LastWaiter -> Next = CurrentTask;
 		Lock -> LastWaiter = CurrentTask;
@@ -30,6 +30,7 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 		CurrentTask -> State = Tasking::Task :: kState_Blocked;
 		
 		Spinlock :: Release ( & Lock -> MLock );
+		Interrupt::IState :: WriteBlock ( ReInt );
 		
 		Tasking::Scheduler :: Preemt ();
 		
@@ -43,10 +44,9 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 		CurrentTask -> Next = NULL;
 		
 		Spinlock :: Release ( & Lock -> MLock );
+		Interrupt::IState :: WriteBlock ( ReInt );
 		
 	}
-	
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
@@ -86,11 +86,11 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	if ( Lock -> Locked == false )
-		KPANIC ( "Released an unheld mutex!" );
-	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	Tasking::Task :: Task_t * CurrentTask = ThisCPU -> CurrentTask;
+	
+	if ( Lock -> Locked == false )
+		KPANIC ( "Released an unheld mutex! Task: %h", CurrentTask );
 	
 	if ( Lock -> Owner != CurrentTask )
 		KPANIC ( "Task released a mutex which it didn't own!" );

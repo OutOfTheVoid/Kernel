@@ -93,6 +93,10 @@ namespace HW
 		void AddSCIHandlerHook ( SCIHandlerHook * Hook );
 		void RemoveSCIHandlerHook ( SCIHandlerHook * Hook );
 		
+		// Turn an ACPI Error into a string
+		
+		const char * GetErrorString ( uint32_t ACPIError );
+		
 	};
 	
 };

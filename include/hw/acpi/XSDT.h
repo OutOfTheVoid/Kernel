@@ -17,9 +17,10 @@ namespace HW
 			static void Init ( void * RSDTAddress );
 			static bool Valid ();
 			
-			static void Discard ();
-			
 			static void * FindTable ( const char * Name );
+			static void FindTables ( const char * Name, void * Addresses [], uint32_t Max );
+			
+			static uint32_t CountTables ( const char * Name );
 			
 		private:
 			
