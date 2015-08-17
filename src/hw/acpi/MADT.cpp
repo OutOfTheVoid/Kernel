@@ -18,12 +18,8 @@ Vector <HW::ACPI::MADT :: ProcessorLAPICRecord *> * HW::ACPI::MADT :: ProcessorL
 Vector <HW::ACPI::MADT :: IOAPICRecord *> * HW::ACPI::MADT :: IOAPICRecords = NULL;
 Vector <HW::ACPI::MADT :: InterruptSourceOverrideRecord *> * HW::ACPI::MADT :: InterruptSourceOverrideRecords = NULL;
 
-MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::MADT :: Lock = MT::Synchronization::Spinlock :: Initializer ();
-
 void HW::ACPI::MADT :: Init ()
 {
-	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	uint32_t TableLength;
 	void * PhysAddr;
@@ -31,15 +27,7 @@ void HW::ACPI::MADT :: Init ()
 	RecordHeader * RecordBase;
 	
 	if ( Validated || ! RSDP :: Found () )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-			
 		return;
-	
-	}
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	ProcessorLAPICRecords = new Vector <ProcessorLAPICRecord *> ();
 	
@@ -204,36 +192,22 @@ void HW::ACPI::MADT :: Init ()
 		
 	}
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	Validated = true;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
 bool HW::ACPI::MADT :: Valid ()
 {
 	
-	bool IsValid = Validated;
-	
-	return IsValid;
+	return Validated;
 	
 };
 
 void HW::ACPI::MADT :: Discard ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return;
-		
-	}
 	
 	mm_kvunmap ( Table );
 	
@@ -243,314 +217,144 @@ void HW::ACPI::MADT :: Discard ()
 	
 	Table = NULL;
 	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
 };
 
 uint32_t HW::ACPI::MADT :: GetAPICBaseAddress ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t Address = Table -> LAPICAddress;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Address;
+	return Table -> LAPICAddress;
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetProcessorCount ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t Count = ProcessorLAPICRecords -> Length ();
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Count;
+	return ProcessorLAPICRecords -> Length ();
 	
 };
 
 uint8_t HW::ACPI::MADT :: GetProcessorLAPICID ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint8_t ID = ( * ProcessorLAPICRecords ) [ Index ] -> APICID;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return ID;
+	return ( * ProcessorLAPICRecords ) [ Index ] -> APICID;
 	
 };
 
 uint8_t HW::ACPI::MADT :: GetProcessorID ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint8_t ID = ( * ProcessorLAPICRecords ) [ Index ] -> APICProcessorID;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return ID;
+	return ( * ProcessorLAPICRecords ) [ Index ] -> APICProcessorID;
 	
 };
 
 bool HW::ACPI::MADT :: GetProcessorEnabled ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return false;
-		
-	}
 	
-	bool Enabled = ( ( * ProcessorLAPICRecords ) [ Index ] -> Flags & kAPICFlags_ProcessorEnabled );
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Enabled;
+	return ( ( * ProcessorLAPICRecords ) [ Index ] -> Flags & kAPICFlags_ProcessorEnabled );
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetIOAPICCount ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t Count = IOAPICRecords -> Length ();
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Count;
+	return IOAPICRecords -> Length ();
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetIOAPICBaseAddress ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t Address = ( * IOAPICRecords ) [ Index ] -> Address;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Address;
+	return ( * IOAPICRecords ) [ Index ] -> Address;
 	
 };
 
 uint8_t HW::ACPI::MADT :: GetIOAPICID ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint8_t ID = ( * IOAPICRecords ) [ Index ] -> ID;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return ID;
+	return ( * IOAPICRecords ) [ Index ] -> ID;
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetIOAPICGlobalSystemInterruptBase ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t InterruptBase = ( * IOAPICRecords ) [ Index ] -> GlobalSystemInterruptBase;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return InterruptBase;
+	return ( * IOAPICRecords ) [ Index ] -> GlobalSystemInterruptBase;
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideCount ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t Count = InterruptSourceOverrideRecords -> Length ();
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Count;
+	return InterruptSourceOverrideRecords -> Length ();
 	
 };
 
 uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint8_t Bus = ( * InterruptSourceOverrideRecords ) [ Index ] -> Bus;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Bus;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Bus;
 	
 };
 
 uint8_t HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint8_t Source = ( * InterruptSourceOverrideRecords ) [ Index ] -> Source;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Source;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Source;
 	
 };
 
 uint32_t HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint32_t GlobalSystemInterrupt = ( * InterruptSourceOverrideRecords ) [ Index ] -> GlobalSystemInterrupt;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return GlobalSystemInterrupt;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> GlobalSystemInterrupt;
 	
 };
 
 uint16_t HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( uint32_t Index )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return 0;
-		
-	}
 	
-	uint16_t Flags = ( * InterruptSourceOverrideRecords ) [ Index ] -> Flags;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
-	
-	return Flags;
+	return ( * InterruptSourceOverrideRecords ) [ Index ] -> Flags;
 	
 };

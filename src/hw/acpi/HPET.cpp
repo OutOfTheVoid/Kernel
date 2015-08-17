@@ -128,8 +128,6 @@ void HW::ACPI::HPET :: Init ( uint32_t * Status )
 		
 	}
 	
-	HPETCount ++;
-	
 	bool Continue = true;
 	
 	while ( Continue )
@@ -154,32 +152,68 @@ void HW::ACPI::HPET :: Init ( uint32_t * Status )
 				
 			}
 			
-			if ( ACPITable :: VerifyTable ( & TableVirtual -> Header ) )
+		}
+			
+		if ( ACPITable :: VerifyTable ( & TableVirtual -> Header ) )
+		{
+			
+			if ( TableVirtual -> TimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_SystemIO )
 			{
 				
-				if ( ( TableVirtual -> TimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) || ( TableVirtual -> TimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_SystemIO ) )
-				{
-					
-					HPETs [ HPETCount ].Address = TableVirtual -> TimerBlockAddress.Address;
-					HPETs [ HPETCount ].AddressSpaceID = TableVirtual -> TimerBlockAddress.AddressSpaceID;
-					HPETs [ HPETCount ].Index = TableVirtual -> HPETNumber;
-					HPETs [ HPETCount ].MinimumClockTick = TableVirtual -> MinimumClockTick;
-					HPETs [ HPETCount ].ComparratorCount = TableVirtual -> ComparratorCount;
-					HPETs [ HPETCount ].AllocationBitmap = 0;
-					HPETs [ HPETCount ].WideCounter = TableVirtual -> CounterSize;
-					HPETs [ HPETCount ].LegacyIRQ = TableVirtual -> LegacyReplacementCapable;
-					
-					system_func_kprintf ( "HPET %u: [ Timers: %u, %s-bit ] \n", TableVirtual -> HPETNumber, TableVirtual -> ComparratorCount, TableVirtual -> CounterSize ? "64" : "32" );
-					
-					HPETCount ++;
-					
-				}
-				else
-					system_func_kprintf ( "A" );
+				HPETs [ HPETCount ].Address = TableVirtual -> TimerBlockAddress.Address;
+				HPETs [ HPETCount ].AddressSpaceID = TableVirtual -> TimerBlockAddress.AddressSpaceID;
+				HPETs [ HPETCount ].Index = TableVirtual -> HPETNumber;
+				HPETs [ HPETCount ].MinimumClockTick = TableVirtual -> MinimumClockTick;
+				HPETs [ HPETCount ].ComparratorCount = TableVirtual -> ComparratorCount;
+				HPETs [ HPETCount ].AllocationBitmap = 0;
+				HPETs [ HPETCount ].WideCounter = TableVirtual -> CounterSize;
+				HPETs [ HPETCount ].LegacyIRQ = TableVirtual -> LegacyReplacementCapable;
+				
+				system_func_kprintf ( "HPET %u: [ Timers: %u, %s-bit ] \n", TableVirtual -> HPETNumber, TableVirtual -> ComparratorCount, TableVirtual -> CounterSize ? "64" : "32" );
+				
+				HPETCount ++;
 				
 			}
-			else
-				system_func_kprintf ( "D" );
+			else if ( TableVirtual -> TimerBlockAddress.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) 
+			{
+				
+				void * HPETVirtual = mm_kvmap ( reinterpret_cast <void *> ( TableVirtual -> TimerBlockAddress.Address ), 0x1000, MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_NoCache );
+				
+				if ( HPETVirtual == NULL )
+				{
+					
+					mm_kfree ( TableVirtual );
+					
+					for ( uint32_t X = 0; X <= HPETCount; X ++ )
+					{
+						
+						if ( HPETs [ X ].AddressSpaceID == kACPIAddress_AddressSpaceID_Memory )
+							mm_kfree ( reinterpret_cast <void *> ( HPETs [ X ].Address ) );
+						
+					}
+					
+					mm_kfree ( HPETs );
+					
+					* Status = kACPIStatus_Failure_System_OutOfMemory;
+					
+					return;
+					
+				}
+				
+				HPETs [ HPETCount ].Address = reinterpret_cast <uint32_t> ( HPETVirtual );
+				HPETs [ HPETCount ].AddressSpaceID = TableVirtual -> TimerBlockAddress.AddressSpaceID;
+				HPETs [ HPETCount ].Index = TableVirtual -> HPETNumber;
+				HPETs [ HPETCount ].MinimumClockTick = TableVirtual -> MinimumClockTick;
+				HPETs [ HPETCount ].ComparratorCount = TableVirtual -> ComparratorCount;
+				HPETs [ HPETCount ].AllocationBitmap = 0;
+				HPETs [ HPETCount ].WideCounter = TableVirtual -> CounterSize;
+				HPETs [ HPETCount ].LegacyIRQ = TableVirtual -> LegacyReplacementCapable;
+				
+				system_func_kprintf ( "HPET %u: [ Timers: %u, %s-bit ] \n", TableVirtual -> HPETNumber, TableVirtual -> ComparratorCount, TableVirtual -> CounterSize ? "64" : "32" );
+				
+				HPETCount ++;
+				
+			}
 			
 		}
 		
@@ -222,53 +256,211 @@ bool HW::ACPI::HPET :: Valid ()
 	
 };
 
-uint32_t HW::ACPI::HPET :: GetHPETCount ()
+uint32_t HW::ACPI::HPET :: GetHPETCount ( uint32_t * Status )
 {
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	* Status = kACPIStatus_Success;
 	
 	return HPETCount;
 	
 };
 
-void * HW::ACPI::HPET :: GetHPETHandle ( uint32_t Index )
+HW::ACPI::HPET :: HPETInfo * HW::ACPI::HPET :: GetHPET ( uint32_t Index, uint32_t * Status )
 {
 	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return NULL;
+		
+	}
+	
 	if ( Index < HPETCount )
-		return reinterpret_cast <void *> ( & HPETs [ Index ] );
+	{
+		
+		* Status = kACPIStatus_Success;
+		
+		return & HPETs [ Index ];
+		
+	}
+	
+	* Status = kACPIStatus_Failure_ResourceNotFound;
 	
 	return NULL;
 	
 };
 
-
-
-bool HW::ACPI::HPET :: AllocCounter ( uint32_t GlobalInterrupt, HPETCounterHandle * CounterHandle, uint32_t Requirements )
+void HW::ACPI::HPET :: AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo * Counter, uint32_t Requirements, uint32_t * Status )
 {
 	
-	(void) GlobalInterrupt;
-	(void) CounterHandle;
-	(void) Requirements;
+	if ( Counter == NULL )
+	{
+		
+		* Status = kACPIStatus_Failure_NullArgument;
+		
+		return;
+		
+	}
 	
-	return false;
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return;
+		
+	}
+	
+	if ( GlobalInterrupt > 31 )
+	{
+		
+		* Status = kACPIStatus_Failure_ResourceIncompatible;
+		
+		return;
+		
+	}
+	
+	uint32_t I;
+	uint32_t J;
+	
+	for ( I = 0; I < HPETCount; I ++ )
+	{
+		
+		if ( HPETs [ I ].AllocationBitmap != 0xFFFFFFFF )
+		{
+			
+			for ( J = 0; J < HPETs [ I ].ComparratorCount; J ++ )
+			{
+				
+				if ( ( HPETs [ I ].AllocationBitmap & ( 1 << J ) ) == 0 )
+				{
+					
+					uint32_t CapabilitiesLow;
+					uint32_t CapabilitiesHigh;
+					
+					ReadRegister ( HPETs [ I ].Address, HPETs [ I ].AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + I * kRegisterStride_TimerN, & CapabilitiesLow, & CapabilitiesHigh );
+					
+					if ( Requirements & kRequirement_LegacyReplacement_PIT )
+					{
+						
+						// Todo: Check legacy PIT replacement requirement...
+						
+					}
+					
+					if ( Requirements & kRequirement_LegacyReplacement_RTC )
+					{
+						
+						// Todo: Check legacy RTC replacement requirement...
+						
+					}
+					
+					if ( Requirements & kRequirement_FSBDelivery )
+					{
+						
+						// Todo: Check FSB Delivery requirement
+						
+					}
+					
+					if ( Requirements & kRequirement_Periodic )
+					{
+						
+						if ( ( CapabilitiesLow & kRegisterFlags_TimerNConfigurationCapabilities_Low_Periodic ) == 0 )
+							continue;
+						
+					}
+					
+					uint32_t InterruptBit = 1 << GlobalInterrupt;
+					
+					if ( CapabilitiesHigh & InterruptBit )
+					{
+						
+						HPETs [ I ].AllocationBitmap |= ( 1 << J );
+						
+						Counter -> HPETInfoPointer = & HPETs [ I ];
+						Counter -> Counter = J;
+						
+						Counter -> GlobalInterrupt = GlobalInterrupt;
+						Counter -> CapabilitiesLow = CapabilitiesLow;
+						Counter -> CapabilitiesHigh = CapabilitiesHigh;
+						
+						* Status = kACPIStatus_Success;
+						
+						return;
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	* Status = kACPIStatus_Failure_ResourceIncompatible;
+	
+	return;
 	
 };
 
-void HW::ACPI::HPET :: FreeCounter ( HPETCounterHandle * CounterHandle )
+void HW::ACPI::HPET :: FreeCounter ( HPETCounterInfo * Counter, uint32_t * Status )
 {
 	
-	(void) CounterHandle;
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return;
+		
+	}
+	
+	if ( Counter == NULL )
+	{
+		
+		* Status = kACPIStatus_Failure_NullArgument;
+		
+		return;
+		
+	}
+	
+	if ( Counter -> HPETInfoPointer == NULL )
+	{
+		
+		* Status = kACPIStatus_Failure_NullArgument;
+		
+		return;
+		
+	}
+	
+	Counter -> HPETInfoPointer -> AllocationBitmap &= ~ ( 1 << Counter -> Counter );
+	Counter -> HPETInfoPointer = NULL;
 	
 };
 			
-void HW::ACPI::HPET :: SetCounter32Bits ( HPETCounterHandle * CounterHandle )
+void HW::ACPI::HPET :: SetCounter32Bits ( HPETCounterInfo * CounterHandle, uint32_t * Status )
 {
 	
+	(void) Status;
 	(void) CounterHandle;
 	
 };
 
-void HW::ACPI::HPET :: SetCounter64Bits ( HPETCounterHandle * CounterHandle )
+void HW::ACPI::HPET :: SetCounter64Bits ( HPETCounterInfo * CounterHandle, uint32_t * Status )
 {
 	
+	(void) Status;
 	(void) CounterHandle;
 	
 };

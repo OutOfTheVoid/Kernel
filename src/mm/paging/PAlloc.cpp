@@ -347,10 +347,11 @@ MM::Paging::PAlloc :: AddressRange * MM::Paging::PAlloc :: DoAlloc ( FreePageZon
 bool MM::Paging::PAlloc :: ExpandStorage ( FreePageZone * Zone )
 {
 	
+	MM::Paging::AddressSpace * KernelAddressSpace = MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ();
+	
 	if ( Zone -> FreeStorageSlotCount <= 3 )
 	{
 		
-		MM::Paging::AddressSpace * KernelAddressSpace = MM::Paging::AddressSpace :: RetrieveKernelAddressSpace ();
 		MM::Paging::AddressSpace :: AddressRange * AllocationRange = KernelAddressSpace -> DoAlloc ( 0x1000 );
 		
 		if ( AllocationRange == reinterpret_cast <MM::Paging::AddressSpace :: AddressRange *> ( MM::Paging::AddressSpace :: kAddressRangePTR_Invalid ) )

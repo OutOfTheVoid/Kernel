@@ -8,8 +8,6 @@
 
 #include <util/Vector.h>
 
-#include <mt/synchronization/Spinlock.h>
-
 namespace HW
 {
 	
@@ -119,8 +117,6 @@ namespace HW
 			static SRATable * Table;
 			
 			static bool Validated;
-			
-			static MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 		};
 		

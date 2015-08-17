@@ -120,14 +120,12 @@ void MT :: MTInit ()
 		
 		TargetCPUInfo = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
 		
-		bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 		MT::Synchronization::Spinlock :: SpinAcquire ( & TargetCPUInfo -> Lock );
 		
 		if ( ( TargetCPUInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_BSP ) == 0 )
 			TargetCPUInfo -> Flags &= ! ::HW::CPU::Processor :: kCPUFlag_Wait;
 		
 		Synchronization::Spinlock :: Release ( & TargetCPUInfo -> Lock );
-		Interrupt::IState :: WriteBlock ( ReInt );
 		
 	}
 	

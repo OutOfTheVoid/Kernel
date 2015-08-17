@@ -4,7 +4,7 @@
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
 
-#include <mt/synchronization/Spinlock.h>
+#include <stdint.h>
 
 namespace HW
 {

@@ -24,26 +24,45 @@ namespace HW
 			typedef struct
 			{
 				
-				void * HPET;
+				uint32_t Address;
+				uint8_t AddressSpaceID;
+				
+				uint8_t Index;
+				uint8_t ComparratorCount;
+				
+				uint16_t MinimumClockTick;
+				bool WideCounter;
+				
+				bool LegacyIRQ;
+				
+				uint32_t AllocationBitmap;
+				
+			} HPETInfo;
+			
+			typedef struct
+			{
+				
+				HPETInfo * HPETInfoPointer;
 				uint8_t Counter;
 				
 				uint32_t GlobalInterrupt;
 				
-				uint32_t Capabilities;
+				uint32_t CapabilitiesLow;
+				uint32_t CapabilitiesHigh;
 				
-			} HPETCounterHandle;
+			} HPETCounterInfo;
 			
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
-			static uint32_t GetHPETCount ();
-			static void * GetHPETHandle ( uint32_t Index );
+			static uint32_t GetHPETCount ( uint32_t * Status );
+			static HPETInfo * GetHPET ( uint32_t Index, uint32_t * Status );
 			
-			static bool AllocCounter ( uint32_t GlobalInterrupt, HPETCounterHandle * CounterHandle, uint32_t Requirements );
-			static void FreeCounter ( HPETCounterHandle * CounterHandle );
+			static void AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo * CounterInfo, uint32_t Requirements, uint32_t * Status );
+			static void FreeCounter ( HPETCounterInfo * CounterHandle, uint32_t * Status );
 			
-			static void SetCounter32Bits ( HPETCounterHandle * Counter );
-			static void SetCounter64Bits ( HPETCounterHandle * Counter );
+			static void SetCounter32Bits ( HPETCounterInfo * Counter, uint32_t * Status );
+			static void SetCounter64Bits ( HPETCounterInfo * Counter, uint32_t * Status );
 			
 			//static void 
 			
@@ -72,24 +91,6 @@ namespace HW
 				uint8_t PageProtection;
 				
 			} __attribute__ (( packed )) HPETTable;
-			
-			typedef struct
-			{
-				
-				uint32_t Address;
-				uint8_t AddressSpaceID;
-				
-				uint8_t Index;
-				uint8_t ComparratorCount;
-				
-				uint16_t MinimumClockTick;
-				bool WideCounter;
-				
-				bool LegacyIRQ;
-				
-				uint32_t AllocationBitmap;
-				
-			} HPETInfo;
 			
 			static const uint32_t kRegsiter_Capabilities = 0x0000;
 			static const uint32_t kRegister_Configuration = 0x0010;
@@ -152,9 +153,7 @@ namespace HW
 			
 			static bool Validated;
 			
-			
-			
-			inline static void ReadRegister ( uint32_t Address, uint8_t AddressSpace, uint32_t Register, uint32_t * Low, uint32_t * High )
+			inline static void ReadRegister ( volatile uint32_t Address, uint8_t AddressSpace, uint32_t Register, volatile uint32_t * Low, volatile uint32_t * High )
 			{
 				
 				switch ( AddressSpace )
@@ -162,8 +161,8 @@ namespace HW
 					
 				case kACPIAddress_AddressSpaceID_Memory:
 				
-					* Low = * reinterpret_cast <uint32_t *> ( Address + Register );
-					* High = * reinterpret_cast <uint32_t *> ( Address + Register + 0x04 );
+					* Low = * reinterpret_cast <volatile uint32_t *> ( Address + Register );
+					* High = * reinterpret_cast <volatile uint32_t *> ( Address + Register + 0x04 );
 					
 					break;
 					
@@ -178,7 +177,7 @@ namespace HW
 				
 			};
 			
-			inline static void WriteRegister ( uint32_t Address, uint8_t AddressSpace, uint32_t Register, uint32_t Low, uint32_t High )
+			inline static void WriteRegister ( volatile uint32_t Address, uint8_t AddressSpace, uint32_t Register, volatile uint32_t Low, volatile uint32_t High )
 			{
 				
 				switch ( AddressSpace )
@@ -186,8 +185,8 @@ namespace HW
 					
 				case kACPIAddress_AddressSpaceID_Memory:
 				
-					* reinterpret_cast <uint32_t *> ( Address + Register ) = Low;
-					* reinterpret_cast <uint32_t *> ( Address + Register + 0x04 ) = High;
+					* reinterpret_cast <volatile uint32_t *> ( Address + Register ) = Low;
+					* reinterpret_cast <volatile uint32_t *> ( Address + Register + 0x04 ) = High;
 					
 					break;
 					

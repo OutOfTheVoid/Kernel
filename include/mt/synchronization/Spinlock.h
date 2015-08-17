@@ -13,7 +13,13 @@ namespace MT
 		{
 		public:
 			
-			typedef uint32_t Spinlock_t;
+			typedef struct
+			{
+				
+				uint32_t Lock;
+				bool ReInt;
+				
+			} Spinlock_t;
 			
 			static void SpinAcquire ( Spinlock_t * Lock );
 			static bool TryAcquire ( Spinlock_t * Lock );
@@ -23,7 +29,12 @@ namespace MT
 			static inline Spinlock_t Initializer ()
 			{
 				
-				return static_cast <Spinlock_t> ( 0 );
+				Spinlock_t New;
+				
+				New.Lock = 0;
+				New.ReInt = false;
+				
+				return New;
 				
 			};
 			

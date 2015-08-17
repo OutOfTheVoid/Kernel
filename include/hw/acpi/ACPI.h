@@ -60,6 +60,8 @@ namespace HW
 		const uint32_t kACPIStatus_Failure_ResourceNotFound = 0x00000003;
 		const uint32_t kACPIStatus_Failure_UnsupportedAddressSpace = 0x00000004;
 		const uint32_t kACPIStatus_Failure_System_OutOfMemory = 0x00000005;
+		const uint32_t kACPIStatus_Failure_NullArgument = 0x00000006;
+		const uint32_t kACPIStatus_Failure_ResourceIncompatible = 0x00000007;
 		
 		const uint32_t kACPIStatus_Failiure_NoACPI = 0xFFFFFFFF;
 		

@@ -9,6 +9,10 @@
 
 #include <cpputil/Unused.h>
 
+#include <interrupt/IState.h>
+
+#include <hw/cpu/Atomic.h>
+
 extern "C" void hw_cpu_hang ();
 
 const char * MM::Paging::AddressSpace :: ErrorStrings [] =
@@ -173,6 +177,8 @@ MM::Paging::AddressSpace :: AddressSpace ()
 	
 	Kernel = false;
 	
+	Lock = MT::Synchronization::Spinlock :: Initializer ();
+	
 };
 
 bool MM::Paging::AddressSpace :: CheckStorage ( uint32_t * Error )
@@ -252,6 +258,9 @@ bool MM::Paging::AddressSpace :: CheckStorage ( uint32_t * Error )
 void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t * Error )
 {
 	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	if ( ! CheckStorage ( Error ) )
 	{
 		
@@ -262,6 +271,9 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 	}
 	
 	AddressRange * AllocationRange = DoAlloc ( Length );
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
 	if ( AllocationRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 	{
@@ -280,12 +292,18 @@ void MM::Paging::AddressSpace :: Alloc ( uint32_t Length, void ** Base, uint32_t
 void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 {
 	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	AddressRange * AllocRange = FindAllocatedNode ( reinterpret_cast <uint32_t> ( Base ) );
 	
 	if ( AllocRange == reinterpret_cast <AddressRange *> ( kAddressRangePTR_Invalid ) )
 	{
 		
 		* Error = kError_Free_NotAllocated;
+		
+		MT::Synchronization::Spinlock :: Release ( & Lock );
+		Interrupt::IState :: WriteBlock ( ReInt );
 		
 		return;
 		
@@ -315,6 +333,9 @@ void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 			Lower -> Length += AllocRange -> Length;
 			FreeOldRange ( AllocRange );
 			
+			MT::Synchronization::Spinlock :: Release ( & Lock );
+			Interrupt::IState :: WriteBlock ( ReInt );
+			
 			* Error = kFree_Error_None;
 			
 			return;
@@ -325,12 +346,18 @@ void MM::Paging::AddressSpace :: Free ( void * Base, uint32_t * Error )
 	
 	InsertFreeNode ( AllocRange );
 	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	Interrupt::IState :: WriteBlock ( ReInt );
+	
 	* Error = kFree_Error_None;
 	
 };
 
 void MM::Paging::AddressSpace :: GetAllocationSize ( void * Base, uint32_t * RecordedSize, uint32_t * Error )
 {
+	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	AddressRange * AllocRange = FindAllocatedNode ( reinterpret_cast <uint32_t> ( Base ) );
 	
@@ -344,6 +371,10 @@ void MM::Paging::AddressSpace :: GetAllocationSize ( void * Base, uint32_t * Rec
 	}
 	
 	* RecordedSize = AllocRange -> Length;
+	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	Interrupt::IState :: WriteBlock ( ReInt );
+	
 	* Error = kGetAllocationSize_Error_None;
 	
 };
@@ -1416,6 +1447,9 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 	if ( Length == 0 )
 		return;
 	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
+	
 	if ( FreeStorageSlotCount <= 2 )
 	{
 		
@@ -1428,6 +1462,9 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 			
 			if ( ! MM::Paging::PFA :: Alloc ( 0x1000, & NewStoragePhysical ) )
 			{
+				
+				MT::Synchronization::Spinlock :: Release ( & Lock );
+				Interrupt::IState :: WriteBlock ( ReInt );
 				
 				* Error = kAlloc_Error_FailedPhysicalAllocation;
 				
@@ -1452,6 +1489,9 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 					
 					MM::Paging::PFA :: Free ( NewStoragePhysical );
 					
+					MT::Synchronization::Spinlock :: Release ( & Lock );
+					Interrupt::IState :: WriteBlock ( ReInt );
+					
 					* Error = kAddFreeRange_Error_OutOfKVirtualSpace;
 					
 					return;
@@ -1465,11 +1505,7 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 			
 		}
 		else
-		{
-			
 			NewStorage = reinterpret_cast <Storage *> ( mm_pmalloc ( 1 ) );
-			
-		}
 		
 		NewStorage -> Bitmap [ 0 ] = 0x00000001;
 		NewStorage -> Bitmap [ 1 ] = 0x00000000;
@@ -1501,6 +1537,9 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 	
 	InsertFreeNode ( NewRange );
 	
+	MT::Synchronization::Spinlock :: Release ( & Lock );
+	Interrupt::IState :: WriteBlock ( ReInt );
+	
 	* Error = kAddFreeRange_Error_None;
 	
 };
@@ -1508,7 +1547,7 @@ void MM::Paging::AddressSpace :: AddFreeRange ( uint32_t Base, uint32_t Length, 
 void MM::Paging::AddressSpace :: Reference ()
 {
 	
-	RefCount ++;
+	HW::CPU::Atomic :: IncrementTestOne ( & RefCount );
 	
 };
 
@@ -1518,7 +1557,7 @@ void MM::Paging::AddressSpace :: Dereference ()
 	if ( RefCount == 0 )
 		return;
 	
-	RefCount --;
+	HW::CPU::Atomic :: DecrementTestZero ( & RefCount );
 	
 };
 

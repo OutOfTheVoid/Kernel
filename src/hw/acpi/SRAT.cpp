@@ -17,26 +17,14 @@ HW::ACPI::SRAT :: SRATable * HW::ACPI::SRAT :: Table = NULL;
 
 bool HW::ACPI::SRAT :: Validated = false;
 
-MT::Synchronization::Spinlock :: Spinlock_t HW::ACPI::SRAT :: Lock = MT::Synchronization::Spinlock :: Initializer ();
-
 void HW::ACPI::SRAT :: Init ()
 {
 	
 	uint32_t TableLength;
 	void * PhysAddr;
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	if ( Validated || ( ! RSDP :: Found () ) )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
 		return;
-		
-	}
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 	if ( RSDP :: GetACPIRevision () == RSDP :: kACPI_Revision_1 )
 	{
@@ -103,11 +91,7 @@ void HW::ACPI::SRAT :: Init ()
 		
 	}
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
 	Validated = true;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };
 
@@ -115,27 +99,5 @@ bool HW::ACPI::SRAT :: Valid ()
 {
 	
 	return Validated;
-	
-};
-
-void HW::ACPI::SRAT :: Discard ()
-{
-	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
-	
-	if ( ! Validated )
-	{
-		
-		MT::Synchronization::Spinlock :: Release ( & Lock );
-		
-		return;
-		
-	}
-	
-	mm_kvunmap ( Table );
-	
-	Table = NULL;
-	
-	MT::Synchronization::Spinlock :: Release ( & Lock );
 	
 };

@@ -12,7 +12,6 @@
 void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
@@ -30,7 +29,6 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 		CurrentTask -> State = Tasking::Task :: kState_Blocked;
 		
 		Spinlock :: Release ( & Lock -> MLock );
-		Interrupt::IState :: WriteBlock ( ReInt );
 		
 		Tasking::Scheduler :: Preemt ();
 		
@@ -44,7 +42,6 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 		CurrentTask -> Next = NULL;
 		
 		Spinlock :: Release ( & Lock -> MLock );
-		Interrupt::IState :: WriteBlock ( ReInt );
 		
 	}
 	
@@ -55,7 +52,6 @@ bool MT::Synchronization::Mutex :: TryAcquire ( Mutex_t * Lock )
 	
 	bool Acquired = false;
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
 	if ( Lock -> Locked == false )
@@ -74,7 +70,6 @@ bool MT::Synchronization::Mutex :: TryAcquire ( Mutex_t * Lock )
 	}
 	
 	Spinlock :: Release ( & Lock -> MLock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 	return Acquired;
 	
@@ -83,7 +78,6 @@ bool MT::Synchronization::Mutex :: TryAcquire ( Mutex_t * Lock )
 void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
@@ -109,14 +103,12 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 		Lock -> Locked = false;
 	
 	Spinlock :: Release ( & Lock -> MLock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
 void MT::Synchronization::Mutex :: ReleaseFromWrongThread ( Mutex_t * Lock )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
 	if ( Lock -> Locked == false )
@@ -136,6 +128,5 @@ void MT::Synchronization::Mutex :: ReleaseFromWrongThread ( Mutex_t * Lock )
 		Lock -> Locked = false;
 	
 	Spinlock :: Release ( & Lock -> MLock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };

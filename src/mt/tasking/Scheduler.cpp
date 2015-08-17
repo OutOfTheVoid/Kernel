@@ -226,7 +226,6 @@ void MT::Tasking::Scheduler :: Schedule ()
 void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )
 {
 	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
 	
 	uint32_t Priority = ToAdd -> Priority;
@@ -250,7 +249,6 @@ void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & TTLock );
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 
@@ -282,38 +280,36 @@ void MT::Tasking::Scheduler :: AddTaskInternal ( Task :: Task_t * ToAdd )
 void MT::Tasking::Scheduler :: KillTask ( Task :: Task_t * ToKill )
 {
 	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
 	
 	ToKill -> State = Task :: kState_Dead;
 	
 	MT::Synchronization::Spinlock :: Release ( & TTLock );
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 
 void MT::Tasking::Scheduler :: SuspendTask ( Task :: Task_t * ToSuspend )
 {
 	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
 	
 	ToSuspend -> State = Task :: kState_KernelSelectable;
 	
 	MT::Synchronization::Spinlock :: Release ( & TTLock );
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 
 void MT::Tasking::Scheduler :: KillCurrentTask ()
 {
 	
-	Interrupt::IState :: ReadAndSetBlock ();
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
 	
 	ThisTask -> State = Task :: kState_Dead;
+	
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
 	Preemt ();
 	
@@ -340,7 +336,6 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 	
 	Task :: Task_t * DeadTask = NULL;
 	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & RLLock );
 	
 	if ( ReapingListHead != NULL )
@@ -352,7 +347,6 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & RLLock );
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 	return DeadTask;
 	
@@ -361,14 +355,12 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 uint64_t MT::Tasking::Scheduler :: GetNewTaskID ()
 {
 	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TIDLock );
 	
 	uint64_t Return = MaxID;
 	MaxID ++;
 	
 	MT::Synchronization::Spinlock :: Release ( & TIDLock );
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 	return Return;
 	

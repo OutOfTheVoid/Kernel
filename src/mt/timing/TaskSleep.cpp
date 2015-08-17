@@ -237,8 +237,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 	
 	SleepInfo * New = NULL;
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
-	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
 	
 	if ( FreeCount != 0 )
@@ -252,8 +250,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
-	
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 	if ( New == NULL )
 		New = reinterpret_cast <SleepInfo *> ( mm_kmalloc ( sizeof ( SleepInfo ) ) );
@@ -274,8 +270,6 @@ MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: CreateNode ()
 void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
-	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & FreeListLock );
 	
 	Node -> Right = FreeHead;
@@ -284,8 +278,6 @@ void MT::Timing::TaskSleep :: DestroyNode ( SleepInfo * Node )
 	FreeCount ++;
 	
 	MT::Synchronization::Spinlock :: Release ( & FreeListLock );
-	
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 

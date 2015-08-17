@@ -343,7 +343,6 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	
 	uint64_t Return;
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & Lock );
 	
 	uint32_t Current;
@@ -371,7 +370,6 @@ uint64_t HW::ACPI::PMTimer :: TimerUpdate ()
 	Return = Count;
 	
 	MT::Synchronization::Spinlock :: Release ( & Lock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 	return Return;
 	

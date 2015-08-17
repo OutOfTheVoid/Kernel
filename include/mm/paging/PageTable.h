@@ -64,6 +64,8 @@ namespace MM
 			
 			static bool KPagingStatus ();
 			
+			static bool ShouldFault ( uint32_t Address, bool Write );
+			
 		private:
 			
 			PDirectory DirectoryPhysical;

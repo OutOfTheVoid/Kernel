@@ -568,13 +568,11 @@ void Interrupt::InterruptHandlers :: SetInterruptHandler ( uint32_t InterruptNum
 	if ( InterruptNumber < 0x100 )
 	{
 		
-		bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 		MT::Synchronization::Spinlock :: SpinAcquire ( & __Interrupt_HandlerPointerLocks [ InterruptNumber ] );
 		
 		__Interrupt_HandlerPointers [ InterruptNumber ] = Handler;
 		
 		MT::Synchronization::Spinlock :: Release ( & __Interrupt_HandlerPointerLocks [ InterruptNumber ] );
-		Interrupt::IState :: WriteBlock ( IBlock );
 		
 	}
 	else
@@ -589,12 +587,8 @@ void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop
 	
 	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & CurrentCPU -> Lock );
-	
 	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( StackTop );
 	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = 0x10;
-	
-	MT::Synchronization::Spinlock :: Release ( & CurrentCPU -> Lock );
 	
 	Interrupt::IState :: WriteBlock ( IBlock );
 	

@@ -109,7 +109,7 @@ void Interrupt::IOAPIC :: DefineFixedRedirectionEntry ( uint32_t Interrupt, uint
 	}
 	
 	if ( BaseAddress == NULL )
-		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!\nNumber of IO APICs: %u", Interrupt, IOAPICs -> Length () );
 	
 	uint32_t EntryLow = ( TargetVector & 0xFF ) | kRedirectionEntry_Low_Deliveryode_Fixed | kRedirectionEntry_Low_DestinationMode_Physical | ( ActiveHigh ? kRedirectionEntry_Low_PinPolarity_ActiveHigh : kRedirectionEntry_Low_PinPolarity_ActiveLow ) | ( EdgeTriggered ? kRedirectionEntry_Low_TriggerMode_Edge : kRedirectionEntry_Low_TriggerMode_Level ) | ( InitiallyMasked ? kRedirectionEntry_Low_Mask_Set : kRedirectionEntry_Low_Mask_Clear );
 	uint32_t EntryHigh = ( LAPICID << kRedirectionEntry_High_BitBase_PhysicalDestination ) | ( kRedirectionEntry_High_UnusedMask & ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1 ) );

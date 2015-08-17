@@ -71,15 +71,33 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	
 	MADT :: Init ();
 	SRAT :: Init ();
-	
 	FADT :: Init ( & SubStatus );
-	
 	HPET :: Init ( & SubStatus );
 	
 	if ( SubStatus == kACPIStatus_Success )
-		system_func_kprintf ( "HPET Count: %i\n", HPET :: GetHPETCount () );
-	else
-		system_func_kprintf ( "HPET Failure! (%s)\n", GetErrorString ( SubStatus ) );
+	{
+		
+		system_func_kprintf ( "testing HPET allocation:\n" );
+		
+		HPET :: HPETCounterInfo CounterInfo;
+		
+		for ( uint32_t I = 0; I < 31; I ++ )
+		{
+			
+			HPET :: AllocCounter ( I, & CounterInfo, 0, & SubStatus );
+			
+			if ( SubStatus == kACPIStatus_Success )
+			{
+				
+				system_func_kprintf ( "HPET Interrupt allocated to GSI %u, counter %u\n", I, CounterInfo.Counter );
+				
+				HPET :: FreeCounter ( & CounterInfo, & SubStatus );
+				
+			}
+			
+		}
+		
+	}
 	
 	* Status = kACPIStatus_Success;
 	
@@ -161,8 +179,6 @@ void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers ::
 	
 	(void) Frame;
 	
-	system_func_kprintf ( "SCI!\n" );
-	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
 	
 	if ( _hw_acpi_RootSCIHook != NULL )
@@ -182,8 +198,6 @@ void HW::ACPI :: SystemControlInterruptHandler ( Interrupt::InterruptHandlers ::
 				
 				if ( Remove )
 				{
-					
-					system_func_kprintf ( "Remove\n" );
 					
 					if ( Current -> Next == Current )
 					{
@@ -235,7 +249,6 @@ void HW::ACPI :: InitSCIHandlerHook ( SCIHandlerHook * Hook, bool ( * Handler ) 
 void HW::ACPI :: AddSCIHandlerHook ( SCIHandlerHook * Hook )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
 	
 	if ( _hw_acpi_RootSCIHook == NULL )
@@ -259,14 +272,12 @@ void HW::ACPI :: AddSCIHandlerHook ( SCIHandlerHook * Hook )
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
 void HW::ACPI :: RemoveSCIHandlerHook ( SCIHandlerHook * Hook )
 {
 	
-	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	MT::Synchronization::Spinlock :: SpinAcquire ( & _hw_acpi_SCIHookLock );
 	
 	if ( Hook == _hw_acpi_RootSCIHook )
@@ -294,7 +305,6 @@ void HW::ACPI :: RemoveSCIHandlerHook ( SCIHandlerHook * Hook )
 	}
 	
 	MT::Synchronization::Spinlock :: Release ( & _hw_acpi_SCIHookLock );
-	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
@@ -306,11 +316,13 @@ const char * _hw_acpi_ErrorStrings [] =
 	"Invalid table",
 	"Resource not found",
 	"Unsupported address space",
-	"System memory allocation failure"
+	"System memory allocation failure",
+	"Null argument",
+	"Resource incompatible"
 	
 };
 
-const uint32_t _hw_acpi_ErrorStringArrayLength = 6;
+const uint32_t _hw_acpi_ErrorStringArrayLength = 8;
 
 const char * HW::ACPI :: GetErrorString ( uint32_t ACPIError )
 {

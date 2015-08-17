@@ -15,6 +15,8 @@
 
 #include <system/func/kprintf.h>
 
+#include <mt/synchronization/Spinlock.h>
+
 namespace MM
 {
 	
@@ -142,7 +144,7 @@ namespace MM
 			static const uint32_t kAddressRangePTR_Invalid = 0xFFFFFFFF;
 			static const uint32_t kStoragePTR_Invalid = 0xFFFFFFFF;
 			
-			uint32_t RefCount;
+			volatile uint32_t RefCount;
 			
 			AddressRange * RootFreeNode;
 			AddressRange * RootAllocatedNode;
@@ -164,6 +166,8 @@ namespace MM
 			uint32_t TotalPageCount;
 			
 			bool Kernel;
+			
+			MT::Synchronization::Spinlock :: Spinlock_t Lock;
 			
 			static char KernelAddressSpaceMem [];
 			static AddressSpace * KernelAddressSpace;
