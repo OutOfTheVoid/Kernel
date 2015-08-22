@@ -1,8 +1,8 @@
 #ifndef MT_SYNCHRONIZATION_RWLOCK_H
 #define MT_SYNCHRONIZATION_RWLOCK_H
 
-#include <mt/synchronization/RWLock.h>
 #include <mt/synchronization/Mutex.h>
+#include <mt/synchronization/Synchronization.h>
 
 namespace MT
 {
@@ -17,7 +17,7 @@ namespace MT
 			typedef struct
 			{
 				
-				Mutex :: Mutex_t WLock;
+				MT::Synchronization::Mutex :: Mutex_t WLock;
 				
 				uint32_t ReadersAtomic;
 				
@@ -26,7 +26,7 @@ namespace MT
 			static inline RWLock_t Initializer ()
 			{
 				
-				RWLock_t New;
+				RWLock_t New = RWLock :: RWLock_t ();
 				
 				New.WLock = Mutex :: Initializer ();
 				

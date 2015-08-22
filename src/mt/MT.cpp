@@ -25,6 +25,8 @@
 
 #include <boot/BootImage.h>
 
+bool __smp_Initialized = false;
+
 void MT :: MPInit ()
 {
 	

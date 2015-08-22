@@ -17,6 +17,19 @@ HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: GetCurrent ()
 	
 };
 
+// Workaround for recursive spinlocks
+uint32_t HW::CPU::Processor :: GetCurrentAPICID32 ()
+{
+	
+	if ( CIndex == 0 )
+		return 0xFFFFFFFF;
+	
+	uint32_t APICID = Interrupt::APIC :: GetLocalID ();
+	
+	return APICID;
+	
+};
+
 HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: Define ( bool BSP, uint8_t APICID, void * InitStackBottom, uint32_t InitStackLength )
 {
 	

@@ -1,5 +1,7 @@
-#ifndef MT_SYNCHRONIZATION_H
-#define MT_SYNCHRONIZATION_H
+#ifndef MT_SYNCHRONIZATION_MUTEX_H
+#define MT_SYNCHRONIZATION_MUTEX_H
+
+#include <stdint.h>
 
 #include <mt/synchronization/Synchronization.h>
 #include <mt/synchronization/Spinlock.h>
@@ -48,8 +50,6 @@ namespace MT
 			static bool TryAcquire ( Mutex_t * Lock );
 			
 			static void Release ( Mutex_t * Lock );
-			
-		private:
 			
 			static void ReleaseFromWrongThread ( Mutex_t * Lock );
 			

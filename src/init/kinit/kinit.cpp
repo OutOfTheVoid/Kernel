@@ -28,6 +28,7 @@
 #include <mt/MT.h>
 
 #include <mt/tasking/Task.h>
+#include <mt/synchronization/RecursiveSpinlock.h>
 #include <mt/tasking/Scheduler.h>
 
 #include <mt/timing/TaskSleep.h>
@@ -42,6 +43,7 @@
 ASM_LINKAGE void hw_cpu_hang ();
 
 ASM_LINKAGE void testKernelTask ();
+ASM_LINKAGE void testKernelTask2 ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -69,15 +71,75 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
+
+	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
+	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };
 
+MT::Synchronization::RecursiveSpinlock :: RecursiveSpinlock_t Lock = MT::Synchronization::RecursiveSpinlock :: Initializer ();
+
+#define RECURSIVE_SPINLOCK_ITERATIONCOUNT 50
+
 void testKernelTask ()
 {
 	
-	while ( true );
+	system_func_kprintf ( "Testing recursive spinlocks:\n" );
+	
+	uint32_t I;
+	
+	for ( I = 0; I < RECURSIVE_SPINLOCK_ITERATIONCOUNT; I ++ )
+	{
+		
+		MT::Synchronization::RecursiveSpinlock :: SpinAcquire ( & Lock );
+		
+		system_func_kprintf ( "Locked (iteration %i)\n", I );
+		
+	}
+	
+	for ( I = 0; I < RECURSIVE_SPINLOCK_ITERATIONCOUNT; I ++ )
+	{
+		
+		MT::Synchronization::RecursiveSpinlock :: Release ( & Lock );
+		
+		system_func_kprintf ( "Released (iteration %i)\n", I );
+		
+	}
+	
+	system_func_kprintf ( "Success!\n" );
+	
+	MT::Tasking::Scheduler :: KillCurrentTask ();
+	
+};
+
+void testKernelTask2 ()
+{
+	
+	system_func_kprintf ( "Testing recursive spinlocks:\n" );
+	
+	uint32_t I;
+	
+	for ( I = 0; I < RECURSIVE_SPINLOCK_ITERATIONCOUNT; I ++ )
+	{
+		
+		MT::Synchronization::RecursiveSpinlock :: SpinAcquire ( & Lock );
+		
+		system_func_kprintf ( "Locked (iteration %i)\n", I );
+		
+	}
+	
+	for ( I = 0; I < RECURSIVE_SPINLOCK_ITERATIONCOUNT; I ++ )
+	{
+		
+		MT::Synchronization::RecursiveSpinlock :: Release ( & Lock );
+		
+		system_func_kprintf ( "Released (iteration %i)\n", I );
+		
+	}
+	
+	system_func_kprintf ( "Success!\n" );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
