@@ -1,5 +1,5 @@
-#ifndef SYSTEM_FUNC_PMALLOC_H
-#define SYSTEM_FUNC_PMALLOC_H
+#ifndef MM_PMALLOC_H
+#define MM_PMALLOC_H
 
 #include <stddef.h>
 #include <stdint.h>

@@ -5,10 +5,23 @@
 
 #include <interrupt/InterruptHandlers.h>
 
-#include <mm/paging/PageTable.h>
-#include <mm/paging/AddressSpace.h>
+#include <cpputil/Linkage.h>
 
 #include <hw/cpu/Math.h>
+
+// Forward declare those classes we can't include for odd reasons
+namespace MM
+{
+
+	namespace Paging
+	{
+
+		class AddressSpace;
+		class PageTable;
+
+	};
+
+};
 
 namespace MT
 {

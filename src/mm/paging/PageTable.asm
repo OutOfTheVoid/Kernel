@@ -56,7 +56,7 @@ mm_paging_disable:
 	mov ebp, esp
 	
 	mov eax, cr0
-	and eax, ~ 0x80000000
+	and eax, ~ 0x7FFFFFFF
 	mov cr0, eax
 	
 	mov esp, ebp

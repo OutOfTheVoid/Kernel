@@ -19,8 +19,6 @@
 
 #include <mt/tasking/Task.h>
 
-#define PFA_DEBUG
-
 namespace MM
 {
 	

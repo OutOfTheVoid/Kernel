@@ -15,7 +15,7 @@
 
 #include <system/func/kprintf.h>
 
-#include <mt/synchronization/Spinlock.h>
+#include <mt/synchronization/RecursiveSpinlock.h>
 
 namespace MM
 {
@@ -167,7 +167,7 @@ namespace MM
 			
 			bool Kernel;
 			
-			MT::Synchronization::Spinlock :: Spinlock_t Lock;
+			MT::Synchronization::RecursiveSpinlock :: RecursiveSpinlock_t Lock;
 			
 			static char KernelAddressSpaceMem [];
 			static AddressSpace * KernelAddressSpace;

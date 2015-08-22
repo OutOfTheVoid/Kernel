@@ -1,5 +1,5 @@
-#ifndef MM_PAGING_PVM_H
-#define MM_PAGING_PVM_H
+#ifndef MM_PAGING_PAGETABLE_H
+#define MM_PAGING_PAGETABLE_H
 
 #include <boot/multiboot/multiboot.h>
 

@@ -7,8 +7,8 @@
 #include <mm/PMalloc.h>
 
 #include <mm/paging/PageTable.h>
-#include <mm/paging/PFA.h>
 #include <mm/paging/AddressSpace.h>
+#include <mm/paging/PFA.h>
 
 #include <util/string/String.h>
 
