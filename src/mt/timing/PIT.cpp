@@ -5,6 +5,7 @@
 
 #include <hw/pc/ISA.h>
 
+#include <system/func/Panic.h>
 #include <system/func/KPrintF.h>
 
 #include <cpputil/Linkage.h>
@@ -22,6 +23,9 @@ void MT::Timing::PIT :: InitTimedIRQ ( void ( * InterruptHandler ) ( Interrupt::
 {
 	
 	mt_timing_pwaitmsMechanism ( NULL );
+
+	if ( ! ::HW::PC::ISA :: TryAllocateIRQ ( kISAIRQ_PIT ) )
+		KPANIC ( "PIT IRQ Init failed: IRQ was already allocated!" );
 	
 	::HW::PC::ISA :: SetIRQHandler ( kISAIRQ_PIT, InterruptHandler );
 	

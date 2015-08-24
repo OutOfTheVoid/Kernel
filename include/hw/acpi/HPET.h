@@ -55,7 +55,7 @@ namespace HW
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
-			static uint32_t GetHPETCount ( uint32_t * Status );
+			static uint32_t GetHPETCount ( uint32_t * Status, HPETInfo * Info );
 			static HPETInfo * GetHPET ( uint32_t Index, uint32_t * Status );
 			
 			static void AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo * CounterInfo, uint32_t Requirements, uint32_t * Status );

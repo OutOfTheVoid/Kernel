@@ -15,6 +15,9 @@ namespace Interrupt
 	public:	
 		
 		static void Init ();
+
+		static bool TryAllocateGlobalSystemInterrupt ( uint32_t Interrupt );
+		static void FreeGlobalSystemInterrupt ( uint32_t Interrupt );
 		
 		static void DefineFixedRedirectionEntry ( uint32_t Interrupt, uint32_t TargetVector, uint8_t APICID, bool ActiveHigh, bool EdgeTriggered, bool InitiallyMasked );
 		static void DefineLowestPriorityRedirectionEntry ( uint32_t Interrupt, uint32_t TargetVector, bool ActiveHigh, bool EdgeTriggered, bool InitiallyMasked );
@@ -33,6 +36,8 @@ namespace Interrupt
 			
 			uint32_t GlobalSystemInterruptBase;
 			uint32_t GlobalSystemInterruptCount;
+
+			uint32_t AllocationBitmap;
 			
 		} IOAPICInfo;
 		

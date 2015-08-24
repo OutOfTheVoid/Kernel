@@ -21,6 +21,9 @@ namespace HW
 			
 			static void SetIRQHandler ( uint8_t IRQ, void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) );
 			static void SetIRQEnabled ( uint8_t IRQ, bool Enabled );
+
+			static bool TryAllocateIRQ ( uint8_t IRQ );
+			static void FreeIRQ ( uint8_t );
 			
 		private:
 			

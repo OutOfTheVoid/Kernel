@@ -74,31 +74,6 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	FADT :: Init ( & SubStatus );
 	HPET :: Init ( & SubStatus );
 	
-	if ( SubStatus == kACPIStatus_Success )
-	{
-		
-		system_func_kprintf ( "testing HPET allocation:\n" );
-		
-		HPET :: HPETCounterInfo CounterInfo;
-		
-		for ( uint32_t I = 0; I < 31; I ++ )
-		{
-			
-			HPET :: AllocCounter ( I, & CounterInfo, 0, & SubStatus );
-			
-			if ( SubStatus == kACPIStatus_Success )
-			{
-				
-				system_func_kprintf ( "HPET Interrupt allocated to GSI %u, counter %u\n", I, CounterInfo.Counter );
-				
-				HPET :: FreeCounter ( & CounterInfo, & SubStatus );
-				
-			}
-			
-		}
-		
-	}
-	
 	* Status = kACPIStatus_Success;
 	
 };
@@ -115,6 +90,16 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 		
 		if ( SubStatus == kACPIStatus_Success )
 		{
+			
+			if ( ! PC::ISA :: TryAllocateIRQ ( Interrupt ) )
+			{
+
+				
+				* Status = kACPIStatus_Failure_ResourceNotFound;
+				
+				return;
+				
+			}
 			
 			PC::ISA :: SetIRQHandler ( Interrupt, & SystemControlInterruptHandler );
 			PC::ISA :: SetIRQEnabled ( Interrupt, true );

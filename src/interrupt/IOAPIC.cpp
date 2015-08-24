@@ -75,13 +75,84 @@ void Interrupt::IOAPIC :: Init ()
 		Info.ID = HW::ACPI::MADT :: GetIOAPICID ( I );
 		Info.GlobalSystemInterruptCount = ( ( Version >> 16 ) & 0xFF ) + 1;
 		Info.Version = Version & 0xFF;
+		Info.AllocationBitmap = 0;
 		
 		if ( ( Info.ID == ( ( ID >> 24 ) & 0xFF ) ) )
 			IOAPICs -> Push ( Info );
 		
+	}
+	
+};
+
+bool Interrupt::IOAPIC :: TryAllocateGlobalSystemInterrupt ( uint32_t Interrupt )
+{
+	
+	uint32_t I;
+	
+	void * BaseAddress = NULL;
+	
+	for ( I = 0; I < IOAPICs -> Length (); I ++ )
+	{
+		
+		uint32_t IOAPICGSIBase = ( * IOAPICs ) [ I ].GlobalSystemInterruptBase;
+		
+		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
+		{
+			
+			uint32_t Bit = 1 << ( Interrupt - IOAPICGSIBase );
+			
+			if ( ( ( * IOAPICs ) [ I ].AllocationBitmap & Bit ) == 0 )
+			{
+				
+				system_func_kprintf ( "Allocated interrupt %i\n", Interrupt );
+				
+				( * IOAPICs ) [ I ].AllocationBitmap |= Bit;
+				
+				return true;
+				
+			}
+
+			return false;
+			
+		}
+	
+	}
+	
+	if ( BaseAddress == NULL )
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
+
+	return false;
+
+};
+
+void Interrupt::IOAPIC :: FreeGlobalSystemInterrupt ( uint32_t Interrupt )
+{
+	
+	uint32_t I;
+	
+	void * BaseAddress = NULL;
+	
+	for ( I = 0; I < IOAPICs -> Length (); I ++ )
+	{
+		
+		uint32_t IOAPICGSIBase = ( * IOAPICs ) [ I ].GlobalSystemInterruptBase;
+		
+		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
+		{
+			
+			system_func_kprintf ( "Freeing interrupt %i\n", Interrupt );
+			
+			uint32_t Bit = 1 << ( Interrupt - IOAPICGSIBase );
+
+			( * IOAPICs ) [ I ].AllocationBitmap &= ~ Bit;
+			
+		}
 		
 	}
 	
+	if ( BaseAddress == NULL )
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
+
 };
 
 void Interrupt::IOAPIC :: DefineFixedRedirectionEntry ( uint32_t Interrupt, uint32_t TargetVector, uint8_t LAPICID, bool ActiveHigh, bool EdgeTriggered, bool InitiallyMasked )
@@ -109,7 +180,7 @@ void Interrupt::IOAPIC :: DefineFixedRedirectionEntry ( uint32_t Interrupt, uint
 	}
 	
 	if ( BaseAddress == NULL )
-		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!\nNumber of IO APICs: %u", Interrupt, IOAPICs -> Length () );
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
 	
 	uint32_t EntryLow = ( TargetVector & 0xFF ) | kRedirectionEntry_Low_Deliveryode_Fixed | kRedirectionEntry_Low_DestinationMode_Physical | ( ActiveHigh ? kRedirectionEntry_Low_PinPolarity_ActiveHigh : kRedirectionEntry_Low_PinPolarity_ActiveLow ) | ( EdgeTriggered ? kRedirectionEntry_Low_TriggerMode_Edge : kRedirectionEntry_Low_TriggerMode_Level ) | ( InitiallyMasked ? kRedirectionEntry_Low_Mask_Set : kRedirectionEntry_Low_Mask_Clear );
 	uint32_t EntryHigh = ( LAPICID << kRedirectionEntry_High_BitBase_PhysicalDestination ) | ( kRedirectionEntry_High_UnusedMask & ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1 ) );

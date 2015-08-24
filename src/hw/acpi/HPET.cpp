@@ -169,8 +169,6 @@ void HW::ACPI::HPET :: Init ( uint32_t * Status )
 				HPETs [ HPETCount ].WideCounter = TableVirtual -> CounterSize;
 				HPETs [ HPETCount ].LegacyIRQ = TableVirtual -> LegacyReplacementCapable;
 				
-				system_func_kprintf ( "HPET %u: [ Timers: %u, %s-bit ] \n", TableVirtual -> HPETNumber, TableVirtual -> ComparratorCount, TableVirtual -> CounterSize ? "64" : "32" );
-				
 				HPETCount ++;
 				
 			}
@@ -208,8 +206,6 @@ void HW::ACPI::HPET :: Init ( uint32_t * Status )
 				HPETs [ HPETCount ].AllocationBitmap = 0;
 				HPETs [ HPETCount ].WideCounter = TableVirtual -> CounterSize;
 				HPETs [ HPETCount ].LegacyIRQ = TableVirtual -> LegacyReplacementCapable;
-				
-				system_func_kprintf ( "HPET %u: [ Timers: %u, %s-bit ] \n", TableVirtual -> HPETNumber, TableVirtual -> ComparratorCount, TableVirtual -> CounterSize ? "64" : "32" );
 				
 				HPETCount ++;
 				
@@ -256,7 +252,7 @@ bool HW::ACPI::HPET :: Valid ()
 	
 };
 
-uint32_t HW::ACPI::HPET :: GetHPETCount ( uint32_t * Status )
+uint32_t HW::ACPI::HPET :: GetHPETCount ( uint32_t * Status, HPETInfo * Info )
 {
 	
 	if ( ! Validated )

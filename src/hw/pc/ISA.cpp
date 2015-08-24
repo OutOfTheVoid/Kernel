@@ -111,3 +111,43 @@ void HW::PC::ISA :: SetIRQEnabled ( uint8_t IRQ, bool Enabled )
 	Interrupt::IOAPIC :: SetRedirectionEntryEnabled ( IRQ, Enabled );
 	
 };
+
+bool HW::PC::ISA :: TryAllocateIRQ ( uint8_t IRQ )
+{
+
+	for ( uint32_t E = 0; E < HW::ACPI::MADT :: GetInterruptSourceOverrideCount (); E ++ )
+	{
+		
+		if ( ( HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( E ) == kMADT_ISABusNumber ) && ( IRQ == HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( E ) ) )
+		{
+			
+			IRQ = HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( E );
+			
+			break;
+		}
+		
+	}
+
+	return Interrupt::IOAPIC :: TryAllocateGlobalSystemInterrupt ( IRQ );
+
+};
+
+void HW::PC::ISA :: FreeIRQ ( uint8_t IRQ )
+{
+
+	for ( uint32_t E = 0; E < HW::ACPI::MADT :: GetInterruptSourceOverrideCount (); E ++ )
+	{
+		
+		if ( ( HW::ACPI::MADT :: GetInterruptSourceOverrideBus ( E ) == kMADT_ISABusNumber ) && ( IRQ == HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( E ) ) )
+		{
+			
+			IRQ = HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( E );
+			
+			break;
+		}
+		
+	}
+
+	Interrupt::IOAPIC :: FreeGlobalSystemInterrupt ( IRQ );
+
+};
