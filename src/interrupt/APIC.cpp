@@ -352,6 +352,17 @@ void Interrupt::APIC :: SendPhysicalStartupIPI ( uint8_t TargetID, uint32_t Entr
 	
 };
 
+void Interrupt::APIC :: SendBroadNMI ()
+{
+	
+	uint32_t InterruptCommandHighRegister = 0;
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_AllExcludingSelf | kIPIDeliveryMode_NMI | kIPITriggerMode_Edge | kIPILevel_Assert;
+	
+	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
+	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
+	
+};
+
 bool Interrupt::APIC :: IPIAccepted ()
 {
 	

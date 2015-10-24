@@ -221,6 +221,14 @@ void MT::Tasking::Scheduler :: Schedule ()
 	if ( Next != Last )
 		Switcher :: SwitchTo ( Next, Last );
 	
+	if ( ThisCPU -> ReleaseOnSchedule != NULL )
+	{
+		
+		ThisCPU -> ReleaseOnSchedule -> Lock = 0;
+		ThisCPU -> ReleaseOnSchedule = NULL;
+		
+	}
+	
 };
 
 void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )

@@ -40,6 +40,7 @@ HW::CPU::Processor :: CPUInfo * HW::CPU::Processor :: Define ( bool BSP, uint8_t
 	Infos [ APICID ].InitStackLength = InitStackLength;
 	Infos [ APICID ].Index = CIndex;
 	Infos [ APICID ].Lock = MT::Synchronization::Spinlock :: Initializer ();
+	Infos [ APICID ].ReleaseOnSchedule = NULL;
 	
 	IndexToAPICID [ CIndex ] = APICID;
 	

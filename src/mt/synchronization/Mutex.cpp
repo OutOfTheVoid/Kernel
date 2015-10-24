@@ -14,32 +14,40 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
-	Tasking::Task :: Task_t * CurrentTask = ThisCPU -> CurrentTask;
+	Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
 	
 	if ( Lock -> Locked )
 	{
 		
 		if ( Lock -> Owner == CurrentTask )
-			KPANIC ( "Mutex acquired twice! Task: %h", Lock -> Owner );
+			KPANIC ( "Mutex acquired twice!" );
 		
-		Lock -> LastWaiter -> Next = CurrentTask;
-		Lock -> LastWaiter = CurrentTask;
+		if ( Lock -> FirstWaiter == NULL )
+		{
+			
+			Lock -> FirstWaiter = CurrentTask;
+			Lock -> LastWaiter = CurrentTask;
+			
+		}
+		else
+		{
+			
+			Lock -> LastWaiter -> Next = CurrentTask;
+			Lock -> LastWaiter = CurrentTask;
+			
+		}
 		
+		CurrentTask -> Next = NULL;
 		CurrentTask -> State = Tasking::Task :: kState_Blocked;
 		
-		Spinlock :: Release ( & Lock -> MLock );
-		
-		Tasking::Scheduler :: Preemt ();
+		MT::Tasking::Scheduler :: Preemt ( & Lock -> MLock );
 		
 	}
 	else
 	{
 		
 		Lock -> Locked = true;
-		
-		Lock -> LastWaiter = Lock -> Owner = CurrentTask;
-		CurrentTask -> Next = NULL;
+		Lock -> Owner = CurrentTask;
 		
 		Spinlock :: Release ( & Lock -> MLock );
 		
@@ -50,28 +58,25 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 bool MT::Synchronization::Mutex :: TryAcquire ( Mutex_t * Lock )
 {
 	
-	bool Acquired = false;
-	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	if ( Lock -> Locked == false )
+	Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
+	
+	if ( Lock -> Locked )
 	{
 		
-		::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
-		Tasking::Task :: Task_t * CurrentTask = ThisCPU -> CurrentTask;
+		Spinlock :: Release ( & Lock -> MLock );
 		
-		Lock -> Locked = true;
-		
-		Lock -> LastWaiter = Lock -> Owner = CurrentTask;
-		CurrentTask -> Next = NULL;
-		
-		Acquired = true;
+		return false;
 		
 	}
 	
+	Lock -> Locked = true;
+	Lock -> Owner = CurrentTask;
+	
 	Spinlock :: Release ( & Lock -> MLock );
 	
-	return Acquired;
+	return true;
 	
 };
 			
@@ -80,27 +85,36 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
-	Tasking::Task :: Task_t * CurrentTask = ThisCPU -> CurrentTask;
+	Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
 	
-	if ( Lock -> Locked == false )
-		KPANIC ( "Released an unheld mutex! Task: %h", CurrentTask );
+	if ( ! Lock -> Locked )
+		KPANIC ( "Unheld Mutex released!" );
 	
 	if ( Lock -> Owner != CurrentTask )
-		KPANIC ( "Task released a mutex which it didn't own!" );
+		KPANIC ( "Mutex released from wrong thread!" );
 	
-	Lock -> Owner = Lock -> Owner -> Next;
-	
-	if ( Lock -> Owner != NULL )
+	if ( Lock -> FirstWaiter != NULL )
 	{
 		
-		Lock -> Owner -> State = Tasking::Task :: kState_Runnable;
+		Tasking::Task :: Task_t * NextOwner = Lock -> FirstWaiter;
+		Lock -> FirstWaiter = NextOwner -> Next;
 		
-		Tasking::Scheduler :: AddTask ( Lock -> Owner );
+		if ( Lock -> FirstWaiter == NULL )
+			Lock -> LastWaiter = NULL;
+		
+		NextOwner -> State = Tasking::Task :: kState_Runnable;
+		Lock -> Owner = NextOwner;
+		
+		Tasking::Scheduler :: AddTask ( NextOwner );
 		
 	}
 	else
+	{
+		
+		Lock -> Owner = NULL;
 		Lock -> Locked = false;
+		
+	}
 	
 	Spinlock :: Release ( & Lock -> MLock );
 	
@@ -111,21 +125,31 @@ void MT::Synchronization::Mutex :: ReleaseFromWrongThread ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	if ( Lock -> Locked == false )
-		KPANIC ( "Released an unheld mutex!" );
+	if ( ! Lock -> Locked )
+		KPANIC ( "Unheld Mutex released!" );
 	
-	Lock -> Owner = Lock -> Owner -> Next;
-	
-	if ( Lock -> Owner != NULL )
+	if ( Lock -> FirstWaiter != NULL )
 	{
 		
-		Lock -> Owner -> State = Tasking::Task :: kState_Runnable;
+		Tasking::Task :: Task_t * NextOwner = Lock -> FirstWaiter;
+		Lock -> FirstWaiter = NextOwner -> Next;
 		
-		Tasking::Scheduler :: AddTask ( Lock -> Owner );
+		if ( Lock -> FirstWaiter == NULL )
+			Lock -> LastWaiter = NULL;
+		
+		NextOwner -> State = Tasking::Task :: kState_Runnable;
+		Lock -> Owner = NextOwner;
+		
+		Tasking::Scheduler :: AddTask ( NextOwner );
 		
 	}
 	else
+	{
+		
+		Lock -> Owner = NULL;
 		Lock -> Locked = false;
+		
+	}
 	
 	Spinlock :: Release ( & Lock -> MLock );
 	

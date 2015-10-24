@@ -26,6 +26,7 @@ namespace MT
 				bool Locked;
 				
 				Tasking::Task :: Task_t * Owner;
+				Tasking::Task :: Task_t * FirstWaiter;
 				Tasking::Task :: Task_t * LastWaiter;
 				
 			} Mutex_t;
@@ -40,6 +41,7 @@ namespace MT
 				New.Locked = false;
 				
 				New.Owner = NULL;
+				New.FirstWaiter = NULL;
 				New.LastWaiter = NULL;
 				
 				return New;

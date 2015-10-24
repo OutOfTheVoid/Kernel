@@ -3,6 +3,10 @@
 #include <system/func/Panic.h>
 #include <system/func/KPrintF.h>
 
+#include <mt/exception/MPException.h>
+
+#include <hw/cpu/Hang.h>
+
 void hw_cpu_exceptionDivideByZero ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
@@ -20,7 +24,10 @@ void hw_cpu_exceptionDebug ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 void hw_cpu_exceptionNMI ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
-	KPANIC ( "NMI!\n\n%r", Frame );
+	if ( ! MT::Exception::MPException :: HasTriggered () )
+		KPANIC ( "NMI!\n\n%r", Frame );
+	else
+		hw_cpu_hang ();
 	
 };
 

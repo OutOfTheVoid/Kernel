@@ -4,6 +4,8 @@
 #include <mt/timing/PIT.h>
 #include <mt/timing/TaskSleep.h>
 
+#include <mt/exception/MPException.h>
+
 #include <mt/apinit/APTrampoline.h>
 
 #include <mt/tasking/Scheduler.h>
@@ -29,6 +31,8 @@ bool __smp_Initialized = false;
 
 void MT :: MPInit ()
 {
+	
+	MT::Exception::MPException :: Init ();
 	
 	Timing::PIT :: InitPWait ();
 	Interrupt :: APICInitEarly ();

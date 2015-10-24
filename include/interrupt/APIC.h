@@ -48,6 +48,7 @@ namespace Interrupt
 		
 		static void SendPhysicalInitIPI ( uint8_t TargetID, bool Assert );
 		static void SendPhysicalStartupIPI ( uint8_t TargetID, uint32_t EntryPageNum );
+		static void SendBroadNMI ();
 		
 		static void ClearErrorStatus ();
 		

@@ -5,6 +5,8 @@
 #include <mt/tasking/Task.h>
 #include <mt/synchronization/Spinlock.h>
 
+#include <hw/cpu/Processor.h>
+
 namespace MT
 {
 	
@@ -33,8 +35,11 @@ namespace MT
 			
 			static Task :: Task_t * GetNextDeadTask ();
 			
-			static inline void Preemt ()
+			static inline void Preemt ( Synchronization::Spinlock :: Spinlock_t * ReleaseOnSchedule = NULL )
 			{
+				
+				if ( ReleaseOnSchedule != NULL )
+					::HW::CPU::Processor :: GetCurrent () -> ReleaseOnSchedule = ReleaseOnSchedule;
 				
 				__asm__ volatile ( "int 0x20" );
 				

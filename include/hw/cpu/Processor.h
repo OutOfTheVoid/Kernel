@@ -58,6 +58,8 @@ namespace HW
 				
 				MT::Tasking::Task :: Task_t * CurrentTask;
 				
+				MT::Synchronization::Spinlock :: Spinlock_t * ReleaseOnSchedule;
+				
 			} CPUInfo;
 			
 			static CPUInfo * GetCurrent ();
