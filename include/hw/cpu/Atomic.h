@@ -36,6 +36,13 @@ namespace HW
 				
 			};
 			
+			static inline void Increment ( volatile uint32_t * Variable )
+			{
+				
+				__asm__ volatile ( "lock inc [ %0 ]" :: "m" ( * Variable ) );
+				
+			};
+			
 			static inline bool DecrementTestZero ( volatile uint32_t * Variable )
 			{
 				

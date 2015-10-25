@@ -5,6 +5,8 @@
 
 #include <mt/exception/MPException.h>
 
+#include <mm/paging/Invalidation.h>
+
 #include <hw/cpu/Hang.h>
 
 void hw_cpu_exceptionDivideByZero ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
@@ -104,7 +106,8 @@ void hw_cpu_exceptionGeneralProtection ( Interrupt::InterruptHandlers :: ISRFram
 void hw_cpu_exceptionPageFault ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
-	KPANIC ( "Page fault!\n\n%r", Frame );
+	if ( MM::Paging::Invalidation :: PageFault ( Frame -> ErrorCode ) )
+		KPANIC ( "Page fault!\n\n%r", Frame );
 	
 };
 

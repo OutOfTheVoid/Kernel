@@ -352,6 +352,28 @@ void Interrupt::APIC :: SendPhysicalStartupIPI ( uint8_t TargetID, uint32_t Entr
 	
 };
 
+void Interrupt::APIC :: SendFixedIPI ( uint8_t TargetID, uint8_t Vector )
+{
+	
+	uint32_t InterruptCommandHighRegister = ( static_cast <uint32_t> ( TargetID ) << 24 );
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_None | kIPILevel_Assert | kIPITriggerMode_Edge | kIPIDestinationMode_Physical | kIPIDeliveryMode_Fixed | Vector;
+	
+	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
+	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
+	
+};
+
+void Interrupt::APIC :: SendBroadFixedIPI ( uint8_t Vector )
+{
+	
+	uint32_t InterruptCommandHighRegister = 0;
+	uint32_t InterruptCommandLowRegister = kIPIDestinationShorthand_AllExcludingSelf | kIPILevel_Assert | kIPITriggerMode_Edge | kIPIDestinationMode_Physical | kIPIDeliveryMode_Fixed | Vector;
+	
+	WriteRegister ( kRegisterOffset_InterruptCommand_Upper, & InterruptCommandHighRegister, 1 );
+	WriteRegister ( kRegisterOffset_InterruptCommand_Lower, & InterruptCommandLowRegister, 1 );
+	
+};
+
 void Interrupt::APIC :: SendBroadNMI ()
 {
 	

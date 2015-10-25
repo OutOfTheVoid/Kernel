@@ -16,6 +16,8 @@ namespace MM
 	namespace Paging
 	{
 		
+		class Invalidation;
+		
 		class PageTable
 		{
 		public:
@@ -67,6 +69,10 @@ namespace MM
 			static bool ShouldFault ( uint32_t Address, bool Write );
 			
 		private:
+			
+			friend class Invalidation;
+			
+			static void FlushEntry ( uint32_t Virtual );
 			
 			PDirectory DirectoryPhysical;
 			PDirectory DirectoryVirtual;

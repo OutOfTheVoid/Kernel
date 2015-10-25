@@ -367,3 +367,10 @@ bool MM::Paging::PageTable :: KPagingStatus ()
 	return mm_paging_getStatus ();
 	
 };
+
+void MM::Paging::PageTable :: FlushEntry ( uint32_t Virtual )
+{
+	
+	mm_paging_invalPage ( Virtual );
+	
+};
