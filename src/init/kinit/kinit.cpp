@@ -37,6 +37,9 @@
 
 #include <mt/timing/PWaitMS.h>
 
+#include <mm/PMalloc.h>
+#include <mm/paging/Invalidation.h>
+
 #include <math/bitmath.h>
 
 #include <fs/FS.h>
@@ -46,7 +49,8 @@ ASM_LINKAGE void hw_cpu_hang ();
 ASM_LINKAGE void testKernelTask ();
 ASM_LINKAGE void testKernelTask2 ();
 
-MT::Synchronization::Mutex::Mutex_t TestMutex;
+MT::Synchronization::Spinlock::Spinlock_t TestLock = MT::Synchronization::Spinlock :: Initializer ();
+volatile void * TestMem = reinterpret_cast <void *> ( 0xFFFFFFFF );
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -72,13 +76,13 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MTInit ();
 	FS :: Init ();
 	
-	TestMutex = MT::Synchronization::Mutex :: Initializer ();
+	TestMem = mm_pmalloc ( 1 );
+	
+	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
+	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
 	
 	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
-
-	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
-	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
@@ -87,28 +91,12 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void testKernelTask ()
 {
 	
-	for ( uint32_t I = 0; I < 200000; I ++ )
-	{
-		
-		MT::Synchronization::Mutex :: Acquire ( & TestMutex );
-		MT::Synchronization::Mutex :: Release ( & TestMutex );
-		
-	}
-	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
 };
 
 void testKernelTask2 ()
 {
-	
-	for ( uint32_t I = 0; I < 2000000; I ++ )
-	{
-		
-		MT::Synchronization::Mutex :: Acquire ( & TestMutex );
-		MT::Synchronization::Mutex :: Release ( & TestMutex );
-		
-	}
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

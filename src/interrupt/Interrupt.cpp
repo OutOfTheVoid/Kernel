@@ -12,6 +12,8 @@
 
 #include <system/func/kprintf.h>
 
+#include <mm/paging/Invalidation.h>
+
 #include <KernelDef.h>
 
 void Interrupt :: APICInitEarly ()
@@ -56,6 +58,8 @@ void Interrupt :: Init ()
 	
 	uint32_t ACPIStatus;
 	HW::ACPI :: InitInterrupts ( & ACPIStatus );
+	
+	MM::Paging::Invalidation :: InitInterrupt ();
 	
 };
 

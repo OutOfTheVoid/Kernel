@@ -142,7 +142,7 @@ void __mm_pmallocFailure ( void * Virtual, uint32_t Pages )
 		Pages -= ( PhysSize >> 12 );
 		Offset += PhysSize;
 		
-		}
+	}
 	
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( Virtual, & DummyError );
 	

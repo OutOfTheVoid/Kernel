@@ -374,3 +374,10 @@ void MM::Paging::PageTable :: FlushEntry ( uint32_t Virtual )
 	mm_paging_invalPage ( Virtual );
 	
 };
+
+bool MM::Paging::PageTable :: ShouldFault ( uint32_t Address, bool Write, bool User )
+{
+	
+	return true;
+	
+};

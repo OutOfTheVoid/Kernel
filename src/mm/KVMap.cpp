@@ -2,6 +2,7 @@
 
 #include <mm/paging/AddressSpace.h>
 #include <mm/paging/PageTable.h>
+#include <mm/paging/Invalidation.h>
 
 #include <system/func/kprintf.h>
 
@@ -35,6 +36,7 @@ void mm_kvremap ( void * Virtual, void * Physical, uint32_t Flags )
 		return;
 	
 	MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Base ), Length );
+	MM::Paging::Invalidation :: InvalidatePages ( reinterpret_cast <uint32_t> ( Base ), Length / 0x1000 );
 	MM::Paging::PageTable :: SetKernelRegionMapping ( reinterpret_cast <uint32_t> ( Virtual ) & 0xFFFFF000, reinterpret_cast <uint32_t> ( Physical ) & 0xFFFFF000, Length, Flags | MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Cutsom_KMap );
 	
 };
@@ -52,6 +54,7 @@ void mm_kvunmap ( void * Virtual )
 		return;
 	
 	MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Base ), Length );
+	MM::Paging::Invalidation :: InvalidatePages ( reinterpret_cast <uint32_t> ( Base ), Length / 0x1000 );
 	MM::Paging::AddressSpace :: RetrieveKernelAddressSpace () -> Free ( Base, & Error );
 	
 };

@@ -25,6 +25,8 @@ namespace MM
 			
 		private:
 			
+			static bool Inited;
+			
 			friend void ::hw_cpu_exceptionPageFault ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 			
 			static const uint32_t kPageFaultErrorCodeFlag_Protection = 0x00000001;
@@ -49,7 +51,7 @@ namespace MM
 			static inline uint32_t GetCR2 ()
 			{
 				
-				register uint32_t Value;
+				register volatile uint32_t Value;
 				__asm__ volatile ( "mov %0, cr2" : "=r" ( Value ) );
 				return Value;
 				

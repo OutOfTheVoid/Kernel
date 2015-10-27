@@ -66,7 +66,18 @@ namespace MM
 			
 			static bool KPagingStatus ();
 			
-			static bool ShouldFault ( uint32_t Address, bool Write );
+			static bool ShouldFault ( uint32_t Address, bool Write, bool User );
+			
+			static inline uint32_t ReadCR3 ()
+			{
+				
+				volatile register uint32_t CR3 = 0;
+				
+				__asm__ volatile ( "mov eax, cr3\nmov eax, [ %0 ]" :: "r" ( CR3 ) : "eax" );
+				
+				return CR3;
+				
+			};
 			
 		private:
 			

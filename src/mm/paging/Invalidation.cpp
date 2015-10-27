@@ -16,6 +16,8 @@ uint32_t MM::Paging::Invalidation :: PageCount = 0;
 
 uint32_t MM::Paging::Invalidation :: ProccessorCount;
 
+bool MM::Paging::Invalidation :: Inited = false;
+
 MT::Synchronization::Spinlock :: Spinlock_t MM::Paging::Invalidation :: InvalLock = MT::Synchronization::Spinlock :: Initializer ();
 
 
@@ -28,6 +30,9 @@ void MM::Paging::Invalidation :: InitInterrupt ()
 
 void MM::Paging::Invalidation :: InvalidatePages ( uint32_t CR3, uint32_t PageAddress, uint32_t Count )
 {
+	
+	if ( ! Inited )
+		return;
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & InvalLock );
 	
@@ -54,9 +59,11 @@ bool MM::Paging::Invalidation :: PageFault ( uint32_t ErrorCode )
 	
 	( void ) ErrorCode;
 	
-	uint32_t Address = GetCR2 ();
+	uint32_t Address = GetCR2 (); 
 	
 	( void ) Address;
+	
+	PageTable * Mapping = HW::CPU::Processor :: GetCurrent () -> CurrentTask -> MemoryMapping;
 	
 	return true;
 	
@@ -81,5 +88,7 @@ void MM::Paging::Invalidation :: InvalidationHandler ( Interrupt::InterruptHandl
 			MM::Paging::PageTable :: FlushEntry ( VirtualStart + 0x1000 * I );
 		
 	}
+	
+	Interrupt::APIC :: EndOfInterrupt ();
 	
 };

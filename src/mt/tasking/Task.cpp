@@ -8,6 +8,7 @@
 
 #include <mm/paging/PageTable.h>
 #include <mm/paging/AddressSpace.h>
+#include <mm/paging/Invalidation.h>
 #include <mm/paging/PFA.h>
 
 #include <util/string/String.h>
@@ -111,6 +112,7 @@ void MT::Tasking::Task :: DestroyKernelTask ( Task_t * ToDestroy )
 					uint32_t DummyError;
 					
 					MM::Paging::PageTable :: ClearKernelRegionMapping ( reinterpret_cast <uint32_t> ( Info -> InitStackBottom ), Info -> InitStackLength );
+					MM::Paging::Invalidation :: InvalidatePages ( reinterpret_cast <uint32_t> ( Info -> InitStackBottom ), Info -> InitStackLength / 0x1000 );
 					
 					MM::Paging::PFA :: AddFreeRange ( Info -> InitStackBottom, Info -> InitStackLength );
 					
