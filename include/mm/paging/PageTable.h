@@ -73,7 +73,7 @@ namespace MM
 				
 				volatile register uint32_t CR3 = 0;
 				
-				__asm__ volatile ( "mov eax, cr3\nmov eax, [ %0 ]" :: "r" ( CR3 ) : "eax" );
+				__asm__ volatile ( "mov eax, cr3\nmov eax, [ %0 ]" :: "r" ( CR3 ) );
 				
 				return CR3;
 				

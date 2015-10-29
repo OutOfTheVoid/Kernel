@@ -81,7 +81,7 @@ void MM::Paging::Invalidation :: InvalidationHandler ( Interrupt::InterruptHandl
 	
 	HW::CPU::Atomic :: Increment ( & ProccessorCount );
 	
-	if ( HW::CPU::Processor :: GetCurrent () -> CurrentTask -> MemoryMapping -> GetCR3 () == CR3 )
+	if ( MM::Paging::PageTable :: ReadCR3 () == CR3 )
 	{
 		
 		for ( uint32_t I = 0; I < PageCount; I ++ )

@@ -49,9 +49,6 @@ ASM_LINKAGE void hw_cpu_hang ();
 ASM_LINKAGE void testKernelTask ();
 ASM_LINKAGE void testKernelTask2 ();
 
-MT::Synchronization::Spinlock::Spinlock_t TestLock = MT::Synchronization::Spinlock :: Initializer ();
-volatile void * TestMem = reinterpret_cast <void *> ( 0xFFFFFFFF );
-
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
 	
@@ -75,8 +72,6 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	Interrupt :: Init ();
 	MT :: MTInit ();
 	FS :: Init ();
-	
-	TestMem = mm_pmalloc ( 1 );
 	
 	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
