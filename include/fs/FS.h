@@ -111,8 +111,6 @@ namespace FS
 	
 	void Init ();
 	
-	
-	
 };
 
 #endif

@@ -43,8 +43,6 @@ namespace FS
 				
 			} __attribute__ (( packed )) StorageHeader;
 			
-			
-			
 			typedef struct QMFS_NodeHeader_Struct
 			{
 				
@@ -53,7 +51,7 @@ namespace FS
 				uint32_t NameOffset;
 				uint32_t NameLength;
 				
-			} QMFS_NodeHeader;
+			} __attribute__ (( packed )) QMFS_NodeHeader;
 			
 			typedef struct QMFS_DirectoryNode_Struct
 			{
@@ -63,7 +61,7 @@ namespace FS
 				uint32_t ChildNodeOffsetArrayOffset;
 				uint32_t ChildNodeCount;
 				
-			} QMFS_DirectoryNode;
+			} __attribute__ (( packed )) QMFS_DirectoryNode;
 			
 			typedef struct QMFS_FileNode_Struct
 			{
@@ -73,11 +71,7 @@ namespace FS
 				uint32_t Offset;
 				uint32_t Length;
 				
-				
-				
-			} QMFS_FileNode;
-			
-			
+			} __attribute__ (( packed )) QMFS_FileNode;
 			
 			typedef struct QMFS_FileSystem_Instance_Struct : public FileSystem_Instance
 			{
