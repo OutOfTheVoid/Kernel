@@ -17,7 +17,7 @@
 
 extern "C" void hw_cpu_hang ();
 
-void MM :: Init ( multiboot_info_t * MultibootInfo )
+void MM :: Init ( multiboot_info_t * MultibootInfo, multiboot_info_t ** NewMultibootInfo )
 {
 	
 	uint32_t MBICopySize = MM::Paging::PFA :: CalcMBICopySize ( MultibootInfo );
@@ -39,6 +39,9 @@ void MM :: Init ( multiboot_info_t * MultibootInfo )
 	Segmentation::GDT :: Init ( 3 );
 	
 	Segmentation::GDT :: Swap ();
+	
+	* NewMultibootInfo = reinterpret_cast <multiboot_info_t *> ( mm_kmalloc ( MBICopySize ) );
+	MM::Paging::PFA :: CopyMBI ( reinterpret_cast <multiboot_info_t *> ( MBICopySpace ), * NewMultibootInfo );
 	
 };
 

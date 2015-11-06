@@ -6,6 +6,8 @@
 
 #include <fs/vfs/FileSystem.h>
 
+#include <hw/storage/StorageDevice.h>
+
 /*
 * Initialization and amanagement code for the Mount file system.
 */
@@ -20,7 +22,12 @@ namespace FS
 		{
 		public:
 			
+			typedef uint32_t MountStatus_t;
+			
 			static void Init ();
+			
+			static void MountDevice ( HW::Storage::StorageDevice * Device, MountStatus_t * Status );
+			//static void UnmountDevice ( HW::Storage::StorageDevice * Device, MountStatus_t * Status );
 			
 		private:
 			

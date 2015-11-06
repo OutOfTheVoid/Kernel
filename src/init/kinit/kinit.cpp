@@ -43,6 +43,8 @@
 #include <math/bitmath.h>
 
 #include <fs/FS.h>
+#include <fs/initrd/InitRamDisk.h>
+
 
 ASM_LINKAGE void hw_cpu_hang ();
 
@@ -59,7 +61,7 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 		KPANIC ( "Multiboot information not supplied!" );
 
 	HW::Video::VText :: Init ( HW::Video::VText :: MakeColor ( HW::Video::VText :: Color_White, HW::Video::VText :: Color_Black ) );
-	MM :: Init ( MultibootInfo );
+	MM :: Init ( MultibootInfo, & MultibootInfo );
 	
 	uint32_t ACPIStatus;
 	
@@ -72,6 +74,8 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	Interrupt :: Init ();
 	MT :: MTInit ();
 	FS :: Init ();
+	
+	FS::InitRD::InitRamDisk :: Init ( MultibootInfo );
 	
 	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask2 );

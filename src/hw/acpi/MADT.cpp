@@ -7,6 +7,8 @@
 #include <mm/KMalloc.h>
 #include <mm/paging/PageTable.h>
 
+#include <cpputil/Memory.h>
+
 #include <KernelDef.h>
 
 bool HW::ACPI::MADT :: Validated = false;

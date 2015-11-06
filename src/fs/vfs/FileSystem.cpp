@@ -2,6 +2,7 @@
 #include <fs/FS.h>
 
 #include <cpputil/Unused.h>
+#include <cpputil/Memory.h>
 
 #include <mm/KMalloc.h>
 
@@ -21,6 +22,7 @@ void FS::VFS::FileSystem :: Init ()
 	if ( RootDirectory == NULL )
 		KPANIC ( "Failed to allocate root directory structure!" );
 	
+	new ( & ( RootDirectory -> Children ) ) Vector <FSNode *> ();
 	RootDirectory -> Lock = MT::Synchronization::RWLock :: Initializer ();
 	RootDirectory -> FSNodeType = kFSNodeType_Directory;
 	

@@ -19,13 +19,19 @@ namespace FS
 	namespace MountFS
 	{
 		
+		class FileSystem;
+		
 		class MountList
 		{
 		public:
 			
 			static void Init ();
 			
+			static void AddFileSystem ( FileSystemEntry * Entry );
+			
 		private:
+			
+			friend class FileSystem;
 			
 			Vector <FileSystemEntry *> * FileSystems;
 			

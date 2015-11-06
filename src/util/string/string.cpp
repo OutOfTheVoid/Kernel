@@ -225,3 +225,33 @@ void memzero ( void * Destination, size_t Count )
 	
 };
 
+size_t strcspn ( const char * Source, const char * Search )
+{
+	
+	register const char * P;
+	register const char * Span;
+	
+	register char Temp1;
+	register char Temp2;
+	
+	for ( P = Source;; )
+	{
+		
+		Temp1 = * P ++;
+		Span = Search;
+		
+		do
+		{
+			
+			if ( ( Temp2 = * Span ++ ) == Temp1 )
+				return ( P - 1 - Source );
+			
+		}
+		while ( Temp2 != NULL );
+		
+	}
+	
+	return strlen ( Source );
+	
+};
+
