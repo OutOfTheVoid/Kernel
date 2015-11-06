@@ -20,17 +20,16 @@ uint32_t FS::InitRD::InitRamDisk :: Length = 0;
 void FS::InitRD::InitRamDisk :: Init ( multiboot_info_t * MultibootInfo )
 {
 	
+	multiboot_module_t * ModList = reinterpret_cast <multiboot_module_t *> ( MultibootInfo -> mods_addr );
+	
 	for ( uint32_t I = 0; I < MultibootInfo -> mods_count; I ++ )
 	{
 		
-		multiboot_module_t * ModuleListing = & reinterpret_cast <multiboot_module_t *> ( MultibootInfo -> mods_addr ) [ I ];
-		
-		if ( strcspn ( reinterpret_cast <const char *> ( ModuleListing -> cmdline ), "initrd" ) != strlen ( reinterpret_cast <const char *> ( ModuleListing -> cmdline ) ) )
+		if ( strcspn ( reinterpret_cast <const char *> ( ModList [ I ].cmdline ), "initrd" ) != strlen ( reinterpret_cast <const char *> ( ModList [ I ].cmdline ) ) )
 		{
 			
-			Length = ( ModuleListing -> mod_end ) - ( ModuleListing -> mod_end );
-			system_func_kprintf ( "Module length: %u\n", Length );
-			ModulePhysical = reinterpret_cast <void *> ( ModuleListing -> mod_start );
+			Length = ( ModList [ I ].mod_end ) - ( ModList [ I ].mod_start );
+			ModulePhysical = reinterpret_cast <void *> ( ModList [ I ].mod_start );
 			
 			break;
 			
@@ -51,7 +50,7 @@ void FS::InitRD::InitRamDisk :: Init ( multiboot_info_t * MultibootInfo )
 	MountFS::FileSystem :: MountStatus_t Status;
 	MountFS::FileSystem :: MountDevice ( Device, & Status );
 	
-	//if ( Status != MountFS::FileSystem :: kMountStatus_Success )
-	//	KPANIC ( "Failed to mount InitRD: %i", Status );
+	if ( Status != MountFS::FileSystem :: kMountStatus_Success )
+		KPANIC ( "Failed to mount InitRD: %i", Status );
 	
 };

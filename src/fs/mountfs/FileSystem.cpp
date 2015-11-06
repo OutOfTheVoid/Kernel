@@ -86,6 +86,8 @@ void FS::MountFS::FileSystem :: MountDevice ( HW::Storage::StorageDevice * Devic
 	
 	FSInstances -> Push ( Instance );
 	
+	* Status = kMountStatus_Success;
+	
 };
 
 void FS::MountFS::FileSystem :: UnmountDevice ( HW::Storage::StorageDevice * Device, MountStatus_t * Status )

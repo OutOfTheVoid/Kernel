@@ -43,6 +43,7 @@
 #include <math/bitmath.h>
 
 #include <fs/FS.h>
+#include <fs/VFS.h>
 #include <fs/initrd/InitRamDisk.h>
 
 
@@ -87,6 +88,8 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 
 void testKernelTask ()
 {
+	
+	FS :: FSNode * RootNode = FS::VFS :: GetRootNode ();
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

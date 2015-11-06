@@ -112,8 +112,8 @@ FS :: FileSystem_Instance * FS::QMFS::FileSystem :: MountStorageDevice ( HW::Sto
 			
 			Checksum = 0;
 			
-			for ( uint32_t I = 0; I < sizeof ( StorageHeader ); I += sizeof ( uint32_t ) )
-				Checksum += * reinterpret_cast <uint32_t *> ( reinterpret_cast <uint32_t> ( & FSHeader ) + I );
+			for ( uint32_t I = 0; I < 4; I ++ )
+				Checksum += reinterpret_cast <uint32_t *> ( & FSHeader ) [ I ];
 			
 			if ( Checksum != 0 )
 				return NULL;
@@ -136,7 +136,7 @@ FS :: FileSystem_Instance * FS::QMFS::FileSystem :: MountStorageDevice ( HW::Sto
 			
 			QMFS_DirectoryNode DirectoryNode;
 			
-			reinterpret_cast <HW::Storage::RamDiskStorageDevice *> ( Device ) -> Read ( reinterpret_cast <uint8_t *> ( & DirectoryNode ), 0, sizeof ( QMFS_DirectoryNode ), & Status );
+			reinterpret_cast <HW::Storage::RamDiskStorageDevice *> ( Device ) -> Read ( reinterpret_cast <uint8_t *> ( & DirectoryNode ), FSHeader.RootDirectoryOffset, sizeof ( QMFS_DirectoryNode ), & Status );
 			
 			if ( Status != HW::Storage::StorageDevice :: kStorageStatus_Success )
 			{

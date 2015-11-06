@@ -66,6 +66,8 @@ void HW::Storage::RamDiskStorageDevice :: Read ( uint8_t * Buffer, uint32_t Offs
 	
 	MT::Synchronization::RWLock :: ReadRelease ( & Lock );
 	
+	* Status = kStorageStatus_Success;
+	
 };
 
 void HW::Storage::RamDiskStorageDevice :: Write ( uint8_t * Buffer, uint32_t Offset, uint32_t Length, StorageStatus * Status )
@@ -103,6 +105,8 @@ void HW::Storage::RamDiskStorageDevice :: Write ( uint8_t * Buffer, uint32_t Off
 	memcpy ( reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( Address ) + Offset ), Buffer, Length );
 	
 	MT::Synchronization::RWLock :: WriteRelease ( & Lock );
+	
+	* Status = kStorageStatus_Success;
 	
 };
 

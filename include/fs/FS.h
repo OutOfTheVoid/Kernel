@@ -111,8 +111,14 @@ namespace FS
 		
 	};
 	
+	typedef FSNode * KFile;
+	
 	void Init ( multiboot_info_t * MultibootInfo );
 	
+	/*void Open ( const char * Path, KFile * FileInstancePTR, FSStatus_t * Status );
+	void Close ( const char * Path, KFile * FileInstancePTR, FSStatus_t * Status );
+	void Enumerate ( const char * Path,  );
+	*/
 };
 
 #endif

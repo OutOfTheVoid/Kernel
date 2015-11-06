@@ -6,6 +6,8 @@
 
 #include <fs/initrd/InitRamDisk.h>
 
+#include <system/func/kprintf.h>
+
 void FS :: Init ( multiboot_info_t * MultibootInfo )
 {
 	
