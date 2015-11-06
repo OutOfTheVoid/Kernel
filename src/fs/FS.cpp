@@ -2,16 +2,19 @@
 
 #include <fs/vfs/VFS.h>
 #include <fs/mountfs/MountFS.h>
-
 #include <fs/qmfs/QMFS.h>
 
-void FS :: Init ()
+#include <fs/initrd/InitRamDisk.h>
+
+void FS :: Init ( multiboot_info_t * MultibootInfo )
 {
 	
 	VFS :: Init ();
 	MountFS :: Init ();
 	
 	QMFS :: Init ();
+	
+	FS::InitRD::InitRamDisk :: Init ( MultibootInfo );
 	
 };
 

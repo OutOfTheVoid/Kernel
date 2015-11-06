@@ -73,9 +73,7 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MPInit ();
 	Interrupt :: Init ();
 	MT :: MTInit ();
-	FS :: Init ();
-	
-	FS::InitRD::InitRamDisk :: Init ( MultibootInfo );
+	FS :: Init ( MultibootInfo );
 	
 	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, 0 );
 	MT::Tasking::Scheduler :: AddTask ( NewTask2 );

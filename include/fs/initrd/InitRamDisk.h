@@ -5,6 +5,8 @@
 
 #include <boot/multiboot/Multiboot.h>
 
+#include <hw/storage/RamDiskStorageDevice.h>
+
 namespace FS
 {
 	
@@ -19,6 +21,12 @@ namespace FS
 			static void Discard ();
 			
 		private:
+			
+			static void * ModulePhysical;
+			static void * ModuleVirtual;
+			static uint32_t Length;
+			
+			static HW::Storage::RamDiskStorageDevice * Device;
 			
 		};
 		

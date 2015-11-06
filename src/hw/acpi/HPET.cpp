@@ -255,6 +255,8 @@ bool HW::ACPI::HPET :: Valid ()
 uint32_t HW::ACPI::HPET :: GetHPETCount ( uint32_t * Status, HPETInfo * Info )
 {
 	
+	( void ) Info;
+	
 	if ( ! Validated )
 	{
 		

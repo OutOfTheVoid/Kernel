@@ -5,6 +5,8 @@
 
 #include <mt/synchronization/RWLock.h>
 
+#include <boot/multiboot/Multiboot.h>
+
 namespace FS
 {
 	
@@ -109,7 +111,7 @@ namespace FS
 		
 	};
 	
-	void Init ();
+	void Init ( multiboot_info_t * MultibootInfo );
 	
 };
 

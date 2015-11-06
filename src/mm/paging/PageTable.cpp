@@ -378,6 +378,10 @@ void MM::Paging::PageTable :: FlushEntry ( uint32_t Virtual )
 bool MM::Paging::PageTable :: ShouldFault ( uint32_t Address, bool Write, bool User )
 {
 	
+	( void ) Address;
+	( void ) Write;
+	( void ) User;
+	
 	return true;
 	
 };

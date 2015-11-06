@@ -1,11 +1,13 @@
-#ifndef FS_MOUNT_MOUNTFS_H
-#define FS_MOUNT_MOUNTFS_H
-
-#include <fs/mount/Mount.h>
+#ifndef FS_MOUNT_MOUNTLIST_H
+#define FS_MOUNT_MOUNTLIST_H
 
 #include <fs/FS.h>
 
 #include <util/Vector.h>
+
+#include <mt/synchronization/RWLock.h>
+
+#include <hw/storage/StorageDevice.h>
 
 /*
 * MountList maintains a list of filesystems installed into the kernel, as well
@@ -33,7 +35,11 @@ namespace FS
 			
 			friend class FileSystem;
 			
-			Vector <FileSystemEntry *> * FileSystems;
+			static FileSystemEntry * FindMountableFileSystem ( HW::Storage::StorageDevice * Device );
+			
+			static Vector <FileSystemEntry *> * FileSystems;
+			
+			static MT::Synchronization::RWLock :: RWLock_t ListLock;
 			
 		};
 		

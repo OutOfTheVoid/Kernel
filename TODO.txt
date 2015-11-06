@@ -9,6 +9,7 @@ To do List
 * VFS - Partial
 * Init ramdisk - Partial
 * ATA PIO Driver ?
+* AHCI Driver ?
 * File I/O
 * Driver Interface
 * FAT32 Driver

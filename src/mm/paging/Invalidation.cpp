@@ -65,6 +65,8 @@ bool MM::Paging::Invalidation :: PageFault ( uint32_t ErrorCode )
 	
 	PageTable * Mapping = HW::CPU::Processor :: GetCurrent () -> CurrentTask -> MemoryMapping;
 	
+	( void ) Mapping;
+	
 	return true;
 	
 };

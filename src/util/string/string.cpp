@@ -247,7 +247,7 @@ size_t strcspn ( const char * Source, const char * Search )
 				return ( P - 1 - Source );
 			
 		}
-		while ( Temp2 != NULL );
+		while ( Temp2 != 0 );
 		
 	}
 	

@@ -1,10 +1,13 @@
 #include <fs/qmfs/FileSystem.h>
+#include <fs/mountfs/MountList.h>
 
 #include <util/string/String.h>
 
 #include <cpputil/Unused.h>
 
 #include <mm/KMalloc.h>
+
+#include <system/func/kprintf.h>
 
 FS::FileSystemEntry FS::QMFS::FileSystem :: FSEntry;
 
@@ -33,6 +36,8 @@ void FS::QMFS::FileSystem :: RegisterFileSystem ()
 	FSFunctions.Find = & Find;
 	FSFunctions.Enumerate = & Enumerate;
 	
+	MountFS::MountList :: AddFileSystem ( & FSEntry );
+	
 };
 
 bool FS::QMFS::FileSystem :: TestStorageDevice ( HW::Storage::StorageDevice * Device )
@@ -45,7 +50,7 @@ bool FS::QMFS::FileSystem :: TestStorageDevice ( HW::Storage::StorageDevice * De
 	switch ( Device -> GetStorageType () )
 	{
 		
-		case HW::Storage::StorageDevice :: kStorageType_RamDisk:
+	case HW::Storage::StorageDevice :: kStorageType_RamDisk:
 		
 		if ( reinterpret_cast <HW::Storage::RamDiskStorageDevice *> ( Device ) -> GetLength () < kMinFSSize )
 			return false;
@@ -62,7 +67,7 @@ bool FS::QMFS::FileSystem :: TestStorageDevice ( HW::Storage::StorageDevice * De
 		
 		break;
 		
-		default:
+	default:
 		
 		if ( Device -> GetLengthLinear () < static_cast <uint64_t> ( kMinFSSize ) )
 			return false;

@@ -182,6 +182,8 @@ void MM::Paging::PFA :: CopyMBI ( multiboot_info_t * Old, multiboot_info_t * New
 	if ( Old -> flags & MULTIBOOT_INFO_MODS )
 	{
 		
+		system_func_kprintf ( "Module copy (count: %i)\n", Old -> mods_count );
+		
 		New -> mods_addr = reinterpret_cast <uint32_t> ( New ) + MultibootInfoSize;
 		
 		memcpy ( reinterpret_cast <void *> ( New -> mods_addr ), reinterpret_cast <void *> ( Old -> mods_addr ), Old -> mods_count * sizeof ( multiboot_module_t ) );
