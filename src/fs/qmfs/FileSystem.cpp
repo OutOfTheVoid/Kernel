@@ -219,7 +219,7 @@ FS :: FileSystem_Instance * FS::QMFS::FileSystem :: MountStorageDevice ( HW::Sto
 				
 			};
 			
-			Device -> ReadLinear ( reinterpret_cast <uint8_t *> ( & RootNodeHeader ), 0, sizeof ( QMFS_DirectoryNode ), & Status );
+			Device -> ReadLinear ( reinterpret_cast <uint8_t *> ( & RootNodeHeader ), FSHeader.RootDirectoryOffset, sizeof ( QMFS_DirectoryNode ), & Status );
 			
 			if ( Status != HW::Storage::StorageDevice :: kStorageStatus_Success )
 			{
@@ -308,6 +308,8 @@ bool FS::QMFS::FileSystem :: EnumerateDirectoryChildren ( QMFS_Directory_FSNode 
 	
 	const_cast <char *> ( Directory -> Name ) [ StorageNode -> Header.NameLength ] = '\0';
 	
+	system_func_kprintf ( "Dir name: \"%s\"\n", Directory -> Name );
+	
 	if ( Status != HW::Storage::StorageDevice :: kStorageStatus_Success )
 	{
 		
@@ -352,7 +354,6 @@ bool FS::QMFS::FileSystem :: EnumerateDirectoryChildren ( QMFS_Directory_FSNode 
 		{
 			
 			QMFS_NodeHeader TestHeader;
-			
 			QMFS_DirectoryNode DirectoryHeader;
 			QMFS_FileNode FileHeader;
 			
@@ -600,9 +601,11 @@ bool FS::QMFS::FileSystem :: EnumerateDirectoryChildren ( QMFS_Directory_FSNode 
 				const_cast <char *> ( FSFileNode -> Name ) [ FileHeader.Header.NameLength ] = '\0';
 				
 				FSFileNode -> FSNodeType = kFSNodeType_File;
-				FSFileNode -> FSInstance = Directory -> FSInstance;
 				FSFileNode -> DiskOffsetLinear = FileHeader.Offset;
 				FSFileNode -> LengthLinear = FileHeader.Length;
+				FSFileNode -> FSInstance = Directory -> FSInstance;
+				
+				Directory -> ChildNodeArray [ I ] = FSFileNode;
 				
 			}
 			break;

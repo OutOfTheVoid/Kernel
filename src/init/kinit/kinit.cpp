@@ -43,9 +43,10 @@
 #include <math/bitmath.h>
 
 #include <fs/FS.h>
-#include <fs/VFS.h>
+#include <fs/vfs/FileSystem.h>
 #include <fs/initrd/InitRamDisk.h>
 
+#include <util/string/string.h>
 
 ASM_LINKAGE void hw_cpu_hang ();
 
@@ -86,10 +87,49 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 };
 
+void DirTree ( const char * PreviousPath, uint32_t Level )
+{
+	
+	uint32_t PreviousPathLength = strlen ( PreviousPath );
+	
+	FS :: FSStatus_t Status = FS :: kFSStatus_Success;
+	uint32_t Index = 0;
+	
+	while ( true )
+	{
+		
+		const char * Name;
+		
+		FS :: Enumerate ( PreviousPath, Index, & Name, & Status );
+		
+		if ( Status != FS :: kFSStatus_Success )
+			return;
+		
+		for ( uint32_t I = 0; I < Level; I ++ )
+			system_func_kprintf ( "|   " );
+			
+		system_func_kprintf ( "%s\n", Name, Name );
+		
+		uint32_t NameLength = strlen ( Name );
+		
+		char SubName [ PreviousPathLength + NameLength + 2 ];
+		
+		strcpy ( SubName, PreviousPath );
+		SubName [ PreviousPathLength - 1 ] = '/';
+		strcpy ( & SubName [ PreviousPathLength ], Name );
+		
+		DirTree ( SubName, Level + 1 );
+		
+		Index ++;
+		
+	}
+	
+};
+
 void testKernelTask ()
 {
 	
-	FS :: FSNode * RootNode = FS::VFS :: GetRootNode ();
+	DirTree ( "", 0 );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

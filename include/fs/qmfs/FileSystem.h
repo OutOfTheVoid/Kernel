@@ -82,8 +82,6 @@ namespace FS
 			typedef struct QMFS_File_FSNode_Struct : public FSNode
 			{
 				
-				QMFS_FileSystem_Instance_Struct * FSInstance;
-				
 				uint32_t DiskOffsetLinear;
 				uint32_t LengthLinear;
 				
@@ -91,8 +89,6 @@ namespace FS
 			
 			typedef struct QMFS_Directory_FSNode_Struct : public FSNode
 			{
-				
-				QMFS_FileSystem_Instance_Struct * FSInstance;
 				
 				uint32_t ChildNodeCount;
 				FSNode ** ChildNodeArray;

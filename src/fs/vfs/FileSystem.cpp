@@ -9,9 +9,11 @@
 #include <util/string/String.h>
 
 #include <system/func/Panic.h>
+#include <system/func/KPrintF.h>
 
 FS::VFS::FileSystem :: VFS_VirtualDirectory_FSNode_Struct * FS::VFS::FileSystem :: RootDirectory = NULL;
 
+FS :: FileSystem_Instance FS::VFS::FileSystem :: GlobalInstance;
 FS :: FSFunctionBlock FS::VFS::FileSystem :: Functions;
 
 void FS::VFS::FileSystem :: Init ()
@@ -25,13 +27,14 @@ void FS::VFS::FileSystem :: Init ()
 	new ( & ( RootDirectory -> Children ) ) Vector <FSNode *> ();
 	RootDirectory -> Lock = MT::Synchronization::RWLock :: Initializer ();
 	RootDirectory -> FSNodeType = kFSNodeType_Directory;
+	RootDirectory -> FSInstance = & GlobalInstance;
 	
 	memzero ( reinterpret_cast <void *> ( & Functions ), sizeof ( Functions ) );
 	
 	for ( uint32_t I = 0; I < kNodeTypes; I ++ )
 		Functions.NodeTypeFlags [ I ] = kFSNodeTypeFlag_IllegalNodeType;
 	
-	Functions.NodeTypeFlags [ kFSNodeType_Directory ] = kFSNodeTypeFlag_OpenClose | kFSNodeTypeFlag_Enumerate | kFSNodeTypeFlag_Find | kFSNodeTypeFlag_Add | kFSNodeTypeFlag_Delete;
+	Functions.NodeTypeFlags [ kFSNodeType_Directory ] = kFSNodeTypeFlag_Enumerate | kFSNodeTypeFlag_Find | kFSNodeTypeFlag_Add | kFSNodeTypeFlag_Delete;
 	
 	Functions.Open = & Open;
 	Functions.Close = & Close;
@@ -39,6 +42,11 @@ void FS::VFS::FileSystem :: Init ()
 	Functions.Find = & Find;
 	Functions.Add = & Add;
 	Functions.Delete = & Delete;
+	
+	GlobalInstance.FSEntry = NULL;
+	GlobalInstance.Device = NULL;
+	GlobalInstance.RootNode = RootDirectory;
+	GlobalInstance.FSFunctions = & Functions;
 	
 };
 

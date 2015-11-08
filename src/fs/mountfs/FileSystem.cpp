@@ -5,6 +5,7 @@
 #include <fs/mountfs/MountList.h>
 
 #include <system/func/Panic.h>
+#include <system/func/KPrintF.h>
 
 #include <mt/synchronization/RWLock.h>
 
@@ -32,6 +33,8 @@ void FS::MountFS::FileSystem :: Init ()
 	new ( & ( MountDirectory -> Children ) ) Vector <FSNode *> ();
 	
 	FSNode * RootNode = FS::VFS::FileSystem :: GetRootNode ();
+	
+	MountDirectory -> FSInstance = RootNode -> FSInstance;
 	
 	FSStatus_t Status;
 	

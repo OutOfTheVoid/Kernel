@@ -44,6 +44,7 @@ namespace FS
 			static VFS_VirtualDirectory_FSNode * RootDirectory;
 			
 			static FSFunctionBlock Functions;
+			static FileSystem_Instance GlobalInstance;
 			
 			static void Open ( FSNode * Node, FSStatus_t * Status );
 			static void Close ( FSNode * Node, FSStatus_t * Status );

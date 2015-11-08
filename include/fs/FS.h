@@ -42,6 +42,8 @@ namespace FS
 	
 	static const FSStatus_t kFSStatus_Failure_StorageDevice = 16;
 	
+	static const FSStatus_t kFSStatus_Failure_Nonexistent = 17;
+	
 	static const uint32_t kNodeTypes = 2;
 	
 	static const uint32_t kFSNodeType_File = 0;
@@ -57,6 +59,10 @@ namespace FS
 	static const uint32_t kFSNodeTypeFlag_Delete = 0x40;
 	
 	struct FSFunctionBlock_Struct;
+	typedef struct FSFunctionBlock_Struct FSFunctionBlock;
+	
+	struct FileSystem_Instance_Struct;
+	typedef struct FileSystem_Instance_Struct FileSystem_Instance;
 	
 	typedef struct FSNode_Struct
 	{
@@ -65,6 +71,8 @@ namespace FS
 		uint32_t FSNodeType;
 		
 		MT::Synchronization::RWLock :: RWLock_t Lock;
+		
+		FileSystem_Instance * FSInstance;
 		
 	} FSNode;
 	
@@ -85,10 +93,6 @@ namespace FS
 		void ( * Delete ) ( FSNode * Node, FSNode * ToDelete, FSStatus_t * Status );
 		
 	} FSFunctionBlock;
-	
-	struct FileSystem_Instance_Struct;
-	
-	typedef struct FileSystem_Instance_Struct FileSystem_Instance;
 	
 	typedef struct
 	{
@@ -115,10 +119,13 @@ namespace FS
 	
 	void Init ( multiboot_info_t * MultibootInfo );
 	
-	/*void Open ( const char * Path, KFile * FileInstancePTR, FSStatus_t * Status );
-	void Close ( const char * Path, KFile * FileInstancePTR, FSStatus_t * Status );
-	void Enumerate ( const char * Path,  );
-	*/
+	void Open ( const char * Path, KFile * FileInstancePTR, FSStatus_t * Status );
+	void Close ( KFile FileInstancePTR, FSStatus_t * Status );
+	
+	void Read ( KFile FileInstancePTR, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status );
+	
+	void Enumerate ( const char * Path, uint32_t Index, const char ** Name, FSStatus_t * Status );
+	
 };
 
 #endif
