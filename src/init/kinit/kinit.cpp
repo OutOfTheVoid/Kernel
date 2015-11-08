@@ -129,7 +129,29 @@ void DirTree ( const char * PreviousPath, uint32_t Level )
 void testKernelTask ()
 {
 	
-	DirTree ( "", 0 );
+	//DirTree ( "", 0 );
+	
+	uint8_t Buff [ 0x1000 ];
+	
+	memzero ( Buff, 0x1000 );
+	
+	FS :: FSStatus_t Status;
+	FS :: FSNode * File = NULL;
+	FS :: Open ( "/Mount/initrd/test.txt", & File, & Status );
+	
+	if ( Status == FS :: kFSStatus_Success )
+	{
+		
+		FS :: Read ( File, Buff, 0, 0x1000, & Status );
+		
+		if ( Status == FS :: kFSStatus_Success )
+			system_func_kprintf ( "File contents: \"%s\"\n", Buff );
+		
+		FS :: Close ( File, & Status );
+	
+	}
+	
+	
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

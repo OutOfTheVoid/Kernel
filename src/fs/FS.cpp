@@ -143,11 +143,16 @@ void FS :: Close ( KFile FileInstancePTR, FSStatus_t * Status )
 void FS :: Read ( KFile FileInstancePTR, uint8_t * Buffer, uint32_t Position, uint32_t Length, FSStatus_t * Status )
 {
 	
-	( void ) FileInstancePTR;
-	( void ) Buffer;
-	( void ) Position;
-	( void ) Length;
-	( void ) Status;
+	if ( ( FileInstancePTR -> FSInstance -> FSFunctions -> NodeTypeFlags [ FileInstancePTR -> FSNodeType ] & kFSNodeTypeFlag_Read ) == 0 )
+	{
+		
+		* Status = kFSStatus_Failure_NonFile;
+		
+		return;
+		
+	}
+	
+	FileInstancePTR -> FSInstance -> FSFunctions -> Read ( FileInstancePTR, Buffer, Position, Length, Status );
 	
 };
 

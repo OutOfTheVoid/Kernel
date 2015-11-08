@@ -28,9 +28,11 @@ void FS::QMFS::FileSystem :: RegisterFileSystem ()
 	for ( uint32_t I = 0; I < kNodeTypes; I ++ )
 		FSFunctions.NodeTypeFlags [ I ] = kFSNodeTypeFlag_IllegalNodeType;
 	
-	FSFunctions.NodeTypeFlags [ kFSNodeType_Directory ] = kFSNodeTypeFlag_OpenClose | kFSNodeTypeFlag_Enumerate | kFSNodeTypeFlag_Find;
+	FSFunctions.NodeTypeFlags [ kFSNodeType_Directory ] = kFSNodeTypeFlag_Enumerate | kFSNodeTypeFlag_Find;
 	FSFunctions.NodeTypeFlags [ kFSNodeType_File ] = kFSNodeTypeFlag_OpenClose | kFSNodeTypeFlag_Read | kFSNodeTypeFlag_Write;
 	
+	FSFunctions.Open = & Open;
+	FSFunctions.Close = & Close;
 	FSFunctions.Read = & Read;
 	FSFunctions.Write = & Write;
 	FSFunctions.Find = & Find;
@@ -307,8 +309,6 @@ bool FS::QMFS::FileSystem :: EnumerateDirectoryChildren ( QMFS_Directory_FSNode 
 	}
 	
 	const_cast <char *> ( Directory -> Name ) [ StorageNode -> Header.NameLength ] = '\0';
-	
-	system_func_kprintf ( "Dir name: \"%s\"\n", Directory -> Name );
 	
 	if ( Status != HW::Storage::StorageDevice :: kStorageStatus_Success )
 	{
@@ -651,25 +651,18 @@ void FS::QMFS::FileSystem :: Read ( FSNode * Node, uint8_t * Buffer, uint32_t Po
 		
 	}
 	
+	if ( Position > reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear )
+	{
+		
+		Position = reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear;
+		Length = 0;
+		
+	}
+	
 	uint32_t Offset = reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear + Position;
 	
-	if ( Length > reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear )
-	{
-		
-		* Status = kFSStatus_Failure_Length;
-		
-		return;
-		
-	}
-	
-	if ( ( Offset < reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> DiskOffsetLinear ) || ( Position + Length >= reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear ) )
-	{
-		
-		* Status = kFSStatus_Failure_Position;
-		
-		return;
-		
-	}
+	if ( Offset + Length > reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear )
+		Length = reinterpret_cast <QMFS_File_FSNode *> ( Node ) -> LengthLinear - Position;
 	
 	MT::Synchronization::RWLock :: ReadAcquire ( & Node -> Lock );
 	
