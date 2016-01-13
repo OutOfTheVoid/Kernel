@@ -41,8 +41,6 @@ void MT::Tasking::Switcher :: SwitchTo ( Task :: Task_t * NewTask, Task :: Task_
 		
 	}
 	
-	//Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( NewTask -> KStack );
-	
 	mt_tasking_switchTask ( & OldTask -> KStack, NewTask -> KStack );
 	
 };

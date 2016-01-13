@@ -3,7 +3,6 @@
 #include <hw/acpi/MADT.h>
 
 #include <system/func/Panic.h>
-#include <system/func/KPrintF.h>
 
 #include <mm/KMalloc.h>
 #include <mm/KVMap.h>
@@ -104,8 +103,6 @@ bool Interrupt::IOAPIC :: TryAllocateGlobalSystemInterrupt ( uint32_t Interrupt 
 			if ( ( ( * IOAPICs ) [ I ].AllocationBitmap & Bit ) == 0 )
 			{
 				
-				system_func_kprintf ( "Allocated interrupt %i\n", Interrupt );
-				
 				( * IOAPICs ) [ I ].AllocationBitmap |= Bit;
 				
 				return true;
@@ -139,8 +136,6 @@ void Interrupt::IOAPIC :: FreeGlobalSystemInterrupt ( uint32_t Interrupt )
 		
 		if ( ( IOAPICGSIBase <= Interrupt ) && ( IOAPICGSIBase + ( * IOAPICs ) [ I ].GlobalSystemInterruptCount > Interrupt ) )
 		{
-			
-			system_func_kprintf ( "Freeing interrupt %i\n", Interrupt );
 			
 			uint32_t Bit = 1 << ( Interrupt - IOAPICGSIBase );
 

@@ -87,6 +87,8 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	
 };
 
+
+
 void MT::Tasking::Task :: DestroyKernelTask ( Task_t * ToDestroy )
 {
 	

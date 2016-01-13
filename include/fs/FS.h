@@ -5,6 +5,8 @@
 
 #include <mt/synchronization/RWLock.h>
 
+#include <hw/cpu/Atomic.h>
+
 #include <boot/multiboot/Multiboot.h>
 
 namespace FS
@@ -71,6 +73,7 @@ namespace FS
 		uint32_t FSNodeType;
 		
 		MT::Synchronization::RWLock :: RWLock_t Lock;
+		volatile uint32_t * RefCountAtomic;
 		
 		FileSystem_Instance * FSInstance;
 		
