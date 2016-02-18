@@ -435,6 +435,8 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
+	
+	
 	// Reset Register
 	
 	if ( ( Table -> ResetRegister.Address != 0 ) && ( Table -> ResetRegister.AddressSpaceID == kACPIAddress_AddressSpaceID_Memory ) )
@@ -919,6 +921,56 @@ void HW::ACPI::FADT :: Init ( uint32_t * Status )
 		
 	}
 	
+	if ( Table -> FACSAddress != 0 )
+	{
+		
+		void * MappedRegister = NULL;
+		
+		for ( uint32_t I = 0; I < CurrentKVMapPages.Length (); I ++ )
+		{
+			
+			uint32_t PAdd = MM::Paging::PageTable :: KernelVirtualToPhysical ( CurrentKVMapPages [ I ] );
+			
+			if ( ( PAdd <= Table -> FACSAddress ) && ( ( PAdd + 0x1000 ) > Table -> FACSAddress + sizeof ( FACStructure ) ) )
+				MappedRegister = reinterpret_cast <void *> ( CurrentKVMapPages [ I ] + ( Table -> FACSAddress & 0x00000FFF ) );
+			
+		}
+		
+		if ( MappedRegister == NULL )
+		{
+			
+			MappedRegister = mm_kvmap ( reinterpret_cast <void *> ( Table -> FACSAddress ), 0x1000, MM::Paging::PageTable :: Flags_NoCache );
+			
+			if ( MappedRegister == NULL )
+			{
+				
+				while ( CurrentKVMapPages.Length () != 0 )
+					mm_kvunmap ( reinterpret_cast <void *> ( CurrentKVMapPages.Pop () ) );
+					
+				mm_kvunmap ( Table );
+				
+				* Status = kACPIStatus_Failure_System_OutOfMemory;
+			
+				return;
+				
+			}
+			
+			CurrentKVMapPages.Push ( reinterpret_cast <uint32_t> ( MappedRegister ) & 0xFFFFF000 );
+			
+		}
+		
+		Table -> FACSAddress = reinterpret_cast <uint32_t> ( MappedRegister );
+		
+	}
+	else
+	{
+		
+		* Status = kACPIStatus_Failure_UnsupportedAddressSpace;
+		
+		return;
+		
+	}
+	
 	Validated = true;
 	
 	* Status = kACPIStatus_Success;
@@ -929,6 +981,90 @@ bool HW::ACPI::FADT :: Valid ()
 {
 	
 	return Validated;
+	
+};
+
+uint32_t * HW::ACPI::FADT :: GetGlobalLockAddress ( uint32_t * Status )
+{
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	FACStructure * FACS = reinterpret_cast <FACStructure *> ( Table -> FACSAddress );
+	
+	* Status = kACPIStatus_Success;
+	
+	return & FACS -> GlobalLock;
+	
+};
+
+uint32_t HW::ACPI::FADT :: GetHardwareSignature ( uint32_t * Status )
+{
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	FACStructure * FACS = reinterpret_cast <FACStructure *> ( Table -> FACSAddress );
+	
+	uint32_t HWSignature = FACS -> HardwareSignature;
+	
+	* Status = kACPIStatus_Success;
+	
+	return HWSignature;
+	
+};
+
+void HW::ACPI::FADT :: SetFirmwareWakeVector ( uint32_t WakeVector, uint32_t * Status )
+{
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return;
+		
+	}
+	
+	FACStructure * FACS = reinterpret_cast <FACStructure *> ( Table -> FACSAddress );
+	
+	FACS -> FirmwareWakeVector = WakeVector;
+	
+	* Status = kACPIStatus_Success;
+	
+};
+
+uint32_t HW::ACPI::FADT :: GetFirmwareFlags ( uint32_t * Status )
+{
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	FACStructure * FACS = reinterpret_cast <FACStructure *> ( Table -> FACSAddress );
+	
+	uint32_t Flags = FACS -> FirmwareFlags;
+	
+	* Status = kACPIStatus_Success;
+	
+	return Flags;
 	
 };
 

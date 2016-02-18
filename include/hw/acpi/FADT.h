@@ -33,6 +33,8 @@ namespace HW
 			static const uint16_t kIAPCFlag_NoASPM = 0x0010;
 			static const uint16_t kIAPCFlag_RTCCMOS = 0x0020;
 			
+			static const uint32_t kFirmwareFlags_S4Supported = 0x00000001;
+			
 			static const uint32_t kFixedFeatureFlag_WBINVD = 0x00000001;
 			static const uint32_t kFixedFeatureFlag_WBINVDFlush = 0x00000002;
 			static const uint32_t kFixedFeatureFlag_CPUC1 = 0x00000004;
@@ -61,6 +63,14 @@ namespace HW
 			static uint32_t GetSMICommandPort ( uint32_t * Status );
 			
 			static void WriteACPIEnable ( bool Enable, uint32_t * Status );
+			
+			static uint32_t * GetGlobalLockAddress ( uint32_t * Status );
+			
+			static uint32_t GetHardwareSignature ( uint32_t * Status );
+			
+			static void SetFirmwareWakeVector ( uint32_t WakeVector, uint32_t * Status );
+			
+			static uint32_t GetFirmwareFlags ( uint32_t * Status );
 			
 			static ACPIAddress GetPM1aEventBlockAddress ( uint32_t * Status );
 			static ACPIAddress GetPM1bEventBlockAddress ( uint32_t * Status );
@@ -183,6 +193,32 @@ namespace HW
 				ACPIAddress SleepStatusRegister;
 				
 			} __attribute__ (( packed )) FADTable;
+			
+			typedef struct
+			{
+				
+				char Signature [ 4 ];
+				uint32_t Length;
+				
+				uint32_t HardwareSignature;
+				
+				uint32_t FirmwareWakeVector;
+				
+				uint32_t GlobalLock;
+				
+				uint32_t FirmwareFlags;
+				
+				uint64_t ExtendedFirmwareWakeVector;
+				
+				uint8_t Version;
+				
+				uint8_t Reserved [ 3 ];
+				
+				uint32_t OSPMFlags;
+				
+				uint8_t Reserved2 [ 24 ];
+				
+			} __attribute__ (( packed )) FACStructure;
 			
 			static bool Validated;
 			

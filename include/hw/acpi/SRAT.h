@@ -35,7 +35,7 @@ namespace HW
 				
 			} __attribute__ (( packed )) SRATable;
 			
-			typedef struct SRATSubTableHeader
+			typedef struct
 			{
 				
 				uint8_t Type;
