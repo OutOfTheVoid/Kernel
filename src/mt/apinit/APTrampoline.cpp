@@ -10,7 +10,7 @@
 
 #include <system/func/kprintf.h>
 
-MT::APInit::APTrampoline :: TrapolineBinary * MT::APInit::APTrampoline :: Binary = reinterpret_cast <MT::APInit::APTrampoline :: TrapolineBinary *> ( 0x1000 );
+MT::APInit::APTrampoline :: TrampolineBinary * MT::APInit::APTrampoline :: Binary = reinterpret_cast <MT::APInit::APTrampoline :: TrampolineBinary *> ( 0x1000 );
 
 C_LINKAGE uint32_t __mt_apinit_trampolinestart;
 C_LINKAGE uint32_t __mt_apinit_trampolineend;

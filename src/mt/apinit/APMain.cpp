@@ -9,6 +9,8 @@
 
 #include <mt/tasking/Scheduler.h>
 
+#include <mm/segmentation/GDT.h>
+
 void mt_apinit_apmain ()
 {
 	
@@ -20,6 +22,8 @@ void mt_apinit_apmain ()
 	ThisCPU -> Flags |= HW::CPU::Processor :: kCPUFlag_ProtectedMode | HW::CPU::Processor :: kCPUFlag_Wait;
 	
 	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
+	
+	MM::Segmentation::GDT :: Swap ();
 	
 	bool Enter = false;
 	

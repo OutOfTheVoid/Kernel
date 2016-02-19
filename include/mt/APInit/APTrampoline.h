@@ -32,9 +32,9 @@ namespace MT
 				uint32_t InitStackTop;
 				uint32_t * PagingDirectory;
 				
-			} __attribute__ (( packed )) TrapolineBinary;
+			} __attribute__ (( packed )) TrampolineBinary;
 			
-			static TrapolineBinary * Binary;
+			static TrampolineBinary * Binary;
 			
 		};
 		
