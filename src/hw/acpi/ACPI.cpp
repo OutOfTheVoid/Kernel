@@ -7,6 +7,7 @@
 #include <hw/acpi/FADT.h>
 #include <hw/acpi/PMTimer.h>
 #include <hw/acpi/HPET.h>
+#include <hw/acpi/DSDT.h>
 #include <hw/acpi/aml/AML.h>
 
 #include <system/func/kprintf.h>
@@ -95,7 +96,18 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 		
 	}
 	
-	AML :: Init ( & SubStatus );
+	DSDT :: Init ( & SubStatus );
+	
+	if ( SubStatus != kACPIStatus_Success )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return;
+		
+	}
+	
+	 AML :: Init ( & SubStatus );
 	
 	if ( SubStatus != kACPIStatus_Success )
 	{

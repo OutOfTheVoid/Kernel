@@ -16,12 +16,12 @@ namespace HW
 		namespace AML
 		{
 			
-			typedef struct
+			class DefinitionBlock
 			{
 				
 				
 				
-			} __attribtue__ (( packed )) DefinitionBlockHeader;
+			};
 			
 		};
 		

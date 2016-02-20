@@ -60,7 +60,7 @@ namespace HW
 			typedef struct
 			{
 				
-				HW::ACPI::ACPITable :: ACPITableHeader Header;
+				ACPITable :: ACPITableHeader Header;
 				
 				uint32_t LAPICAddress;
 				uint32_t Flags;

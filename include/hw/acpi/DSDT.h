@@ -3,7 +3,6 @@
 
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/ACPITable.h>
-#include <hw/acpi/aml/DefinitionBlock.h>
 
 #include <stdint.h>
 
@@ -20,7 +19,8 @@ namespace HW
 			static void Init ( uint32_t * Status );
 			static bool Valid ();
 			
-			static void Discard ();
+			static void * GetDefinitionBlockAddress ( uint32_t * Status );
+			static uint32_t GetDefinitionBlockLength ( uint32_t * Status );
 			
 		private:
 			
@@ -28,12 +28,20 @@ namespace HW
 			{
 				
 				ACPITable :: ACPITableHeader Header;
-				AML::DefinitionBlock :: DefinitionBlockHeader;
 				
-			} __attribute__ (( packed )) DSDTable;
+				uint8_t DefinitionBlockStart [ 0 ];
+				
+			} DSDTable;
+			
+			static bool Validated;
+			
+			static DSDTable * Table;
+			static uint32_t TableLength;
 			
 		};
 		
 	};
 	
 };
+
+#endif

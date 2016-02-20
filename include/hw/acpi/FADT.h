@@ -64,6 +64,8 @@ namespace HW
 			
 			static void WriteACPIEnable ( bool Enable, uint32_t * Status );
 			
+			static void * GetDSDTAddress ( uint32_t * Status );
+			
 			static uint32_t * GetGlobalLockAddress ( uint32_t * Status );
 			
 			static uint32_t GetHardwareSignature ( uint32_t * Status );

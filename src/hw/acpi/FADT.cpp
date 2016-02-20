@@ -984,6 +984,26 @@ bool HW::ACPI::FADT :: Valid ()
 	
 };
 
+void * HW::ACPI::FADT :: GetDSDTAddress ( uint32_t * Status )
+{
+	
+	if ( ! Validated )
+	{
+		
+		* Status = kACPIStatus_Failure_InvalidTable;
+		
+		return 0;
+		
+	}
+	
+	void * DSDTAddress = reinterpret_cast <void *> ( Table -> DSDTAddress );
+	
+	* Status = kACPIStatus_Success;
+	
+	return DSDTAddress;
+	
+};
+
 uint32_t * HW::ACPI::FADT :: GetGlobalLockAddress ( uint32_t * Status )
 {
 	
