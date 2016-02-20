@@ -6,6 +6,14 @@ void ( * HW::ACPI::AML::Interpreter :: ExtOpTable [ 0x100 ] ) ( InterpreterConte
 void HW::ACPI::AML::Interpreter :: Init ()
 {
 	
+	for ( uint32_t I = 0; I < 0x100; I ++ )
+	{
+		
+		OpTable [ I ] = & IllegalOp;
+		ExtOpTable [ I ] = & IllegalOp;
+		
+	}
+	
 	// Type 1 op-codes
 	
 	OpTable [ 0x33 ] = & BreakPointOp;
@@ -181,7 +189,7 @@ void HW::ACPI::AML::Interpreter :: AddOp ( InterpreterContext * Context ) // 0x7
 	
 };
 
-void HW::ACPI::AML::Interpreter :: AddOp ( InterpreterContext * Context ) // 0x7B
+void HW::ACPI::AML::Interpreter :: AndOp ( InterpreterContext * Context ) // 0x7B
 {
 	
 	

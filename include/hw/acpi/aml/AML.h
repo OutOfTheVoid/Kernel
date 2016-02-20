@@ -17,7 +17,13 @@ namespace HW
 			
 			void Init ( uint32_t * Status );
 			
-			
+			typedef struct
+			{
+				
+				void * Data;
+				uint32_t Length;
+				
+			} DefinitionBlock;
 			
 		};
 		
