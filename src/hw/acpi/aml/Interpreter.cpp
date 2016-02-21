@@ -95,12 +95,26 @@ void HW::ACPI::AML::Interpreter :: Init ()
 	
 };
 
+void HW::ACPI::AML::Interpreter :: Exec ( InterpreterContext * Context, uint32_t * Status )
+{
+	
+	
+	
+};
+
+void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result, uint32_t * Status )
+{
+	
+	
+	
+};
+
 // Illegal opcode! This should never be called during runtime.
 
 void HW::ACPI::AML::Interpreter :: IllegalOp ( InterpreterContext * Context )
 {
 	
-	
+	Context -> State = kInterpreterState_Error_IllegalOpcode;
 	
 };
 
@@ -111,7 +125,21 @@ void HW::ACPI::AML::Interpreter :: IllegalOp ( InterpreterContext * Context )
 void HW::ACPI::AML::Interpreter :: ExtPrefixOp ( InterpreterContext * Context ) // 0x5B
 {
 	
+	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
+	MethodContext -> CurrentOffset ++;
 	
+	if ( MethodContext -> CurrentOffset >= MethodContext -> MaxOffset )
+	{
+		
+		Context -> State = kInterpreterState_Error_Bounds;
+		
+		return;
+		
+	}
+	
+	uint8_t ExtensionOpcode = reinterpret_cast <uint8_t *> ( Context -> Block.Data ) [ MethodContext -> CurrentOffset ];
+	
+	return ExtOpTable [ ExtensionOpcode ] ( Context );
 	
 };
 
@@ -482,6 +510,37 @@ void HW::ACPI::AML::Interpreter :: XorOp ( InterpreterContext * Context ) // 0x7
 
 void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // Ext 0x32
 {
+	
+	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
+	MethodContext -> CurrentOffset ++;
+	
+	if ( MethodContext -> CurrentOffset + 1 >= MethodContext -> MaxOffset )
+	{
+		
+		Context -> State = kInterpreterState_Error_Bounds;
+		
+		return;
+		
+	}
+	
+	uint8_t Type;
+	uint32_t Code;
+	ACPIObject Argument;
+	
+	Type = * reinterpret_cast <uint8_t *> ( Context -> Block.Data + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+	MethodContext -> CurrentOffset ++;
+	
+	if ( MethodContext -> CurrentOffset + 4 >= MethodContext -> MaxOffset )
+	{
+		
+		Context -> State = kInterpreterState_Error_Bounds;
+		
+		return;
+		
+	}
+	
+	Code = * reinterpret_cast <uint32_t *> ( Context -> Block.Data + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+	MethodContext -> CurrentOffset += 4;
 	
 	
 	

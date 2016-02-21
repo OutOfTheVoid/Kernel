@@ -44,6 +44,17 @@ namespace HW
 			typedef struct
 			{
 				
+				const char * CString;
+				
+				uint32_t Length;
+				
+				bool Allocated;
+				
+			} ACPIString;
+			
+			typedef struct
+			{
+				
 				uint32_t Type;
 				
 				union
@@ -55,7 +66,7 @@ namespace HW
 					uint32_t BCDInt32;
 					uint64_t BCDInt64;
 					
-					const char * String;
+					ACPIString String;
 					
 					// Buffer Buff;
 					// BufferField BField;

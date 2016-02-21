@@ -1,6 +1,8 @@
 #ifndef HW_ACPI_AML_INTERPRETER_H
 #define HW_ACPI_AML_INTERPRETER_H
 
+#include <hw/acpi/aml/Object.h>
+
 #include <hw/HW.h>
 #include <hw/acpi/ACPI.h>
 #include <hw/acpi/aml/AML.h>
@@ -24,15 +26,98 @@ namespace HW
 				
 			private:
 				
+				static const uint32_t kMaxInvocationContextStack = 0x20;
+				static const uint32_t kMaxFlowControlModeStack = 0x200;
+				
+				// Execution statuses
+				
+				static const uint32_t kExecutionStatus_Finished = 0;
+				
+				static const uint32_t kExecutionStatus_Blocked = 1;
+				
+				static const uint32_t kExecutionStatus_Failure = 2;
+				
+				// Interpreter states
+				
+				static const uint32_t kInterpreterState_Idle = 0;
+				
+				static const uint32_t kInterpreterState_Executing = 1;
+				
+				static const uint32_t kInterpreterState_Error_Unknown = 2;
+				static const uint32_t kInterpreterState_Error_Bounds = 3;
+				static const uint32_t kInterpreterState_Error_IllegalOpcode = 3;
+				
+				// Flow control modes
+				
+				static const uint32_t kFlowControlMode_ControlMethod = 0;
+				
+				static const uint32_t kFlowControlMode_WhileLoop = 1;
+				
+				static const uint32_t kFlowControlMode_ArgumentEval = 2;
+				
+				typedef struct
+				{
+					
+					uint32_t CurrentOffset;
+					uint32_t MaxOffset;
+					
+					bool IntegerSizeIs64;
+					
+				} MethodInvocationContext;
+				
+				typedef struct
+				{
+					
+					uint8_t Type;
+					uint32_t Code;
+					
+					union
+					{
+						
+						uint32_t IntArg32;
+						uint32_t IntArg64;
+						
+					};
+					
+					bool ArgIs64Bit;
+					
+				} FatalResult;
+				
+				typedef struct
+				{
+					
+					uint32_t OpcodeOffset;
+					
+					uint32_t ResolvedArumentCount;
+					
+					uint8_t Opcode;
+					bool ExtOpcode;
+					
+				} AgrumentResolutionBackReference;
+				
 				typedef struct
 				{
 					
 					DefinitionBlock Block;
 					
+					MethodInvocationContext MethodContextStack [ kMaxInvocationContextStack ];
+					uint32_t MethodContextStackIndex;
+					
+					uint32_t FlowControlModeStack [ kMaxFlowControlModeStack ];
+					uint32_t FlowControlModeStackIndex;
+					
+					uint32_t State;
+					
+					FatalResult FatalError;
+					
 				} InterpreterContext;
 				
 				static void ( * OpTable [ 0x100 ] ) ( InterpreterContext * Context );
 				static void ( * ExtOpTable [ 0x100 ] ) ( InterpreterContext * Context );
+				
+				static void Exec ( InterpreterContext * Context, uint32_t * Status );
+				
+				static void EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result, uint32_t * Status );
 				
 				static void IllegalOp ( InterpreterContext * Context );
 				
