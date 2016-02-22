@@ -45,7 +45,8 @@ namespace HW
 				
 				static const uint32_t kInterpreterState_Error_Unknown = 2;
 				static const uint32_t kInterpreterState_Error_Bounds = 3;
-				static const uint32_t kInterpreterState_Error_IllegalOpcode = 3;
+				static const uint32_t kInterpreterState_Error_IllegalOpcode = 4;
+				static const uint32_t kInterpreterState_Error_MalformedConstant = 5;
 				
 				// Flow control modes
 				
@@ -117,7 +118,7 @@ namespace HW
 				
 				static void Exec ( InterpreterContext * Context, uint32_t * Status );
 				
-				static void EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result, uint32_t * Status );
+				static void EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result );
 				
 				static void IllegalOp ( InterpreterContext * Context );
 				

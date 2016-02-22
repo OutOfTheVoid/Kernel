@@ -102,10 +102,159 @@ void HW::ACPI::AML::Interpreter :: Exec ( InterpreterContext * Context, uint32_t
 	
 };
 
-void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result, uint32_t * Status )
+void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result )
 {
 	
+	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
 	
+	if ( MethodContext -> CurrentOffset + 2 > MethodContext -> MaxOffset )
+	{
+		
+		Context -> State = kInterpreterState_Error_Bounds;
+		Result -> Type = kObjectType_Uninitialized;
+		
+		return;
+		
+	}
+	
+	uint8_t PrefixByte = reinterpret_cast <uint8_t *> ( Context -> Block.Data ) [ MethodContext -> CurrentOffset ];
+	
+	MethodContext -> CurrentOffset ++;
+	
+	union
+	{
+		
+		uint8_t ByteData;
+		uint16_t WordData;
+		uint32_t DWordData;
+		uint64_t QWordData;
+		
+		struct
+		{
+			
+			uint32_t StringLength;
+			uint32_t StringOffset;
+			
+		} StringFigures;
+		
+	};
+	
+	switch ( PrefixByte )
+	{
+	
+	case 0x0A: // Byte prefix
+		
+		ByteData = reinterpret_cast <uint8_t *> ( Context -> Block.Data ) [ MethodContext -> CurrentOffset ];
+		
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		
+		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( ByteData ) : Result -> Value.Int32 = static_cast <uint32_t> ( ByteData );
+		
+		break;
+		
+	case 0x0B: // Word prefix
+	
+		if ( MethodContext -> CurrentOffset + 2 > MethodContext -> MaxOffset )
+		{
+			
+			Context -> State = kInterpreterState_Error_Bounds;
+			Result -> Type = kObjectType_Uninitialized;
+			
+			return;
+			
+		}
+		
+		WordData = * reinterpret_cast <uint16_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+		
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		
+		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( WordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( WordData );
+		
+		break;
+		
+	case 0x0C: // DWord prefix
+		
+		if ( MethodContext -> CurrentOffset + 4 > MethodContext -> MaxOffset )
+		{
+			
+			Context -> State = kInterpreterState_Error_Bounds;
+			Result -> Type = kObjectType_Uninitialized;
+			
+			return;
+			
+		}
+		
+		DWordData = * reinterpret_cast <uint32_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+		
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		
+		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( DWordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( DWordData );
+		
+		break;
+		
+	case 0x0E: // QWord prefix
+		
+		if ( MethodContext -> CurrentOffset + 8 > MethodContext -> MaxOffset )
+		{
+			
+			Context -> State = kInterpreterState_Error_Bounds;
+			Result -> Type = kObjectType_Uninitialized;
+			
+			return;
+			
+		}
+		
+		QWordData = * reinterpret_cast <uint64_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+		
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		
+		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( QWordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( QWordData );
+		
+		break;
+		
+	case 0x0D:
+		
+		
+		StringFigures.StringLength = 0;
+		StringFigures.StringOffset = MethodContext -> CurrentOffset;
+		
+		while ( ( MethodContext -> CurrentOffset + 1 > MethodContext -> MaxOffset ) && ( * reinterpret_cast <uint8_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) ) != 0 ) )
+		{
+			
+			if ( * reinterpret_cast <uint8_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) ) > 0x7F )
+			{
+				
+				Context -> State = kInterpreterState_Error_MalformedConstant;
+				Result -> Type = kObjectType_Uninitialized;
+				
+				return;
+				
+			}
+			
+			StringFigures.StringLength ++;
+			MethodContext -> CurrentOffset ++;
+			
+		}
+		
+		if ( MethodContext -> CurrentOffset + 1 <= MethodContext -> MaxOffset )
+		{
+			
+			Context -> State = kInterpreterState_Error_Bounds;
+			Result -> Type = kObjectType_Uninitialized;
+			
+			return;
+			
+		}
+		
+		Result -> Type = kObjectType_String;
+		
+		Result -> Value.String.CString = reinterpret_cast <const char *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( StringFigures.StringOffset ) );
+		Result -> Value.String.Length = StringFigures.StringLength;
+		Result -> Value.String.Allocated = false;
+		
+		break;
+		
+	}
 	
 };
 
@@ -128,7 +277,7 @@ void HW::ACPI::AML::Interpreter :: ExtPrefixOp ( InterpreterContext * Context ) 
 	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
 	MethodContext -> CurrentOffset ++;
 	
-	if ( MethodContext -> CurrentOffset >= MethodContext -> MaxOffset )
+	if ( MethodContext -> CurrentOffset > MethodContext -> MaxOffset )
 	{
 		
 		Context -> State = kInterpreterState_Error_Bounds;
@@ -514,7 +663,7 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
 	MethodContext -> CurrentOffset ++;
 	
-	if ( MethodContext -> CurrentOffset + 1 >= MethodContext -> MaxOffset )
+	if ( MethodContext -> CurrentOffset + 1 > MethodContext -> MaxOffset )
 	{
 		
 		Context -> State = kInterpreterState_Error_Bounds;
@@ -527,10 +676,10 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 	uint32_t Code;
 	ACPIObject Argument;
 	
-	Type = * reinterpret_cast <uint8_t *> ( Context -> Block.Data + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+	Type = * reinterpret_cast <uint8_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 	MethodContext -> CurrentOffset ++;
 	
-	if ( MethodContext -> CurrentOffset + 4 >= MethodContext -> MaxOffset )
+	if ( MethodContext -> CurrentOffset + 4 > MethodContext -> MaxOffset )
 	{
 		
 		Context -> State = kInterpreterState_Error_Bounds;
@@ -539,10 +688,15 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 		
 	}
 	
-	Code = * reinterpret_cast <uint32_t *> ( Context -> Block.Data + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
+	Code = * reinterpret_cast <uint32_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 	MethodContext -> CurrentOffset += 4;
 	
+	uint32_t PreState = Context -> State;
 	
+	EvaluateTermArg ( Interpreter, & Argument );
+	
+	if ( Context -> State != PreState )
+		return;
 	
 };
 
