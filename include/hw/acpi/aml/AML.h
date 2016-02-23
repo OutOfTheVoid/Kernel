@@ -25,6 +25,9 @@ namespace HW
 				
 			} DefinitionBlock;
 			
+			void * ACPIAlloc ( size_t Size );
+			void ACPIFree ( void * Memory );
+			
 		};
 		
 	};

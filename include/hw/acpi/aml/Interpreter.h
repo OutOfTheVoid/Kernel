@@ -118,7 +118,7 @@ namespace HW
 				
 				static void Exec ( InterpreterContext * Context, uint32_t * Status );
 				
-				static void EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result );
+				static void EvaluateTermArg ( InterpreterContext * Context, Object :: ACPIObject * Result );
 				
 				static void IllegalOp ( InterpreterContext * Context );
 				

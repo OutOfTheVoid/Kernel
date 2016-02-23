@@ -102,7 +102,7 @@ void HW::ACPI::AML::Interpreter :: Exec ( InterpreterContext * Context, uint32_t
 	
 };
 
-void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Context, ACPIObject * Result )
+void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Context, Object :: ACPIObject * Result )
 {
 	
 	MethodInvocationContext * MethodContext = & Context -> MethodContextStack [ Context -> MethodContextStackIndex ];
@@ -111,7 +111,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 	{
 		
 		Context -> State = kInterpreterState_Error_Bounds;
-		Result -> Type = kObjectType_Uninitialized;
+		Result -> Type = Object :: kObjectType_Uninitialized;
 		
 		return;
 		
@@ -146,7 +146,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		
 		ByteData = reinterpret_cast <uint8_t *> ( Context -> Block.Data ) [ MethodContext -> CurrentOffset ];
 		
-		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? Object :: kObjectType_Int64 : Object :: kObjectType_Int32;
 		
 		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( ByteData ) : Result -> Value.Int32 = static_cast <uint32_t> ( ByteData );
 		
@@ -158,7 +158,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		{
 			
 			Context -> State = kInterpreterState_Error_Bounds;
-			Result -> Type = kObjectType_Uninitialized;
+			Result -> Type = Object :: kObjectType_Uninitialized;
 			
 			return;
 			
@@ -166,7 +166,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		
 		WordData = * reinterpret_cast <uint16_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 		
-		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? Object :: kObjectType_Int64 : Object :: kObjectType_Int32;
 		
 		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( WordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( WordData );
 		
@@ -178,7 +178,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		{
 			
 			Context -> State = kInterpreterState_Error_Bounds;
-			Result -> Type = kObjectType_Uninitialized;
+			Result -> Type = Object :: kObjectType_Uninitialized;
 			
 			return;
 			
@@ -186,7 +186,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		
 		DWordData = * reinterpret_cast <uint32_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 		
-		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? Object :: kObjectType_Int64 : Object :: kObjectType_Int32;
 		
 		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( DWordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( DWordData );
 		
@@ -198,7 +198,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		{
 			
 			Context -> State = kInterpreterState_Error_Bounds;
-			Result -> Type = kObjectType_Uninitialized;
+			Result -> Type = Object :: kObjectType_Uninitialized;
 			
 			return;
 			
@@ -206,7 +206,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		
 		QWordData = * reinterpret_cast <uint64_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 		
-		Result -> Type = MethodContext -> IntegerSizeIs64 ? kObjectType_Int64 : kObjectType_Int32;
+		Result -> Type = MethodContext -> IntegerSizeIs64 ? Object :: kObjectType_Int64 : Object :: kObjectType_Int32;
 		
 		MethodContext -> IntegerSizeIs64 ? Result -> Value.Int64 = static_cast <uint64_t> ( QWordData ) : Result -> Value.Int32 = static_cast <uint32_t> ( QWordData );
 		
@@ -225,7 +225,7 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 			{
 				
 				Context -> State = kInterpreterState_Error_MalformedConstant;
-				Result -> Type = kObjectType_Uninitialized;
+				Result -> Type = Object :: kObjectType_Uninitialized;
 				
 				return;
 				
@@ -240,13 +240,13 @@ void HW::ACPI::AML::Interpreter :: EvaluateTermArg ( InterpreterContext * Contex
 		{
 			
 			Context -> State = kInterpreterState_Error_Bounds;
-			Result -> Type = kObjectType_Uninitialized;
+			Result -> Type = Object :: kObjectType_Uninitialized;
 			
 			return;
 			
 		}
 		
-		Result -> Type = kObjectType_String;
+		Result -> Type = Object :: kObjectType_String;
 		
 		Result -> Value.String.CString = reinterpret_cast <const char *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( StringFigures.StringOffset ) );
 		Result -> Value.String.Length = StringFigures.StringLength;
@@ -674,7 +674,7 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 	
 	uint8_t Type;
 	uint32_t Code;
-	ACPIObject Argument;
+	Object :: ACPIObject Argument;
 	
 	Type = * reinterpret_cast <uint8_t *> ( reinterpret_cast <char *> ( Context -> Block.Data ) + reinterpret_cast <size_t> ( MethodContext -> CurrentOffset ) );
 	MethodContext -> CurrentOffset ++;
@@ -693,10 +693,14 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 	
 	uint32_t PreState = Context -> State;
 	
-	EvaluateTermArg ( Interpreter, & Argument );
+	EvaluateTermArg ( Context, & Argument );
 	
 	if ( Context -> State != PreState )
 		return;
+	
+	Context -> FatalError.Type = Type;
+	Context -> FatalError.Code = Code;
+	
 	
 };
 

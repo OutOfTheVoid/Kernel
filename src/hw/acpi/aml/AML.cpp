@@ -1,7 +1,9 @@
 #include <hw/acpi/aml/AML.h>
 #include <hw/acpi/aml/NameSpace.h>
 
-void HW::ACPI::AML::Init ( uint32_t * Status )
+#include <mm/KMalloc.h>
+
+void HW::ACPI::AML :: Init ( uint32_t * Status )
 {
 	
 	uint32_t SubStatus = kACPIStatus_Success;
@@ -18,5 +20,19 @@ void HW::ACPI::AML::Init ( uint32_t * Status )
 	}
 	
 	
+	
+};
+
+void * HW::ACPI::AML :: ACPIAlloc ( size_t Size )
+{
+	
+	return mm_kmalloc ( Size );
+	
+};
+
+void HW::ACPI::AML :: ACPIFree ( void * Memory )
+{
+	
+	mm_kfree ( Memory );
 	
 };
