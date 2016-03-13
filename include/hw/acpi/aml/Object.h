@@ -101,7 +101,7 @@ namespace HW
 					
 				} ACPIObject;
 				
-				static bool CoerceObjectToInteger ( ACPIObject * Object, bool Is64Bit );
+				static bool CoerceToInteger ( ACPIObject * Object, bool Is64Bit );
 				
 			};
 			

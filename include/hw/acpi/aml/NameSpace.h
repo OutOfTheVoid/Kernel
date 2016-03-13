@@ -18,19 +18,44 @@ namespace HW
 			{
 			public:
 				
+				typedef uint32_t TableHandle;
+				
 				static void Init ( uint32_t * Status );
+				
+				static TableHandle LoadTable ( DefinitionBlock * DefBlock, uint32_t * Status );
 				
 			private:
 				
-				typedef struct Package_Struct
+				friend class Interpreter;
+				
+				typedef struct NameSpaceObject_Struct
 				{
 					
 					char Name [ 4 ];
 					
-					Package_Struct * Parent;
+					DefinitionBlock * DefBlock;
+					
+					NameSpaceObject_Struct * Parent;
+					
+				} NameSpaceObject;
+				
+				typedef struct Scope_Struct : public NameSpaceObject
+				{
 					
 					
-				} Package;
+					
+				} Scope;
+				
+				typedef struct ControlMethod_Struct : public NameSpaceObject
+				{
+					
+					
+				} ControlMethod;
+				
+				static DefinitionBlock RootDefBlock;
+				static NameSpaceObject RootObject;
+				
+				static void ParseScope (  );
 				
 			};
 			

@@ -1,5 +1,7 @@
 #include <hw/acpi/aml/Interpreter.h>
 
+#include <mm/KMalloc.h>
+
 void ( * HW::ACPI::AML::Interpreter :: OpTable [ 0x100 ] ) ( InterpreterContext * Context );
 void ( * HW::ACPI::AML::Interpreter :: ExtOpTable [ 0x100 ] ) ( InterpreterContext * Context );
 
@@ -92,6 +94,26 @@ void HW::ACPI::AML::Interpreter :: Init ()
 	ExtOpTable [ 0x33 ] = & TimerOp;
 	ExtOpTable [ 0x29 ] = & ToBCDOp;
 	ExtOpTable [ 0x25 ] = & WaitOp;
+	
+};
+
+HW::ACPI::AML::Interpreter :: InterpreterHandle HW::ACPI::AML::Interpreter :: CreateInterpreter ( uint32_t * Status )
+{
+	
+	InterpreterContext * Context = reinterpret_cast <InterpreterContext *> ( mm_kmalloc ( sizeof ( Context ) ) );
+	
+	if ( Context == NULL )
+	{
+		
+		* Status = kInterpreterStatus_Create_Failure_OutOfMemory;
+		
+		return NULL;
+		
+	}
+	
+	Context -> State = kInterpreterState_Idle;
+	
+	return Context;
 	
 };
 
@@ -698,9 +720,19 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 	if ( Context -> State != PreState )
 		return;
 	
+	if ( ! Object :: CoerceToInteger ( & Argument, MethodContext -> IntegerSizeIs64 ) )
+	{
+		
+		Context -> State = kInterpreterState_Error_TypeConversionFailure;
+		
+		return;
+		
+	}
+	
 	Context -> FatalError.Type = Type;
 	Context -> FatalError.Code = Code;
-	
+	MethodContext -> IntegerSizeIs64 ? Context -> FatalError.IntArg64 = Argument.Value.Int64 : Context -> FatalError.IntArg32 = Argument.Value.Int32;
+	Context -> FatalError.ArgIs64Bit = MethodContext -> IntegerSizeIs64;
 	
 };
 

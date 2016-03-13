@@ -15,10 +15,17 @@ namespace HW
 		namespace AML
 		{
 			
+			const uint32_t kDefinitionBlockType_Static = 0;
+			const uint32_t kDefinitionBlockType_Dynamic = 1;
+			const uint32_t kDefinitionBlockType_Root = 2;
+			
 			void Init ( uint32_t * Status );
 			
 			typedef struct
 			{
+				
+				const char * Name;
+				uint32_t Type;
 				
 				void * Data;
 				uint32_t Length;

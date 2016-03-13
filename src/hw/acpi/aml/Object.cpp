@@ -1,6 +1,6 @@
 #include <hw/acpi/aml/Object.h>
 
-bool HW::ACPI::AML::Object :: CoerceObjectToInteger ( ACPIObject * Object, bool Is64Bit )
+bool HW::ACPI::AML::Object :: CoerceToInteger ( ACPIObject * Object, bool Is64Bit )
 {
 	
 	union
@@ -215,7 +215,11 @@ bool HW::ACPI::AML::Object :: CoerceObjectToInteger ( ACPIObject * Object, bool 
 			
 		}
 		
+		return true;
+		
 	}
+	
+	return false;
 	
 };
 

@@ -22,7 +22,17 @@ namespace HW
 			{
 			public:
 				
+				static const uint32_t kInterpreterStatus_Success = 0;
+				
+				static const uint32_t kInterpreterStatus_Create_Failure_OutOfMemory = 1;
+				
+				typedef void * InterpreterHandle;
+				
 				static void Init ();
+				
+				static InterpreterHandle CreateInterpreter ( uint32_t * Status );
+				
+				static void RunControlMethod (  );
 				
 			private:
 				
@@ -43,10 +53,13 @@ namespace HW
 				
 				static const uint32_t kInterpreterState_Executing = 1;
 				
-				static const uint32_t kInterpreterState_Error_Unknown = 2;
-				static const uint32_t kInterpreterState_Error_Bounds = 3;
-				static const uint32_t kInterpreterState_Error_IllegalOpcode = 4;
-				static const uint32_t kInterpreterState_Error_MalformedConstant = 5;
+				static const uint32_t kInterpreterState_Error_Thrown = 2;
+				
+				static const uint32_t kInterpreterState_Error_Unknown = 3;
+				static const uint32_t kInterpreterState_Error_Bounds = 4;
+				static const uint32_t kInterpreterState_Error_IllegalOpcode = 5;
+				static const uint32_t kInterpreterState_Error_MalformedConstant = 6;
+				static const uint32_t kInterpreterState_Error_TypeConversionFailure = 7;
 				
 				// Flow control modes
 				
