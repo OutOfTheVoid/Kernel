@@ -14,7 +14,7 @@ ASM_LINKAGE void mt_tasking_reaperEntry ();
 void MT::Tasking::Reaper :: Init ()
 {
 	
-	ReaperTask = Task :: CreateKernelTask ( "Task Reaper", reinterpret_cast <void *> ( & mt_tasking_reaperEntry ), 0x1000, 0 );
+	ReaperTask = Task :: CreateKernelTask ( "Task Reaper", reinterpret_cast <void *> ( & mt_tasking_reaperEntry ), 0x1000, MT::Tasking::Task::kPriority_RealTime_Max, MT::Tasking::Task::kPriority_RealTime_Max );
 	
 	ReaperTask -> Flags |= Task :: kFlag_Suspended;
 	

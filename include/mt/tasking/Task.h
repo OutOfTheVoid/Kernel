@@ -49,6 +49,18 @@ namespace MT
 			static const uint32_t kState_KernelSelectable = 0x0004;
 			static const uint32_t kState_Dead = 0x0008;
 			static const uint32_t kState_Idle = 0x0010;
+			static const uint32_t kState_RunnableYielded = 0x0020;
+			
+			static const uint32_t kPriority_RealTime_Min = 4;
+			static const uint32_t kPriority_RealTime_Max = 0;
+			
+			static const uint32_t kPriority_System_Min = 9;
+			static const uint32_t kPriority_System_Max = 5;
+			
+			static const uint32_t kPriority_HighUser_Min = 14;
+			static const uint32_t kPriority_HighUser_Max = 10;
+			static const uint32_t kPriority_LowUser_Min = 15;
+			static const uint32_t kPriority_LowUser_Max = 19;
 			
 			typedef struct Task_Struct
 			{
@@ -70,7 +82,9 @@ namespace MT
 				uint32_t Privelege;
 				
 				uint32_t Priority;
-				uint32_t RunOut;
+				
+				uint32_t MaxPriority;
+				uint32_t MinPriority;
 				
 				struct Task_Struct * Next;
 				struct Task_Struct * Previous;
@@ -80,7 +94,7 @@ namespace MT
 				
 			} Task_t;
 			
-			static Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority );
+			static Task_t * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority );
 			
 			static void DestroyKernelTask ( Task_t * ToDestroy );
 			

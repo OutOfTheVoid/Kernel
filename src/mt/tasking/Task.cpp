@@ -17,7 +17,7 @@
 
 ASM_LINKAGE void interrupt_ISRCommonHandlerInjectionReturn ();
 
-MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t Priority )
+MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority )
 {
 	
 	Task_t * New = reinterpret_cast <MT::Tasking::Task :: Task_t *> ( mm_kmalloc ( sizeof ( Task :: Task_t ) ) );
@@ -33,7 +33,9 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	New -> State = kState_Runnable;
 	New -> User = 0;
 	New -> Privelege = kPrivelege_Exec | kPrivelege_IO;
-	New -> Priority = Priority;
+	New -> Priority = MaxPriority;
+	New -> MaxPriority = MaxPriority;
+	New -> MinPriority = MinPriority;
 	
 	New -> MemoryMapping = NULL;
 	New -> MemorySpace = NULL;

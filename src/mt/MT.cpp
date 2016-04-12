@@ -115,7 +115,7 @@ void MT :: MTInit ()
 	Timing::TaskSleep :: Init ();
 	
 	Tasking::Scheduler :: Init ();
-	Tasking::Scheduler :: PInit ();
+	Tasking::Scheduler :: PInit ( Tasking::Task :: kPriority_System_Max );
 	
 	uint32_t I;
 	

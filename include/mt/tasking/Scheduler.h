@@ -20,7 +20,7 @@ namespace MT
 			static const double kSchedulingQuantumMS = 10.0;
 			
 			static void Init ();
-			static void PInit ();
+			static void PInit ( uint32_t Priority );
 			
 			static void Schedule ();
 			
@@ -32,6 +32,8 @@ namespace MT
 			
 			static void KillTask ( Task :: Task_t * ToKill );
 			static void KillCurrentTask ();
+			
+			static void YieldCurrentTask ();
 			
 			static Task :: Task_t * GetNextDeadTask ();
 			
@@ -50,12 +52,12 @@ namespace MT
 			friend class Task;
 			
 			static Task :: Task_t * TaskTable [ 0x20 ];
-			static Synchronization::Spinlock :: Spinlock_t TTLock;
+			static Synchronization::Spinlock :: Spinlock_t TaskTableLock;
 			
 			static Task :: Task_t * ReapingListHead;
-			static Synchronization::Spinlock :: Spinlock_t RLLock;
+			static Synchronization::Spinlock :: Spinlock_t ReapListLock;
 			
-			static Synchronization::Spinlock :: Spinlock_t TIDLock;
+			static Synchronization::Spinlock :: Spinlock_t TaskIDLock;
 			static uint64_t MaxID;
 			
 			static uint64_t GetNewTaskID ();

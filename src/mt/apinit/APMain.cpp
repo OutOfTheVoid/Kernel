@@ -39,7 +39,7 @@ void mt_apinit_apmain ()
 	}
 	
 	Interrupt :: APInit ();
-	MT::Tasking::Scheduler :: PInit ();
+	MT::Tasking::Scheduler :: PInit ( MT::Tasking::Task :: kPriority_System_Max );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

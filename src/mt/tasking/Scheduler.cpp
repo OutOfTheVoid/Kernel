@@ -22,13 +22,13 @@
 #include <cpputil/Linkage.h>
 #include <cpputil/Unused.h>
 
-MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TIDLock = MT::Synchronization::Spinlock :: Initializer ();
+MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TaskIDLock = MT::Synchronization::Spinlock :: Initializer ();
 uint64_t MT::Tasking::Scheduler :: MaxID = 0;
 
 MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: ReapingListHead = NULL;
-MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: RLLock = MT::Synchronization::Spinlock :: Initializer ();
+MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: ReapListLock = MT::Synchronization::Spinlock :: Initializer ();
 
-MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TTLock = MT::Synchronization::Spinlock :: Initializer ();
+MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Scheduler :: TaskTableLock = MT::Synchronization::Spinlock :: Initializer ();
 MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: TaskTable [ 0x20 ];
 
 ASM_LINKAGE void mt_tasking_schedulerInterrupt ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
@@ -45,7 +45,7 @@ void MT::Tasking::Scheduler :: Init ()
 	
 };
 
-void MT::Tasking::Scheduler :: PInit ()
+void MT::Tasking::Scheduler :: PInit ( uint32_t Priority )
 {
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
@@ -71,7 +71,7 @@ void MT::Tasking::Scheduler :: PInit ()
 	CPUInitTask -> State = MT::Tasking::Task :: kState_Runnable;
 	CPUInitTask -> User = 0;
 	CPUInitTask -> Privelege = MT::Tasking::Task :: kPrivelege_Exec | MT::Tasking::Task :: kPrivelege_IO;
-	CPUInitTask -> Priority = 0;
+	CPUInitTask -> Priority = Priority;
 	CPUInitTask -> Next = CPUInitTask;
 	CPUInitTask -> Previous = CPUInitTask;
 	
@@ -88,7 +88,7 @@ void MT::Tasking::Scheduler :: PInit ()
 	memcpy ( reinterpret_cast <void *> ( IdleName ), "CPU Idle ", 9 );
 	memcpy ( reinterpret_cast <void *> ( & IdleName [ 9 ] ), IDN, IDNLength + 1 );
 	
-	Task :: Task_t * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( IdleName ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF );
+	Task :: Task_t * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( IdleName ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF, 0xFFFFFFFF );
 	
 	ThisCPU -> IdleTask = IdleTask;
 	
@@ -114,15 +114,47 @@ void MT::Tasking::Scheduler :: Schedule ()
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TaskTableLock );
 	
 	Task :: Task_t * Last = ThisCPU -> CurrentTask;
 	uint32_t Priority = Last -> Priority;
+	
+	
 	
 	if ( Last != ThisCPU -> IdleTask )
 	{
 		
 		if ( Last -> State == Task :: kState_Runnable )
+		{
+			
+			if ( Last -> Priority > Task :: kPriority_RealTime_Min )
+			{
+				
+				if ( Last -> Priority < Last -> MinPriority )
+					Last -> Priority ++;
+				
+			}
+			
+			if ( TaskTable [ Priority ] != NULL )
+			{
+				
+				TaskTable [ Priority ] -> Previous -> Next = Last;
+				Last -> Previous = TaskTable [ Priority ] -> Previous;
+				TaskTable [ Priority ] -> Previous = Last;
+				Last -> Next = TaskTable [ Priority ];
+				
+			}
+			else
+			{
+				
+				TaskTable [ Priority ] = Last;
+				Last -> Next = Last;
+				Last -> Previous = Last;
+				
+			}
+			
+		}
+		else if ( Last -> State == Task :: kState_RunnableYielded )
 		{
 			
 			if ( TaskTable [ Priority ] != NULL )
@@ -142,6 +174,13 @@ void MT::Tasking::Scheduler :: Schedule ()
 				Last -> Previous = Last;
 				
 			}
+			
+		}
+		else
+		{
+			
+			if ( ( Last -> Priority > Last -> MaxPriority ) && ( Last -> Priority > Task :: kPriority_RealTime_Min ) )
+				Last -> Priority --;
 			
 		}
 		
@@ -193,7 +232,7 @@ void MT::Tasking::Scheduler :: Schedule ()
 	else if ( Last -> State == Task :: kState_Dead )
 	{
 		
-		Synchronization::Spinlock :: SpinAcquire ( & RLLock );
+		Synchronization::Spinlock :: SpinAcquire ( & ReapListLock );
 		
 		if ( ReapingListHead != NULL )
 		{
@@ -210,13 +249,13 @@ void MT::Tasking::Scheduler :: Schedule ()
 			
 		}
 		
-		Synchronization::Spinlock :: Release ( & RLLock );
+		Synchronization::Spinlock :: Release ( & ReapListLock );
 		
 		Reaper :: Signal ();
 		
 	}
 	
-	Synchronization::Spinlock :: Release ( & TTLock );
+	Synchronization::Spinlock :: Release ( & TaskTableLock );
 	
 	if ( Next != Last )
 		Switcher :: SwitchTo ( Next, Last );
@@ -234,29 +273,11 @@ void MT::Tasking::Scheduler :: Schedule ()
 void MT::Tasking::Scheduler :: AddTask ( Task :: Task_t * ToAdd )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TaskTableLock );
 	
-	uint32_t Priority = ToAdd -> Priority;
+	AddTaskInternal ( ToAdd );
 	
-	if ( TaskTable [ ToAdd -> Priority ] != NULL )
-	{
-		
-		TaskTable [ Priority ] -> Previous -> Next = ToAdd;
-		ToAdd -> Previous = TaskTable [ Priority ] -> Previous;
-		TaskTable [ Priority ] -> Previous = ToAdd;
-		ToAdd -> Next = TaskTable [ Priority ];
-		
-	}
-	else
-	{
-		
-		TaskTable [ Priority ] = ToAdd;
-		ToAdd -> Next = ToAdd;
-		ToAdd -> Previous = ToAdd;
-		
-	}
-	
-	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	MT::Synchronization::Spinlock :: Release ( & TaskTableLock );
 	
 };
 
@@ -288,22 +309,22 @@ void MT::Tasking::Scheduler :: AddTaskInternal ( Task :: Task_t * ToAdd )
 void MT::Tasking::Scheduler :: KillTask ( Task :: Task_t * ToKill )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TaskTableLock );
 	
 	ToKill -> State = Task :: kState_Dead;
 	
-	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	MT::Synchronization::Spinlock :: Release ( & TaskTableLock );
 	
 };
 
 void MT::Tasking::Scheduler :: SuspendTask ( Task :: Task_t * ToSuspend )
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TTLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TaskTableLock );
 	
 	ToSuspend -> State = Task :: kState_KernelSelectable;
 	
-	MT::Synchronization::Spinlock :: Release ( & TTLock );
+	MT::Synchronization::Spinlock :: Release ( & TaskTableLock );
 	
 };
 
@@ -316,6 +337,22 @@ void MT::Tasking::Scheduler :: KillCurrentTask ()
 	Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
 	
 	ThisTask -> State = Task :: kState_Dead;
+	
+	Interrupt::IState :: WriteBlock ( ReInt );
+	
+	Preemt ();
+	
+};
+
+void MT::Tasking::Scheduler :: YieldCurrentTask ()
+{
+	
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
+	
+	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
+	Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
+	
+	ThisTask -> State = Task :: kState_RunnableYielded;
 	
 	Interrupt::IState :: WriteBlock ( ReInt );
 	
@@ -344,7 +381,7 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 	
 	Task :: Task_t * DeadTask = NULL;
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & RLLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & ReapListLock );
 	
 	if ( ReapingListHead != NULL )
 	{
@@ -354,7 +391,7 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 		
 	}
 	
-	MT::Synchronization::Spinlock :: Release ( & RLLock );
+	MT::Synchronization::Spinlock :: Release ( & ReapListLock );
 	
 	return DeadTask;
 	
@@ -363,12 +400,12 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Scheduler :: GetNextDeadTask ()
 uint64_t MT::Tasking::Scheduler :: GetNewTaskID ()
 {
 	
-	MT::Synchronization::Spinlock :: SpinAcquire ( & TIDLock );
+	MT::Synchronization::Spinlock :: SpinAcquire ( & TaskIDLock );
 	
 	uint64_t Return = MaxID;
 	MaxID ++;
 	
-	MT::Synchronization::Spinlock :: Release ( & TIDLock );
+	MT::Synchronization::Spinlock :: Release ( & TaskIDLock );
 	
 	return Return;
 	
