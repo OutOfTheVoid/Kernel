@@ -59,8 +59,8 @@ namespace MT
 			
 			static const uint32_t kPriority_HighUser_Min = 14;
 			static const uint32_t kPriority_HighUser_Max = 10;
-			static const uint32_t kPriority_LowUser_Min = 15;
-			static const uint32_t kPriority_LowUser_Max = 19;
+			static const uint32_t kPriority_LowUser_Min = 19;
+			static const uint32_t kPriority_LowUser_Max = 15;
 			
 			typedef struct Task_Struct
 			{
@@ -86,8 +86,8 @@ namespace MT
 				uint32_t MaxPriority;
 				uint32_t MinPriority;
 				
-				struct Task_Struct * Next;
-				struct Task_Struct * Previous;
+				volatile struct Task_Struct * Next;
+				volatile struct Task_Struct * Previous;
 				
 				MM::Paging::PageTable * MemoryMapping;
 				MM::Paging::AddressSpace * MemorySpace;

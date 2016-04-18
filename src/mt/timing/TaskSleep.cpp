@@ -116,7 +116,7 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
 	
-	Tasking::Task :: Task_t * PendingTask = ThisCPU -> CurrentTask;
+	volatile Tasking::Task :: Task_t * PendingTask = ThisCPU -> CurrentTask;
 	PendingTask -> State = Tasking::Task :: kState_Blocked;
 	NewNode -> PendingTask = PendingTask;
 	
@@ -142,9 +142,9 @@ void MT::Timing::TaskSleep :: SleepCurrent ( double Milliseconds )
 	
 	MT::Synchronization::Spinlock :: Release ( & TimerLock );
 	
-	Interrupt::IState :: WriteBlock ( ReInt );
-	
 	__asm__ volatile ( "int 0x20" );
+	
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
 };
 
@@ -199,8 +199,10 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 	MT::Synchronization::Spinlock :: Release ( & TreeLock );
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & TimerLock );
+	
 	SetNextInterrupt ( NextInterruptUpdated );
 	NextInterrupt = NextInterruptUpdated;
+	
 	MT::Synchronization::Spinlock :: Release ( & TimerLock );
 	
 	SleepInfo * Current = NULL;
@@ -210,12 +212,12 @@ void MT::Timing::TaskSleep :: OnInterrupt ()
 		
 		Current = WakeHead;
 		
-		Tasking::Task :: Task_t * WakeTask = Current -> PendingTask;
+		volatile Tasking::Task :: Task_t * WakeTask = Current -> PendingTask;
 		WakeHead = Current -> Right;
 		DestroyNode ( Current );
 		
 		WakeTask -> State = Tasking::Task :: kState_Runnable;
-		MT::Tasking::Scheduler :: AddTask ( WakeTask );
+		MT::Tasking::Scheduler :: AddTask ( const_cast <Tasking::Task :: Task_t *> ( WakeTask ) );
 		
 	}
 	

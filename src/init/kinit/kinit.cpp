@@ -3,17 +3,22 @@
 #include <hw/video/VText.h>
 #include <hw/ACPI/ACPI.h>
 
+#include <hw/cpu/Processor.h>
+
 #include <system/func/kprintf.h>
 #include <system/func/panic.h>
 
 #include <MM/MM.h>
 
 #include <interrupt/Interrupt.h>
+#include <interrupt/IState.h>
 
 #include <mt/MT.h>
 
 #include <mt/tasking/Task.h>
 #include <mt/tasking/Scheduler.h>
+
+#include <mt/timing/TaskSleep.h>
 
 #include <mm/PMalloc.h>
 #include <mm/paging/Invalidation.h>
@@ -56,8 +61,8 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MTInit ();
 	FS :: Init ( MultibootInfo );
 	
-	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, MT::Tasking::Task :: kPriority_System_Max, MT::Tasking::Task :: kPriority_System_Min );
-	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, MT::Tasking::Task :: kPriority_System_Max, MT::Tasking::Task :: kPriority_System_Min );
+	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, MT::Tasking::Task :: kPriority_System_Max + 2, MT::Tasking::Task :: kPriority_LowUser_Min );
+	MT::Tasking::Task :: Task_t * NewTask = MT::Tasking::Task :: CreateKernelTask ( "Test", reinterpret_cast <void *> ( & testKernelTask ), 0x2000, MT::Tasking::Task :: kPriority_System_Max, MT::Tasking::Task :: kPriority_LowUser_Min );
 	
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	MT::Tasking::Scheduler :: AddTask ( NewTask2 );
@@ -66,68 +71,33 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 };
 
-void DirTree ( const char * PreviousPath, uint32_t Level )
+void testKernelTask ()
 {
-	
-	uint32_t PreviousPathLength = strlen ( PreviousPath );
-	
-	FS :: FSStatus_t Status = FS :: kFSStatus_Success;
-	uint32_t Index = 0;
 	
 	while ( true )
 	{
 		
-		const char * Name;
+		for ( int i = 0; i < 100000000; i ++ )
+			;
 		
-		FS :: Enumerate ( PreviousPath, Index, & Name, & Status );
+		volatile uint32_t Prio;
 		
-		if ( Status != FS :: kFSStatus_Success )
-			return;
+		bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 		
-		for ( uint32_t I = 0; I < Level; I ++ )
-			system_func_kprintf ( "|   " );
-			
-		system_func_kprintf ( "%s\n", Name, Name );
+		::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
+		volatile MT::Tasking::Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
 		
-		uint32_t NameLength = strlen ( Name );
+		uint32_t MaxPrio;
+		uint32_t MinPrio;
 		
-		char SubName [ PreviousPathLength + NameLength + 2 ];
+		Prio = ThisTask -> Priority;
+		MaxPrio = ThisTask -> MaxPriority;
+		MinPrio = ThisTask -> MinPriority;
 		
-		strcpy ( SubName, PreviousPath );
-		SubName [ PreviousPathLength - 1 ] = '/';
-		strcpy ( & SubName [ PreviousPathLength ], Name );
+		system_func_kprintf ( "        [A: %u of <%u, %u>]\n", Prio, MinPrio, MaxPrio );
 		
-		DirTree ( SubName, Level + 1 );
+		Interrupt::IState :: WriteBlock ( ReInt );
 		
-		Index ++;
-		
-	}
-	
-};
-
-void testKernelTask ()
-{
-	
-	DirTree ( "", 0 );
-	
-	uint8_t Buff [ 0x1000 ];
-	
-	memzero ( Buff, 0x1000 );
-	
-	FS :: FSStatus_t Status;
-	FS :: FSNode * File = NULL;
-	FS :: Open ( "/Mount/initrd/testFolder/test3.txt", & File, & Status );
-	
-	if ( Status == FS :: kFSStatus_Success )
-	{
-		
-		FS :: Read ( File, Buff, 0, 0x1000, & Status );
-		
-		if ( Status == FS :: kFSStatus_Success )
-			system_func_kprintf ( "File contents of test3.txt: \"%s\"\n", Buff );
-		
-		FS :: Close ( File, & Status );
-	
 	}
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
@@ -137,24 +107,44 @@ void testKernelTask ()
 void testKernelTask2 ()
 {
 	
-	uint8_t Buff [ 0x1000 ];
+	bool ReInt = Interrupt::IState :: ReadAndSetBlock ();
 	
-	memzero ( Buff, 0x1000 );
+	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
+	volatile MT::Tasking::Task :: Task_t * ThisTask = ThisCPU -> CurrentTask;
 	
-	FS :: FSStatus_t Status;
-	FS :: FSNode * File = NULL;
-	FS :: Open ( "/Mount/initrd/test.txt", & File, & Status );
+	Interrupt::IState :: WriteBlock ( ReInt );
 	
-	if ( Status == FS :: kFSStatus_Success )
+	while ( true )
 	{
 		
-		FS :: Read ( File, Buff, 0, 0x1000, & Status );
+		system_func_kprintf ( "\n\n" );
 		
-		if ( Status == FS :: kFSStatus_Success )
-			system_func_kprintf ( "File contents of test.txt: \"%s\"\n", Buff );
+		volatile uint32_t Prio = 0;
 		
-		FS :: Close ( File, & Status );
-	
+		while ( Prio < MT::Tasking::Task :: kPriority_LowUser_Min )
+		{
+			
+			ReInt = Interrupt::IState :: ReadAndSetBlock ();
+			
+			uint32_t MaxPrio;
+			uint32_t MinPrio;
+			
+			Prio = ThisTask -> Priority;
+			MaxPrio = ThisTask -> MaxPriority;
+			MinPrio = ThisTask -> MinPriority;
+			
+			Interrupt::IState :: WriteBlock ( ReInt );
+			
+			system_func_kprintf ( "(B: %u of <%u, %u>)\n", Prio, MinPrio, MaxPrio );
+			
+			for ( int i = 0; i < 100000000; i ++ )
+				;
+			
+		}
+		
+		for ( int q = 0; q < 4; q ++ )
+			MT::Timing::TaskSleep :: SleepCurrent ( 250 );
+		
 	}
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();

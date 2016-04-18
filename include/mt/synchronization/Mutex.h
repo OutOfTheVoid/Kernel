@@ -25,9 +25,9 @@ namespace MT
 				
 				bool Locked;
 				
-				Tasking::Task :: Task_t * Owner;
-				Tasking::Task :: Task_t * FirstWaiter;
-				Tasking::Task :: Task_t * LastWaiter;
+				volatile Tasking::Task :: Task_t * Owner;
+				volatile Tasking::Task :: Task_t * FirstWaiter;
+				volatile Tasking::Task :: Task_t * LastWaiter;
 				
 			} Mutex_t;
 			

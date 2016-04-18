@@ -6,6 +6,10 @@
 
 #include <hw/cpu/IO.h>
 
+/*
+* HPET: High Precision Event Timer ( Table ). ACPI Table defining HPET Timers.
+*/
+
 namespace HW
 {
 	

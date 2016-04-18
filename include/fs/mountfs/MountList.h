@@ -27,8 +27,10 @@ namespace FS
 		{
 		public:
 			
+			// Initialize the mount list.
 			static void Init ();
 			
+			// Add a filesystem driver to the list for the ability to mount.
 			static void AddFileSystem ( FileSystemEntry * Entry );
 			
 		private:

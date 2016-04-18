@@ -11,7 +11,7 @@
 #include <util/Vector.h>
 
 /*
-* Initialization and amanagement code for the Mount file system.
+* Initialization and amanagement code for the Mount file system. Essentially a virtual folder for containing mount points.
 */
 
 namespace FS
@@ -31,9 +31,13 @@ namespace FS
 			static const MountStatus_t kMountStatus_Failure_MountFailure = 2;
 			static const MountStatus_t kMountStatus_Failure_VFSStaging = 3;
 			
+			// Initilize the mount filesystem.
 			static void Init ();
 			
+			// Mount a device.
 			static void MountDevice ( HW::Storage::StorageDevice * Device, MountStatus_t * Status );
+			
+			// Unmount a device.
 			static void UnmountDevice ( HW::Storage::StorageDevice * Device, MountStatus_t * Status );
 			
 		private:

@@ -6,10 +6,19 @@
 
 #include <hw/cpu/Math.h>
 
-ASM_LINKAGE void mt_tasking_switchTask ( void ** OldProcessStack, void * NewProcessStack );
+ASM_LINKAGE void mt_tasking_switchTask ( void * volatile * OldProcessStack, volatile void * NewProcessStack );
 ASM_LINKAGE void mt_tasking_switchTaskInitial ();
 
-void MT::Tasking::Switcher :: SwitchTo ( Task :: Task_t * NewTask, Task :: Task_t * OldTask )
+extern void * mt_tasking_switcher_TaskListLockRef;
+
+void MT::Tasking::Switcher :: Init ( Synchronization::Spinlock :: Spinlock_t * TaskTableLock )
+{
+	
+	mt_tasking_switcher_TaskListLockRef = reinterpret_cast <void *> ( & TaskTableLock -> Lock );
+	
+};
+
+void MT::Tasking::Switcher :: SwitchTo ( volatile Task :: Task_t * NewTask, volatile Task :: Task_t * OldTask )
 {
 	
 	if ( OldTask -> Flags & Task :: kFlag_Math )
@@ -18,7 +27,7 @@ void MT::Tasking::Switcher :: SwitchTo ( Task :: Task_t * NewTask, Task :: Task_
 		if ( ::HW::CPU::Math :: GetTest () )
 		{
 			
-			::HW::CPU::Math :: SaveState ( & OldTask -> Math );
+			::HW::CPU::Math :: SaveState ( const_cast < ::HW::CPU::Math :: MathState *> ( & OldTask -> Math ) );
 			::HW::CPU::Math :: ClearTest ();
 			
 		}
@@ -37,7 +46,7 @@ void MT::Tasking::Switcher :: SwitchTo ( Task :: Task_t * NewTask, Task :: Task_
 			
 		}
 		else
-			::HW::CPU::Math :: LoadState ( & NewTask -> Math );
+			::HW::CPU::Math :: LoadState ( const_cast < ::HW::CPU::Math :: MathState *> ( & NewTask -> Math ) );
 		
 	}
 	

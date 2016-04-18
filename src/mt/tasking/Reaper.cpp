@@ -70,6 +70,8 @@ void MT::Tasking::Reaper :: Run ()
 			
 		}
 		
+		system_func_kprintf ( "Reaper suspending!\n" );
+		
 		Scheduler :: SuspendCurrentTask ();
 		
 	};

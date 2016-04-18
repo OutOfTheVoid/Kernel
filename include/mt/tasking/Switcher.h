@@ -4,6 +4,8 @@
 #include <mt/tasking/Tasking.h>
 #include <mt/tasking/Task.h>
 
+#include <mt/Synchronization/Spinlock.h>
+
 namespace MT
 {
 	
@@ -14,7 +16,8 @@ namespace MT
 		{
 		public:
 			
-			static void SwitchTo ( Task :: Task_t * NewTask, Task :: Task_t * OldTask );
+			static void Init ( Synchronization::Spinlock :: Spinlock_t * TaskTableLock );
+			static void SwitchTo ( volatile Task :: Task_t * NewTask, volatile Task :: Task_t * OldTask );
 			
 		};
 		

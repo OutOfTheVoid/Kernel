@@ -25,7 +25,7 @@ namespace MT
 			static void Schedule ();
 			
 			static void AddTask ( Task :: Task_t * ToAdd );
-			static void AddTaskInternal ( Task :: Task_t * ToAdd );
+			static void AddTaskInternal ( volatile Task :: Task_t * ToAdd );
 			
 			static void SuspendTask ( Task :: Task_t * ToSuspend );
 			static void SuspendCurrentTask ();
@@ -51,10 +51,10 @@ namespace MT
 			
 			friend class Task;
 			
-			static Task :: Task_t * TaskTable [ 0x20 ];
+			static volatile Task :: Task_t * TaskTable [ 0x20 ];
 			static Synchronization::Spinlock :: Spinlock_t TaskTableLock;
 			
-			static Task :: Task_t * ReapingListHead;
+			static volatile Task :: Task_t * ReapingListHead;
 			static Synchronization::Spinlock :: Spinlock_t ReapListLock;
 			
 			static Synchronization::Spinlock :: Spinlock_t TaskIDLock;

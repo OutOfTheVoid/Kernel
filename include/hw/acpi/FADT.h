@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+/*
+* Fixed ACPI Description Table. Contains base definitions for ACPI and chipset control.
+*/
+
 namespace HW
 {
 	

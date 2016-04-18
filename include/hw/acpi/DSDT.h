@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+/*
+* DSDT: Differentiated System Descriptor Table. Essentially, just an AML block for the global ACPI namespace.
+*/
+
 namespace HW
 {
 	

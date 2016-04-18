@@ -54,9 +54,9 @@ namespace HW
 				
 				MT::Synchronization::Spinlock :: Spinlock_t Lock;
 				
-				MT::Tasking::Task :: Task_t * IdleTask;
+				volatile MT::Tasking::Task :: Task_t * IdleTask;
 				
-				MT::Tasking::Task :: Task_t * CurrentTask;
+				volatile MT::Tasking::Task :: Task_t * CurrentTask;
 				
 				MT::Synchronization::Spinlock :: Spinlock_t * ReleaseOnSchedule;
 				
