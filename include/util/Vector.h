@@ -7,6 +7,8 @@
 
 #include <cpputil/Unused.h>
 
+#include <stdint.h>
+
 template <typename T>
 class Vector
 {

@@ -29,6 +29,8 @@
 #include <fs/vfs/FileSystem.h>
 #include <fs/initrd/InitRamDisk.h>
 
+#include <system/System.h>
+
 #include <util/string/string.h>
 
 ASM_LINKAGE void hw_cpu_hang ();
@@ -59,6 +61,9 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT :: MPInit ();
 	Interrupt :: Init ();
 	MT :: MTInit ();
+	
+	System :: Init ();
+	
 	FS :: Init ( MultibootInfo );
 	
 	MT::Tasking::Task :: Task_t * NewTask2 = MT::Tasking::Task :: CreateKernelTask ( "Test2", reinterpret_cast <void *> ( & testKernelTask2 ), 0x2000, MT::Tasking::Task :: kPriority_System_Max + 2, MT::Tasking::Task :: kPriority_LowUser_Min );

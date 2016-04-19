@@ -36,7 +36,10 @@ void MM :: Init ( multiboot_info_t * MultibootInfo, multiboot_info_t ** NewMulti
 	
 	Paging::PFA :: Init2 ( MultibootInfo, MBICopySize );
 	
-	Segmentation::GDT :: Init ( 3 );
+	Segmentation::GDT :: Init ( 5 );
+	
+	Segmentation::GDT :: SetCodeEntry32 ( 3, 0, 0xFFFFFFFF, 3, true );
+	Segmentation::GDT :: SetDataEntry32 ( 4, 0, 0xFFFFFFFF, 3, true );
 	
 	Segmentation::GDT :: Swap ();
 	
