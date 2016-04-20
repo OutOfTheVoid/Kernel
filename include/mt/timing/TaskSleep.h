@@ -31,7 +31,7 @@ namespace MT
 			typedef struct SleepInfo_Struct
 			{
 				
-				volatile Tasking::Task :: Task_t * PendingTask;
+				volatile Tasking :: Task * PendingTask;
 				
 				uint64_t ThresholdNS;
 				

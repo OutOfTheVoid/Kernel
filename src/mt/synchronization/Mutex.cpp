@@ -14,7 +14,7 @@ void MT::Synchronization::Mutex :: Acquire ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	volatile Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
+	volatile Tasking::Task * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
 	
 	if ( Lock -> Locked )
 	{
@@ -60,7 +60,7 @@ bool MT::Synchronization::Mutex :: TryAcquire ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	volatile Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
+	volatile Tasking::Task * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
 	
 	if ( Lock -> Locked )
 	{
@@ -85,7 +85,7 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 	
 	Spinlock :: SpinAcquire ( & Lock -> MLock );
 	
-	volatile Tasking::Task :: Task_t * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
+	volatile Tasking::Task * CurrentTask = ::HW::CPU::Processor :: GetCurrent () -> CurrentTask;
 	
 	if ( ! Lock -> Locked )
 		KPANIC ( "Unheld Mutex released!" );
@@ -96,7 +96,7 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 	if ( Lock -> FirstWaiter != NULL )
 	{
 		
-		volatile Tasking::Task :: Task_t * NextOwner = Lock -> FirstWaiter;
+		volatile Tasking::Task * NextOwner = Lock -> FirstWaiter;
 		Lock -> FirstWaiter = NextOwner -> Next;
 		
 		if ( Lock -> FirstWaiter == NULL )
@@ -105,7 +105,7 @@ void MT::Synchronization::Mutex :: Release ( Mutex_t * Lock )
 		NextOwner -> State = Tasking::Task :: kState_Runnable;
 		Lock -> Owner = NextOwner;
 		
-		Tasking::Scheduler :: AddTask ( const_cast <Tasking::Task :: Task_t *> ( NextOwner ) );
+		Tasking::Scheduler :: AddTask ( const_cast <Tasking::Task *> ( NextOwner ) );
 		
 	}
 	else
@@ -131,7 +131,7 @@ void MT::Synchronization::Mutex :: ReleaseFromWrongThread ( Mutex_t * Lock )
 	if ( Lock -> FirstWaiter != NULL )
 	{
 		
-		volatile Tasking::Task :: Task_t * NextOwner = Lock -> FirstWaiter;
+		volatile Tasking::Task * NextOwner = Lock -> FirstWaiter;
 		Lock -> FirstWaiter = NextOwner -> Next;
 		
 		if ( Lock -> FirstWaiter == NULL )
@@ -140,7 +140,7 @@ void MT::Synchronization::Mutex :: ReleaseFromWrongThread ( Mutex_t * Lock )
 		NextOwner -> State = Tasking::Task :: kState_Runnable;
 		Lock -> Owner = NextOwner;
 		
-		Tasking::Scheduler :: AddTask ( const_cast <Tasking::Task :: Task_t *> ( NextOwner ) );
+		Tasking::Scheduler :: AddTask ( const_cast <Tasking::Task *> ( NextOwner ) );
 		
 	}
 	else

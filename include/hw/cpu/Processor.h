@@ -51,12 +51,13 @@ namespace HW
 				uint8_t Index;
 				
 				MT::HW::TSS :: TSS_t CrossPrivelegeInterruptTSS;
+				uint16_t CrossPrivelegeInterruptTSSegment;
 				
 				MT::Synchronization::Spinlock :: Spinlock_t Lock;
 				
-				volatile MT::Tasking::Task :: Task_t * IdleTask;
+				volatile MT::Tasking :: Task * IdleTask;
 				
-				volatile MT::Tasking::Task :: Task_t * CurrentTask;
+				volatile MT::Tasking :: Task * CurrentTask;
 				
 				MT::Synchronization::Spinlock :: Spinlock_t * ReleaseOnSchedule;
 				

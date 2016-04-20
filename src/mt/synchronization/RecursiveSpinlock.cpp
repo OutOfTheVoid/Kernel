@@ -4,6 +4,8 @@
 
 #include <cpputil/Linkage.h>
 
+#include <hw/cpu/Processor.h>
+
 ASM_LINKAGE uint32_t mt_synchronization_tryslock ( uint32_t * Lock );
 ASM_LINKAGE void mt_synchronization_pwacquirelock ( uint32_t * Lock );
 ASM_LINKAGE void mt_synchronization_release ( uint32_t * Lock );

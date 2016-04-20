@@ -4,8 +4,6 @@
 #include <mt/synchronization/Synchronization.h>
 #include <mt/synchronization/Spinlock.h>
 
-#include <hw/cpu/Processor.h>
-
 #include <stdint.h>
 
 namespace MT

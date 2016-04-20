@@ -1,13 +1,15 @@
 #include <mt/apinit/APMain.h>
 #include <mt/synchronization/Spinlock.h>
 
+#include <mt/tasking/Scheduler.h>
+
+#include <mt/hw/TSS.h>
+
 #include <system/func/KPrintF.h>
 
 #include <hw/cpu/Processor.h>
 
 #include <interrupt/Interrupt.h>
-
-#include <mt/tasking/Scheduler.h>
 
 #include <mm/segmentation/GDT.h>
 
@@ -37,6 +39,14 @@ void mt_apinit_apmain ()
 		MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
 		
 	}
+	
+	MM::Segmentation::GDT :: Swap ();
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & ThisCPU -> Lock );
+	
+	MT::HW::TSS :: Flush ( ThisCPU -> CrossPrivelegeInterruptTSSegment );
+	
+	MT::Synchronization::Spinlock :: Release ( & ThisCPU -> Lock );
 	
 	Interrupt :: APInit ();
 	MT::Tasking::Scheduler :: PInit ( MT::Tasking::Task :: kPriority_System_Max );

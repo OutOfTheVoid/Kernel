@@ -24,18 +24,18 @@ namespace MT
 			
 			static void Schedule ();
 			
-			static void AddTask ( Task :: Task_t * ToAdd );
-			static void AddTaskInternal ( volatile Task :: Task_t * ToAdd );
+			static void AddTask ( Task * ToAdd );
+			static void AddTaskInternal ( volatile Task * ToAdd );
 			
-			static void SuspendTask ( Task :: Task_t * ToSuspend );
+			static void SuspendTask ( Task * ToSuspend );
 			static void SuspendCurrentTask ();
 			
-			static void KillTask ( Task :: Task_t * ToKill );
+			static void KillTask ( Task * ToKill );
 			static void KillCurrentTask ();
 			
 			static void YieldCurrentTask ();
 			
-			static Task :: Task_t * GetNextDeadTask ();
+			static Task * GetNextDeadTask ();
 			
 			static inline void Preemt ( Synchronization::Spinlock :: Spinlock_t * ReleaseOnSchedule = NULL )
 			{
@@ -51,10 +51,10 @@ namespace MT
 			
 			friend class Task;
 			
-			static volatile Task :: Task_t * TaskTable [ 0x20 ];
+			static volatile Task * TaskTable [ 0x20 ];
 			static Synchronization::Spinlock :: Spinlock_t TaskTableLock;
 			
-			static volatile Task :: Task_t * ReapingListHead;
+			static volatile Task * ReapingListHead;
 			static Synchronization::Spinlock :: Spinlock_t ReapListLock;
 			
 			static Synchronization::Spinlock :: Spinlock_t TaskIDLock;

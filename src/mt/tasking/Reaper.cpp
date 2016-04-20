@@ -5,7 +5,7 @@
 
 #include <system/func/kprintf.h>
 
-MT::Tasking::Task :: Task_t * MT::Tasking::Reaper :: ReaperTask = NULL;
+MT::Tasking :: Task * MT::Tasking::Reaper :: ReaperTask = NULL;
 
 MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Reaper :: TaskLock = MT::Synchronization::Spinlock :: Initializer ();
 
@@ -46,7 +46,7 @@ void MT::Tasking::Reaper :: Run ()
 		
 		system_func_kprintf ( "Reaper running!\n" );
 		
-		Task :: Task_t * ToKill = Scheduler :: GetNextDeadTask ();
+		Task * ToKill = Scheduler :: GetNextDeadTask ();
 		
 		while ( ToKill != NULL )
 		{

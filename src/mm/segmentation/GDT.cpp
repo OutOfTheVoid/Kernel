@@ -41,6 +41,35 @@ void MM::Segmentation::GDT :: Init ( uint8_t EntryCount )
 	
 };
 
+uint8_t MM::Segmentation::GDT :: GetEntryCount ()
+{
+	
+	return EntryCount;
+	
+};
+
+void MM::Segmentation::GDT :: Expand ( uint8_t EntryCount )
+{
+	
+	if ( ! OwnsCurrent )
+		return Init ( EntryCount );
+	
+	if ( EntryCount == 0 )
+		return;
+	
+	GDTEntry * Entries = reinterpret_cast <GDTEntry *> ( mm_kmalloc ( sizeof ( GDTEntry ) * ( EntryCount ) ) );
+	
+	if ( Entries == NULL )
+		KPANIC ( "GDT kmalloc failed!" );
+	
+	for ( uint32_t I = 0; I < GDT :: EntryCount; I ++ )
+		Entries [ I ] = GDT :: Entries [ I ];
+		
+	GDT :: Entries = Entries;
+	GDT :: EntryCount = EntryCount;
+	
+};
+
 void MM::Segmentation::GDT :: SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable )
 {
 	
@@ -193,6 +222,47 @@ void MM::Segmentation::GDT :: SetCodeEntry16 ( uint32_t Index, uint32_t Base, ui
 	(void) Limit;
 	(void) Ring;
 	(void) Readable;
+	
+};
+
+void MM::Segmentation::GDT :: SetTSSEntry ( uint32_t Index, MT::HW::TSS :: TSS_t * Address, uint8_t Ring )
+{
+	
+	Flags Flag = static_cast <Flags> ( kFlags_None );
+	AccessType Type = static_cast <AccessType> ( kAccessType_Accessed | kAccessType_Code | kAccessType_Present );
+	
+	switch ( Ring )
+	{
+	case 0:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring0 );
+		
+		break;
+		
+	case 1:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring1 );
+		
+		break;
+		
+	case 2:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring2 );
+		
+		break;
+		
+	case 3:
+	
+		Type = static_cast <AccessType> ( Type | kAccessType_Ring3 );
+		
+		break;
+		
+	default:
+		KPANIC ( "Invalid privelege ring specified" );
+		
+	}
+	
+	DefineEntry ( & Entries [ Index ], sizeof ( MT::HW::TSS :: TSS_t ), reinterpret_cast <uint32_t> ( Address ), Type, Flag );
 	
 };
 

@@ -68,6 +68,12 @@ namespace MT
 				
 			} __attribute__ (( packed )) TSS_t;
 			
+			static inline void Flush ( uint16_t Segment )
+			{
+				
+				__asm__ volatile ( "ltr ax" : : "a" ( Segment ) );
+				
+			};
 			
 		};
 		

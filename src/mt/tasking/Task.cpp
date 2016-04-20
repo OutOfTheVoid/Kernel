@@ -1,6 +1,8 @@
 #include <mt/tasking/Task.h>
 #include <mt/tasking/Scheduler.h>
 
+#include <mt/process/UserProcess.h>
+
 #include <cpputil/Linkage.h>
 
 #include <mm/KMalloc.h>
@@ -15,12 +17,14 @@
 
 #include <hw/cpu/Processor.h>
 
+#include <system/permissions/UserList.h>
+
 ASM_LINKAGE void interrupt_ISRCommonHandlerInjectionReturn ();
 
-MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority )
+MT::Tasking :: Task * MT::Tasking::Task :: CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority )
 {
 	
-	Task_t * New = reinterpret_cast <MT::Tasking::Task :: Task_t *> ( mm_kmalloc ( sizeof ( Task :: Task_t ) ) );
+	Task * New = new Task ();
 	
 	if ( New == NULL )
 		return NULL;
@@ -31,7 +35,7 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	
 	New -> Flags = kFlag_Kernel;
 	New -> State = kState_Runnable;
-	New -> User = 0;
+	New -> User = System::Permissions::UserList :: kUserID_System;
 	New -> Privelege = kPrivelege_Exec | kPrivelege_IO;
 	New -> Priority = MaxPriority;
 	New -> MaxPriority = MaxPriority;
@@ -39,6 +43,8 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	
 	New -> MemoryMapping = NULL;
 	New -> MemorySpace = NULL;
+	
+	New -> Process = NULL;
 	
 	StackSize += 0xFFF;
 	StackSize &= ~ 0xFFF;
@@ -89,9 +95,48 @@ MT::Tasking::Task :: Task_t * MT::Tasking::Task :: CreateKernelTask ( const char
 	
 };
 
+MT::Tasking :: Task * MT::Tasking::Task :: CreateUserTask ( const char * Name, Process :: UserProcess * ContainerProcess, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority )
+{
+	
+	Task * New = new Task ();
+	
+	if ( New == NULL )
+		return NULL;
+	
+	strcpy ( New -> Name, Name );
+	
+	New -> Process = ContainerProcess;
+	
+	New -> ID = Scheduler :: GetNewTaskID ();
+	
+	New -> Flags = kFlag_User;
+	New -> State = kState_Runnable;
+	New -> User = 0;
+	New -> Privelege = kPrivelege_None;
+	New -> Priority = MaxPriority;
+	New -> MaxPriority = MaxPriority;
+	New -> MinPriority = MinPriority;
+	
+	New -> MemoryMapping = ContainerProcess -> MemoryMapping;
+	New -> MemorySpace = ContainerProcess -> MemorySpace;
+	
+	StackSize += 0xFFF;
+	StackSize &= ~ 0xFFF;
+	
+	void * Stack = mm_pmalloc ( ( StackSize >> 12 ) + 1 );
+	
+	MT::Synchronization::Spinlock :: SpinAcquire ( & ContainerProcess -> ThreadListLock );
+	
+	New -> ThreadID = ContainerProcess -> Threads -> Length ();
+	ContainerProcess -> Threads -> Push ( New );
+	
+	MT::Synchronization::Spinlock :: Release ( & ContainerProcess -> ThreadListLock );
+	
+	return New;
+	
+};
 
-
-void MT::Tasking::Task :: DestroyKernelTask ( Task_t * ToDestroy )
+void MT::Tasking::Task :: DestroyKernelTask ( Task * ToDestroy )
 {
 	
 	if ( ( ToDestroy -> Flags & kFlag_CPUInitStack ) != 0 )

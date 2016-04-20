@@ -10,12 +10,16 @@
 
 #include <mt/tasking/Scheduler.h>
 
+#include <mt/hw/TSS.h>
+
 #include <system/func/KPrintF.h>
 #include <system/func/Panic.h>
 
 #include <mm/KMalloc.h>
 #include <mm/PMalloc.h>
 #include <mm/paging/PageTable.h>
+
+#include <mm/segmentation/GDT.h>
 
 #include <interrupt/Interrupt.h>
 #include <interrupt/APIC.h>
@@ -26,6 +30,8 @@
 #include <hw/cpu/Processor.h>
 
 #include <boot/BootImage.h>
+
+#include <util/string/string.h>
 
 bool __smp_Initialized = false;
 
@@ -44,6 +50,8 @@ void MT :: MPInit ()
 		APInit::APTrampoline :: SetPagingDirectory ( MM::Paging::PageTable :: GetKernelPD () );
 		
 		uint32_t ProcessorCount = ::HW::ACPI::MADT :: GetProcessorCount ();
+		uint32_t EnabledProcessorCount = 0;
+		
 		uint32_t I;
 		
 		for ( I = 0; I < ProcessorCount; I ++ )
@@ -51,6 +59,8 @@ void MT :: MPInit ()
 			
 			if ( ::HW::ACPI::MADT :: GetProcessorEnabled ( I ) )
 			{
+				
+				EnabledProcessorCount ++;
 				
 				uint8_t APICID = ::HW::ACPI::MADT :: GetProcessorLAPICID ( I );
 				bool IsBSP = Interrupt::APIC :: GetLocalID () == APICID;
@@ -105,6 +115,28 @@ void MT :: MPInit ()
 			
 		}
 		
+		uint16_t StartSegment = MM::Segmentation::GDT :: GetEntryCount ();
+		
+		MM::Segmentation::GDT :: Expand ( StartSegment + EnabledProcessorCount );
+			
+		for ( I = 0; I < ::HW::CPU::Processor :: GetProcessorCount (); I ++ )
+		{
+			
+			::HW::CPU::Processor :: CPUInfo * CPU = ::HW::CPU::Processor :: GetProcessorByIndex ( I );
+			
+			MT::Synchronization::Spinlock :: SpinAcquire ( & CPU -> Lock );
+			
+			CPU -> CrossPrivelegeInterruptTSSegment = 0x08 * ( StartSegment + I ) + 3;
+			
+			memzero ( reinterpret_cast <void *> ( & CPU -> CrossPrivelegeInterruptTSS ), sizeof ( MT::HW::TSS :: TSS_t ) );
+			MM::Segmentation::GDT :: SetTSSEntry ( StartSegment + I, & CPU -> CrossPrivelegeInterruptTSS, 3 );
+			
+			Synchronization::Spinlock :: Release ( & CPU -> Lock );
+			
+		}
+		
+		MM::Segmentation::GDT :: Swap ();
+		
 	}
 	
 };
@@ -129,7 +161,9 @@ void MT :: MTInit ()
 		MT::Synchronization::Spinlock :: SpinAcquire ( & TargetCPUInfo -> Lock );
 		
 		if ( ( TargetCPUInfo -> Flags & ::HW::CPU::Processor :: kCPUFlag_BSP ) == 0 )
-			TargetCPUInfo -> Flags &= ! ::HW::CPU::Processor :: kCPUFlag_Wait;
+			TargetCPUInfo -> Flags &= ~ ::HW::CPU::Processor :: kCPUFlag_Wait;
+		else
+			MT::HW::TSS :: Flush ( TargetCPUInfo -> CrossPrivelegeInterruptTSSegment );
 		
 		Synchronization::Spinlock :: Release ( & TargetCPUInfo -> Lock );
 		

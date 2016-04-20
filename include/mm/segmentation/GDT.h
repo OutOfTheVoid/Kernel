@@ -4,6 +4,8 @@
 #include <mm/MM.h>
 #include <mm/segmentation/Segmentation.h>
 
+#include <mt/hw/TSS.h>
+
 #include <stdint.h>
 
 namespace MM
@@ -44,6 +46,8 @@ namespace MM
 			typedef enum
 			{
 				
+				kAccessType_Accessed = 0x01,
+				
 				kAccessType_Present = 0x80,
 				kAccessType_Absent = 0x00,
 				
@@ -73,10 +77,16 @@ namespace MM
 
 			static void Init ( uint8_t EntryCount );
 			
+			static void Expand ( uint8_t EntryCount );
+			
+			static uint8_t GetEntryCount ();
+			
 			static void SetDataEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable );
 			static void SetCodeEntry32 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable );
 			static void SetDataEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Writeable );
 			static void SetCodeEntry16 ( uint32_t Index, uint32_t Base, uint32_t Limit, uint8_t Ring, bool Readable );
+			
+			static void SetTSSEntry ( uint32_t Index, MT::HW::TSS :: TSS_t * Address, uint8_t Ring );
 			
 			static void Swap ();
 			

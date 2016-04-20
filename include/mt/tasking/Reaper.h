@@ -22,14 +22,14 @@ namespace MT
 			static void Init ();
 			
 			static void Signal ();
-			//
+			
 		private:
 			
 			friend void ::mt_tasking_reaperInit ();
 			
 			static void Run ();
 			
-			static Task :: Task_t * ReaperTask;
+			static Task * ReaperTask;
 			
 			static Synchronization::Spinlock :: Spinlock_t TaskLock;
 			

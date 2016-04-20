@@ -18,7 +18,7 @@ void MT::Tasking::Switcher :: Init ( Synchronization::Spinlock :: Spinlock_t * T
 	
 };
 
-void MT::Tasking::Switcher :: SwitchTo ( volatile Task :: Task_t * NewTask, volatile Task :: Task_t * OldTask )
+void MT::Tasking::Switcher :: SwitchTo ( volatile Task * NewTask, volatile Task * OldTask )
 {
 	
 	if ( OldTask -> Flags & Task :: kFlag_Math )

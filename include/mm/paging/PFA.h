@@ -17,7 +17,17 @@
 
 #include <math/bitmath.h>
 
-#include <mt/tasking/Task.h>
+namespace MT
+{
+	
+	namespace Tasking
+	{
+		
+		class Task;
+		
+	};
+	
+};
 
 namespace MM
 {
@@ -44,7 +54,7 @@ namespace MM
 			
 		private:
 			
-			friend void MT::Tasking::Task :: DestroyKernelTask ( MT::Tasking::Task :: Task_t * ToDestroy );
+			friend class MT::Tasking::Task;
 			
 			static void AddFreeRange ( void * Address, uint32_t Length );
 			
