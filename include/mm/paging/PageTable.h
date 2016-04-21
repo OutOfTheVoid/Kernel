@@ -51,6 +51,8 @@ namespace MM
 			
 			uint32_t GetCR3 ();
 			
+			void Load ();
+			
 			static void SetKernelMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Flags );
 			static void SetKernelRegionMapping ( uint32_t Virtual, uint32_t Physical, uint32_t Length, uint32_t Flags );
 			
@@ -67,6 +69,8 @@ namespace MM
 			static bool KPagingStatus ();
 			
 			static bool ShouldFault ( uint32_t Address, bool Write, bool User );
+			
+			static void KLoad ();
 			
 			static inline uint32_t ReadCR3 ()
 			{

@@ -37,7 +37,7 @@ void MM::Paging::PageTable :: KInit ()
 	{
 		
 		uint32_t * DirectoryEntry = & Kernel_PDirectory [ I ];
-		SetDirectoryEntry ( DirectoryEntry, reinterpret_cast <uint32_t> ( & mm_paging_kernelpt ) + 0x1000 * I, DFlags_Present | DFlags_Writeable );
+		SetDirectoryEntry ( DirectoryEntry, reinterpret_cast <uint32_t> ( & mm_paging_kernelpt ) + 0x1000 * I, DFlags_Present | DFlags_User | DFlags_Writeable );
 		
 		for ( uint32_t P = 0; P < 1024; P ++ )
 			SetKernelMapping ( I * 0x400000 + P * 0x1000, I * 0x400000 + P * 0x1000, Flags_Writeable );
@@ -46,6 +46,14 @@ void MM::Paging::PageTable :: KInit ()
 	
 	for ( I = 0; I < reinterpret_cast <uint32_t> ( & __kend ); I += 0x1000 )
 		SetKernelMapping ( I, I, Flags_Present | Flags_Writeable );
+	
+};
+
+void MM::Paging::PageTable :: Load ()
+{
+	
+	mm_paging_loadPageDirectory ( DirectoryPhysical );
+	mm_paging_flushCR3 ();
 	
 };
 
@@ -78,7 +86,7 @@ MM::Paging::PageTable :: PageTable ( bool MapKernel )
 	if ( MapKernel )
 	{
 		
-		 for ( I = 0; I < KernelVMLength; I += 0x400000 )
+		 for ( I = 0; I < kKernelVM_Length; I += 0x400000 )
 		 	NewDirectoryVirtual [ I >> 22 ] = Kernel_PDirectory [ I >> 22 ];
 		
 	}
@@ -302,7 +310,7 @@ void MM::Paging::PageTable :: SetKernelRegionMapping ( uint32_t Virtual, uint32_
 	if ( Length < 0x1000 )
 		Length = 0x1000;
 	
-	for ( uint32_t i = 0; i < Length; i ++ )
+	for ( uint32_t i = 0; i < Length; i += 0x1000 )
 		SetKernelMapping ( Virtual + i, ( Physical & 0xFFFFF000 ) + i, Flags );
 	
 };
@@ -344,6 +352,14 @@ void MM::Paging::PageTable :: EnableKPaging ()
 	
 	mm_paging_loadPageDirectory ( Kernel_PDirectory );
 	mm_paging_enable ();
+	
+};
+
+void MM::Paging::PageTable :: KLoad ()
+{
+	
+	mm_paging_loadPageDirectory ( Kernel_PDirectory );
+	mm_paging_flushCR3 ();
 	
 };
 

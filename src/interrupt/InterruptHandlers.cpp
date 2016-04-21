@@ -431,7 +431,9 @@ void Interrupt::InterruptHandlers :: InstallSystemInterruptHandlers ()
 	HW::CPU::IDT :: DefineIDTEntry ( 0x7D, & INTERRUPT_ISR_NAME ( 0x7D ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( 0x7E, & INTERRUPT_ISR_NAME ( 0x7E ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( 0x7F, & INTERRUPT_ISR_NAME ( 0x7F ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
-	HW::CPU::IDT :: DefineIDTEntry ( 0x80, & INTERRUPT_ISR_NAME ( 0x80 ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
+	
+	HW::CPU::IDT :: DefineIDTEntry ( 0x80, & INTERRUPT_ISR_NAME ( 0x80 ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring3, true, false );
+	
 	HW::CPU::IDT :: DefineIDTEntry ( 0x81, & INTERRUPT_ISR_NAME ( 0x81 ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( 0x82, & INTERRUPT_ISR_NAME ( 0x82 ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
 	HW::CPU::IDT :: DefineIDTEntry ( 0x83, & INTERRUPT_ISR_NAME ( 0x83 ), 0x08, HW::CPU::IDT :: kInterruptType_InterruptGate32, HW::CPU::IDT :: kPrivelegeLevel_Ring0, true, false );
@@ -577,20 +579,6 @@ void Interrupt::InterruptHandlers :: SetInterruptHandler ( uint32_t InterruptNum
 	}
 	else
 		KPANIC ( "Attempt to set out of range interrupt handler!" );
-	
-};
-
-void Interrupt::InterruptHandlers :: SetCPInterruptKernelStack ( void * StackTop )
-{
-	
-	HW::CPU::Processor :: CPUInfo * CurrentCPU = HW::CPU::Processor :: GetCurrent ();
-	
-	bool IBlock = Interrupt::IState :: ReadAndSetBlock ();
-	
-	CurrentCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( StackTop );
-	CurrentCPU -> CrossPrivelegeInterruptTSS.SS0 = 0x10;
-	
-	Interrupt::IState :: WriteBlock ( IBlock );
 	
 };
 

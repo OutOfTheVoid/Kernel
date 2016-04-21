@@ -91,7 +91,7 @@ void MT::Tasking::Scheduler :: PInit ( uint32_t Priority )
 	memcpy ( reinterpret_cast <void *> ( IdleName ), "CPU Idle ", 9 );
 	memcpy ( reinterpret_cast <void *> ( & IdleName [ 9 ] ), IDN, IDNLength + 1 );
 	
-	Task * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( IdleName ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF, 0xFFFFFFFF );
+	volatile Task * IdleTask = Task :: CreateKernelTask ( const_cast <const char *> ( IdleName ), reinterpret_cast <void *> ( & mt_tasking_idleEntry ), 0x1000, 0xFFFFFFFF, 0xFFFFFFFF );
 	
 	ThisCPU -> IdleTask = IdleTask;
 	
@@ -112,7 +112,7 @@ void MT::Tasking::Scheduler :: PInit ( uint32_t Priority )
 	
 };
 
-void MT::Tasking::Scheduler :: Schedule ()
+void MT::Tasking::Scheduler :: Schedule ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
 	::HW::CPU::Processor :: CPUInfo * ThisCPU = ::HW::CPU::Processor :: GetCurrent ();
@@ -148,6 +148,9 @@ void MT::Tasking::Scheduler :: Schedule ()
 		ThisCPU -> ReleaseOnSchedule = NULL;
 		
 	}
+	
+	if ( ( Last -> Flags & Task :: kFlag_Kernel ) == 0 )
+		Task :: SyncUserStack ( Last, Frame );
 	
 	Synchronization::Spinlock :: SpinAcquire ( & TaskTableLock );
 	
@@ -225,6 +228,26 @@ void MT::Tasking::Scheduler :: Schedule ()
 	}
 	
 	ThisCPU -> CurrentTask = Next;
+	
+	if ( ( Next -> Flags & Task :: kFlag_Kernel ) == 0 )
+	{
+		
+		ThisCPU -> CrossPrivelegeInterruptTSS.ESP0 = reinterpret_cast <uint32_t> ( Next -> KStack );
+		
+		ThisCPU -> CrossPrivelegeInterruptTSS.SS0 = Next -> KSS;
+		ThisCPU -> CrossPrivelegeInterruptTSS.SS0_High = 0;
+		
+	}
+	
+	if ( Next -> MemoryMapping != Last -> MemoryMapping )
+	{
+		
+		if ( Next -> MemoryMapping != NULL )
+			Next -> MemoryMapping -> Load ();
+		else
+			MM::Paging::PageTable :: KLoad ();
+		
+	}
 	
 	if ( Next != Last )
 		Switcher :: SwitchTo ( const_cast <Task *> ( Next ), Last );
@@ -377,10 +400,8 @@ uint64_t MT::Tasking::Scheduler :: GetNewTaskID ()
 void mt_tasking_schedulerInterrupt ( Interrupt::InterruptHandlers :: ISRFrame * Frame )
 {
 	
-	UNUSED ( Frame );
-	
 	Interrupt::APIC :: EndOfInterrupt ();
 	
-	MT::Tasking::Scheduler :: Schedule ();
+	MT::Tasking::Scheduler :: Schedule ( Frame );
 	
 };

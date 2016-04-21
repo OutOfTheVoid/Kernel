@@ -23,6 +23,15 @@ namespace MM
 			
 			static void InvalidatePages ( uint32_t CR3, uint32_t PageAddress, uint32_t Count = 1 );
 			
+			static inline uint32_t GetCR2 ()
+			{
+				
+				register volatile uint32_t Value;
+				__asm__ volatile ( "mov %0, cr2" : "=r" ( Value ) );
+				return Value;
+				
+			}
+			
 		private:
 			
 			static bool Inited;
@@ -47,15 +56,6 @@ namespace MM
 			static MT::Synchronization::Spinlock :: Spinlock_t InvalLock;
 			
 			static bool PageFault ( uint32_t ErrorCode );
-			
-			static inline uint32_t GetCR2 ()
-			{
-				
-				register volatile uint32_t Value;
-				__asm__ volatile ( "mov %0, cr2" : "=r" ( Value ) );
-				return Value;
-				
-			}
 			
 			static void InvalidationHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 			

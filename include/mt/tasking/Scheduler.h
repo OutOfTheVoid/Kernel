@@ -22,7 +22,7 @@ namespace MT
 			static void Init ();
 			static void PInit ( uint32_t Priority );
 			
-			static void Schedule ();
+			static void Schedule ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
 			
 			static void AddTask ( Task * ToAdd );
 			static void AddTaskInternal ( volatile Task * ToAdd );

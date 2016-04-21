@@ -10,10 +10,15 @@
 
 #include <MM/MM.h>
 
+#include <MM/Paging/PageTable.h>
+#include <MM/Paging/AddressSpace.h>
+
 #include <mt/MT.h>
 
 #include <mt/tasking/Task.h>
 #include <mt/tasking/Scheduler.h>
+
+#include <mt/process/UserProcess.h>
 
 #include <fs/FS.h>
 
@@ -23,6 +28,7 @@
 #include <util/string/string.h>
 
 ASM_LINKAGE void InitTask ();
+ASM_LINKAGE void UserModeTask ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -53,11 +59,7 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	FS :: Init ( MultibootInfo );
 	
 	MT::Tasking :: Task * NewTask = MT::Tasking::Task :: CreateKernelTask ( "init", reinterpret_cast <void *> ( & InitTask ), 0x2000, MT::Tasking::Task :: kPriority_System_Max, MT::Tasking::Task :: kPriority_System_Min );
-	
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
-	
-	for ( int i = 0; i < 1000000000; i ++ )
-		;
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	
@@ -66,8 +68,34 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 void InitTask ()
 {
 	
-	system_func_kprintf ( "System user ID: %d\n", System::Permissions::UserList :: GetUserID ( "system" ) );
+	uint32_t Error;
+	
+	MM::Paging::PageTable * PTable = new MM::Paging :: PageTable ( true );
+	
+	MM::Paging :: AddressSpace * MSpace = new MM::Paging :: AddressSpace ();
+	MM::Paging::AddressSpace :: CreateAddressSpace ( MSpace, false, MM :: kUserVM_Start, MM :: kUserVM_Length, & Error );
+	
+	if ( Error != MM::Paging::AddressSpace :: kCreateAddressSpace_Error_None )
+		KPANIC ( "Failed to create userspace virtual memory!" );
+	
+	uint32_t EntryPhys = MM::Paging::PageTable :: KernelVirtualToPhysical ( reinterpret_cast <uint32_t> ( & UserModeTask ) );
+	MM::Paging::PageTable :: SetKernelMapping ( reinterpret_cast <uint32_t> ( & UserModeTask ) & 0xFFFFF000, EntryPhys & 0xFFFFF000, MM::Paging::PageTable :: Flags_User | MM::Paging::PageTable :: Flags_Present | MM::Paging::PageTable :: Flags_Writeable );
+	
+	MT::Process :: UserProcess * UProcess = MT::Process::UserProcess :: CreateUserProcess ( "USERLAND!", PTable, MSpace, NULL );
+	MT::Tasking :: Task * UTask = MT::Tasking::Task :: CreateUserTask ( "userland task 1", UProcess, reinterpret_cast <void *> ( & UserModeTask ), 0x1000, 0x8000, MT::Tasking::Task :: kPriority_LowUser_Max, MT::Tasking::Task :: kPriority_LowUser_Min );
+	
+	MT::Tasking::Scheduler :: AddTask ( UTask );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
+	
+};
+
+void UserModeTask ()
+{
+	
+	__asm__ volatile (
+		"mov eax, 0\n"
+		"int 0x80"
+		);
 	
 };

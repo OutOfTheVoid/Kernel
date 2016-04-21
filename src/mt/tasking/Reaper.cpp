@@ -5,7 +5,7 @@
 
 #include <system/func/kprintf.h>
 
-MT::Tasking :: Task * MT::Tasking::Reaper :: ReaperTask = NULL;
+volatile MT::Tasking :: Task * MT::Tasking::Reaper :: ReaperTask = NULL;
 
 MT::Synchronization::Spinlock :: Spinlock_t MT::Tasking::Reaper :: TaskLock = MT::Synchronization::Spinlock :: Initializer ();
 
@@ -62,7 +62,9 @@ void MT::Tasking::Reaper :: Run ()
 			else
 			{
 				
+				system_func_kprintf ( "Killing user task: %s\n", ToKill -> Name );
 				
+				// TODO: implelent user task reaping
 				
 			}
 			

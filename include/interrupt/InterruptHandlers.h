@@ -72,13 +72,9 @@ namespace Interrupt
 		
 		static void SetInterruptHandler ( uint32_t InterruptNumber, void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * ) = NULL );
 		
-		static void SetCPInterruptKernelStack ( void * StackTop );
-		
 	private:
 		
 		static void InstallSystemInterruptHandlers ();
-		
-		MT::HW::TSS :: TSS_t CPInterruptTSS;
 		
 	};
 	

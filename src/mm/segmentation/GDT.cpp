@@ -124,7 +124,7 @@ void MM::Segmentation::GDT :: SetCodeEntry32 ( uint32_t Index, uint32_t Base, ui
 	if ( Index > EntryCount )
 		KPANIC ( "Attempt to write to out of bounds GDT!" );
 	
-	AccessType Type = static_cast <AccessType> ( kAccessType_Present | kAccessType_Code | kAccessType_Bit4 | kAccessType_ExMatchingPrivelege | ( Readable ? kAccessType_CodeReadable : kAccessType_CodeExOnly ) );
+	AccessType Type = static_cast <AccessType> ( kAccessType_Present | kAccessType_Code | kAccessType_Bit4 /*| kAccessType_ExMatchingPrivelege*/ | ( Readable ? kAccessType_CodeReadable : kAccessType_CodeExOnly ) );
 	
 	switch ( Ring )
 	{

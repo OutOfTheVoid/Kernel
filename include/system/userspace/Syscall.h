@@ -18,15 +18,21 @@ namespace System
 		{
 		public:
 			
-			static void Init ();
+			static const uint32_t kNumSyscalls = 0x1;
 			
-			static void RegisterSyscallHandler ( void ( * Handler ) ( Interrupt::InterruptHandlers :: ISRFrame * Frame, MT::Tasking::Task :: Task_t * Caller ) );
+			static const uint32_t kSyscall_Exit = 0x0;
+			
+			static void Init ();
 			
 		private:
 			
-			static const uint32_t kSysCallInterrupt_Vector = 0x100;
+			static const uint32_t kSysCallInterrupt_Vector = 0x80;
 			
-			static void CallHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+			static void CallInterruptHandler ( Interrupt::InterruptHandlers :: ISRFrame * Frame );
+			
+			static void ( * Handlers [ kNumSyscalls ] ) ( Interrupt::InterruptHandlers :: ISRFrame * Frame, volatile MT::Tasking :: Task * CurrentTask );
+			
+			static void DummySyscall ( Interrupt::InterruptHandlers :: ISRFrame * Frame, volatile MT::Tasking :: Task * CurrentTask );
 			
 		};
 		

@@ -35,7 +35,7 @@ void Interrupt::IState :: DecrementBlock ()
 	CPUI -> CurrentCLICount --;
 	
 	if ( CPUI -> CurrentCLICount == 0 )
-		hw_cpu_sei ();
+		hw_cpu_sti ();
 	
 };
 
@@ -63,6 +63,6 @@ void Interrupt::IState :: WriteBlock ( bool UnBlock )
 {
 	
 	if ( UnBlock )
-		hw_cpu_sei ();
+		hw_cpu_sti ();
 	
 };

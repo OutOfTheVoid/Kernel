@@ -54,7 +54,7 @@ namespace MT
 			
 			static void Init ();
 			
-			static UserProcess * CreateUserProcess ( const char * Name, MM::Paging::PageTable * MemoryMapping, MM::Paging::AddressSpace * MemorySpace, MT::Tasking :: Task * StartupThread, UserProcess * Parent );
+			static UserProcess * CreateUserProcess ( const char * Name, MM::Paging::PageTable * MemoryMapping, MM::Paging::AddressSpace * MemorySpace, UserProcess * Parent );
 			
 		private:
 			

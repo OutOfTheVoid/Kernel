@@ -29,7 +29,7 @@ namespace MT
 			
 			static void Run ();
 			
-			static Task * ReaperTask;
+			static volatile Task * ReaperTask;
 			
 			static Synchronization::Spinlock :: Spinlock_t TaskLock;
 			

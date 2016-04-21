@@ -107,7 +107,10 @@ void hw_cpu_exceptionPageFault ( Interrupt::InterruptHandlers :: ISRFrame * Fram
 {
 	
 	if ( MM::Paging::Invalidation :: PageFault ( Frame -> ErrorCode ) )
-		KPANIC ( "Page fault!\n\n%r", Frame );
+	{
+		uint32_t CR2 = MM::Paging::Invalidation :: GetCR2 ();
+		KPANIC ( "Page fault!\n\n%r\n\nCR2: %h", Frame, CR2 );
+	}
 	
 };
 

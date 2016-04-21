@@ -1,6 +1,8 @@
 #ifndef MM_PAGING_ADDRESSSPACE_H
 #define MM_PAGING_ADDRESSSPACE_H
 
+#include <cpputil/Memory.h>
+
 #include <boot/multiboot/multiboot.h>
 
 #include <mm/MM.h>
@@ -55,8 +57,9 @@ namespace MM
 			static void CreateAddressSpace ( AddressSpace * Space, bool Kernel, uint32_t InitialFreeBase, uint32_t IntialFreeLength, uint32_t * Error );
 			static const char * GetErrorString ( uint32_t Error );
 			
-			void * operator new ( size_t, void * Address );
+			//void * operator new ( size_t, void * Address );
 			
+			AddressSpace ();
 			~AddressSpace ();
 			
 			void AddFreeRange ( uint32_t Base, uint32_t Length, uint32_t * Error );
@@ -114,8 +117,6 @@ namespace MM
 				AddressRange Ranges [ 127 ];
 				
 			} __attribute__(( packed )) Storage;
-			
-			AddressSpace ();
 			
 			void InsertFreeNode ( AddressRange * Node );
 			void InsertAllocatedNode ( AddressRange * Node );

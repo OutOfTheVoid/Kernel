@@ -51,8 +51,6 @@ MT::Tasking :: Task * MT::Tasking::Task :: CreateKernelTask ( const char * Name,
 	
 	void * Stack = mm_pmalloc ( ( StackSize >> 12 ) + 1 );
 	
-	New -> KStackBottom = Stack;
-	
 	if ( Stack == NULL )
 	{
 		
@@ -62,7 +60,13 @@ MT::Tasking :: Task * MT::Tasking::Task :: CreateKernelTask ( const char * Name,
 		
 	}
 	
+	New -> KStackBottom = Stack;
 	New -> KStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( Stack ) + StackSize );
+	New -> KSS = 0x10;
+	
+	New -> UStackBottom = NULL;
+	New -> UStack = NULL;
+	New -> USS = 0x00;
 	
 	StackPush ( & New -> KStack, 0x202 ); // EFlags
 	StackPush ( & New -> KStack, 0x08 ); // CS
@@ -95,7 +99,7 @@ MT::Tasking :: Task * MT::Tasking::Task :: CreateKernelTask ( const char * Name,
 	
 };
 
-MT::Tasking :: Task * MT::Tasking::Task :: CreateUserTask ( const char * Name, Process :: UserProcess * ContainerProcess, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority )
+MT::Tasking :: Task * MT::Tasking::Task :: CreateUserTask ( const char * Name, Process :: UserProcess * ContainerProcess, void * Entry, uint32_t StackSize, uint32_t KStackSize, uint32_t MaxPriority, uint32_t MinPriority )
 {
 	
 	Task * New = new Task ();
@@ -123,7 +127,94 @@ MT::Tasking :: Task * MT::Tasking::Task :: CreateUserTask ( const char * Name, P
 	StackSize += 0xFFF;
 	StackSize &= ~ 0xFFF;
 	
-	void * Stack = mm_pmalloc ( ( StackSize >> 12 ) + 1 );
+	void * Stack;
+	void * StackPhys;
+	uint32_t AllocError;
+	
+	ContainerProcess -> MemorySpace -> Alloc ( StackSize, & Stack, & AllocError );
+	
+	if ( AllocError != MM::Paging::AddressSpace :: kAlloc_Error_None )
+	{
+		
+		delete New;
+		
+		return NULL;
+		
+	}
+	
+	if ( ! MM::Paging::PFA :: Alloc ( StackSize, & StackPhys ) )
+	{
+		
+		delete New;
+		
+		ContainerProcess -> MemorySpace -> Free ( Stack, & AllocError );
+		
+		return NULL;
+		
+	}
+	
+	ContainerProcess -> MemoryMapping -> SetRegionMapping ( reinterpret_cast <uint32_t> ( Stack ), reinterpret_cast <uint32_t> ( StackPhys ), StackSize, MM::Paging::PageTable :: Flags_User | MM::Paging::PageTable :: Flags_Writeable | MM::Paging::PageTable :: Flags_Present );
+	
+	if ( Stack == NULL )
+	{
+		
+		mm_kfree ( reinterpret_cast <void *> ( New ) );
+		
+		return NULL;
+		
+	}
+	
+	New -> UStackBottom = Stack;
+	New -> UStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( Stack ) + StackSize );
+	New -> USS = 0x20;
+	
+	KStackSize += 0xFFF;
+	KStackSize &= ~ 0xFFF;
+	
+	void * KStack = mm_pmalloc ( ( KStackSize >> 12 ) + 1 );
+	
+	if ( KStack == NULL )
+	{
+		
+		mm_pfree ( Stack );
+		mm_kfree ( reinterpret_cast <void *> ( New ) );
+		
+		return NULL;
+		
+	}
+	
+	New -> KStackBottom = KStack;
+	New -> KStack = reinterpret_cast <void *> ( reinterpret_cast <uint32_t> ( KStack ) + KStackSize );
+	New -> KSS = 0x10;
+	
+	StackPush ( & New -> KStack, 0x20 + 3 ); // SS
+	StackPush ( & New -> KStack, reinterpret_cast <uint32_t> ( New -> UStack ) ); // ESP
+	StackPush ( & New -> KStack, 0x202 ); // EFlags
+	StackPush ( & New -> KStack, 0x18 + 3 ); // CS
+	StackPush ( & New -> KStack, reinterpret_cast <uint32_t> ( Entry ) ); // EIP
+	
+	StackPush ( & New -> KStack, 0 ); // Error code
+	StackPush ( & New -> KStack, 0x20 ); // Interrupt number
+	
+	uint32_t OESP = reinterpret_cast <uint32_t> ( New -> KStack );
+	
+	StackPush ( & New -> KStack, 0 ); // EAX
+	StackPush ( & New -> KStack, 0 ); // ECX
+	StackPush ( & New -> KStack, 0 ); // EDX
+	StackPush ( & New -> KStack, 0 ); // EBX
+	StackPush ( & New -> KStack, OESP ); // ESP
+	StackPush ( & New -> KStack, 0 ); // EBP
+	StackPush ( & New -> KStack, 0 ); // ESI
+	StackPush ( & New -> KStack, 0 ); // EDI
+	
+	StackPush ( & New -> KStack, 0x20 + 3 ); // DS
+	
+	StackPush ( & New -> KStack, reinterpret_cast <uint32_t> ( & interrupt_ISRCommonHandlerInjectionReturn ) );
+	
+	StackPush ( & New -> KStack, 0 ); // EBP
+	StackPush ( & New -> KStack, 0 ); // EBX
+	StackPush ( & New -> KStack, 0 ); // ESI
+	StackPush ( & New -> KStack, 0 ); // EDI
 	
 	MT::Synchronization::Spinlock :: SpinAcquire ( & ContainerProcess -> ThreadListLock );
 	
@@ -136,7 +227,15 @@ MT::Tasking :: Task * MT::Tasking::Task :: CreateUserTask ( const char * Name, P
 	
 };
 
-void MT::Tasking::Task :: DestroyKernelTask ( Task * ToDestroy )
+void MT::Tasking::Task :: SyncUserStack ( volatile Task * ToUpdate, Interrupt::InterruptHandlers :: ISRFrame * IFrame )
+{
+	
+	if ( IFrame -> SS == ToUpdate -> USS )
+		ToUpdate -> UStack = reinterpret_cast <void *> ( IFrame -> UserESP );
+	
+};
+
+void MT::Tasking::Task :: DestroyKernelTask ( volatile Task * ToDestroy )
 {
 	
 	if ( ( ToDestroy -> Flags & kFlag_CPUInitStack ) != 0 )
@@ -177,7 +276,7 @@ void MT::Tasking::Task :: DestroyKernelTask ( Task * ToDestroy )
 	else
 		mm_pfree ( ToDestroy -> KStackBottom );
 	
-	mm_kfree ( ToDestroy );
+	mm_kfree ( const_cast <void *> ( reinterpret_cast <volatile void *> ( ToDestroy ) ) );
 	
 };
 

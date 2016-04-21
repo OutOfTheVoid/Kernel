@@ -10,7 +10,7 @@ inline void hw_cpu_cli ()
 	
 };
 
-inline void hw_cpu_sei ()
+inline void hw_cpu_sti ()
 {
 	
 	__asm__ volatile ( "sti" );

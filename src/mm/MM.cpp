@@ -28,11 +28,11 @@ void MM :: Init ( multiboot_info_t * MultibootInfo, multiboot_info_t ** NewMulti
 	Paging::PageTable :: KInit ();
 	Paging::PageTable :: EnableKPaging ();
 	
-	volatile uint32_t KVStart = math_max ( reinterpret_cast <uint32_t> ( & __kend ), KernelVMStart );
+	volatile uint32_t KVStart = math_max ( reinterpret_cast <uint32_t> ( & __kend ), kKernelVM_Start );
 	
 	Paging::PFA :: Init ( MultibootInfo, MBICopySize, const_cast <uint32_t *> ( & KVStart ) );
 	
-	Paging::AddressSpace :: KInit ( KVStart, KernelVMLength - KVStart );
+	Paging::AddressSpace :: KInit ( KVStart, kKernelVM_Length - KVStart );
 	
 	Paging::PFA :: Init2 ( MultibootInfo, MBICopySize );
 	

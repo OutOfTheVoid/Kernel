@@ -65,6 +65,10 @@ namespace MT
 			void * KStack;
 			uint32_t KSS;
 			
+			void * UStackBottom;
+			void * UStack;
+			uint32_t USS;
+			
 			::HW::CPU::Math :: MathState Math;
 			
 			uint32_t User;
@@ -85,9 +89,11 @@ namespace MT
 			Process :: UserProcess * Process;
 			
 			static Task * CreateKernelTask ( const char * Name, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority );
-			static Task * CreateUserTask ( const char * Name, MT::Process :: UserProcess * ContainerProcess, void * Entry, uint32_t StackSize, uint32_t MaxPriority, uint32_t MinPriority );
+			static Task * CreateUserTask ( const char * Name, MT::Process :: UserProcess * ContainerProcess, void * Entry, uint32_t StackSize, uint32_t KStackSize, uint32_t MaxPriority, uint32_t MinPriority );
 			
-			static void DestroyKernelTask ( Task * ToDestroy );
+			static void DestroyKernelTask ( volatile Task * ToDestroy );
+			
+			static void SyncUserStack ( volatile Task * ToUpdate, Interrupt::InterruptHandlers :: ISRFrame * IFrame );
 			
 		private:
 			

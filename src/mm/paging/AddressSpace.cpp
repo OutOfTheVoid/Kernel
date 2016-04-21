@@ -1395,13 +1395,6 @@ void MM::Paging::AddressSpace :: DebugPrint ()
 	
 };
 
-void * MM::Paging::AddressSpace :: operator new ( size_t, void * Address )
-{
-	
-	return Address;
-	
-};
-
 MM::Paging::AddressSpace :: ~AddressSpace ()
 {
 	
