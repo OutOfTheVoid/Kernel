@@ -3,10 +3,17 @@
 
 #include <hw/HW.h>
 
+#include <stdint.h>
+
 namespace HW
 {
 	
-	namespace PCI {};
+	namespace PCI
+	{
+		
+		const uint32_t kMaxBus = 0x100;
+		
+	};
 	
 };
 

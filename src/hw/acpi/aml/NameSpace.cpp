@@ -1,5 +1,8 @@
 #include <hw/acpi/aml/NameSpace.h>
+
 #include <mm/KMalloc.h>
+
+#include <cpputil/Unused.h>
 
 HW::ACPI::AML :: DefinitionBlock HW::ACPI::AML::NameSpace :: RootDefBlock;
 HW::ACPI::AML::NameSpace :: NameSpaceObject HW::ACPI::AML::NameSpace :: RootObject;
@@ -29,6 +32,9 @@ void HW::ACPI::AML::NameSpace :: Init ( uint32_t * Status )
 HW::ACPI::AML::NameSpace :: TableHandle HW::ACPI::AML::NameSpace :: LoadTable ( DefinitionBlock * DefBlock, uint32_t * Status )
 {
 	
+	UNUSED ( DefBlock );
+	UNUSED ( Status );
 	
+	return 0xFFFFFFFF;
 	
 };

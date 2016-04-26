@@ -24,6 +24,8 @@ namespace HW
 			
 			uint16_t CheckVendor ( uint32_t Bus, uint32_t Device );
 			
+			
+			
 		private:
 			
 			static const uint32_t kPort_Address = 0xCF8;

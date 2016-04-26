@@ -2,6 +2,8 @@
 
 #include <mm/KMalloc.h>
 
+#include <cpputil/Unused.h>
+
 void ( * HW::ACPI::AML::Interpreter :: OpTable [ 0x100 ] ) ( InterpreterContext * Context );
 void ( * HW::ACPI::AML::Interpreter :: ExtOpTable [ 0x100 ] ) ( InterpreterContext * Context );
 
@@ -120,7 +122,8 @@ HW::ACPI::AML::Interpreter :: InterpreterHandle HW::ACPI::AML::Interpreter :: Cr
 void HW::ACPI::AML::Interpreter :: Exec ( InterpreterContext * Context, uint32_t * Status )
 {
 	
-	
+	UNUSED ( Context );
+	UNUSED ( Status );
 	
 };
 
@@ -317,63 +320,63 @@ void HW::ACPI::AML::Interpreter :: ExtPrefixOp ( InterpreterContext * Context ) 
 void HW::ACPI::AML::Interpreter :: BreakOp ( InterpreterContext * Context ) // 0xA5
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: BreakPointOp ( InterpreterContext * Context ) // 0x33
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ContinueOp ( InterpreterContext * Context ) // 0x9F
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ElseOp ( InterpreterContext * Context ) // 0xA1
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: IfOp ( InterpreterContext * Context ) // 0xA0
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: NoOp ( InterpreterContext * Context ) // 0xA3
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: NotifyOp ( InterpreterContext * Context ) // 0x86
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ReturnOp ( InterpreterContext * Context ) // 0xA4
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: WhileOp ( InterpreterContext * Context ) // 0xA2
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
@@ -384,294 +387,294 @@ void HW::ACPI::AML::Interpreter :: WhileOp ( InterpreterContext * Context ) // 0
 void HW::ACPI::AML::Interpreter :: AddOp ( InterpreterContext * Context ) // 0x72
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: AndOp ( InterpreterContext * Context ) // 0x7B
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: BufferOp ( InterpreterContext * Context ) // 0x11
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ConcatOp ( InterpreterContext * Context ) // 0x73
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ConcatResOp ( InterpreterContext * Context ) // 0x84
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: CopyObjectOp ( InterpreterContext * Context ) // 0x9D
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: DecrementOp ( InterpreterContext * Context ) // 0x76
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: DerefOfOp ( InterpreterContext * Context ) // 0x83
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: DivideOp ( InterpreterContext * Context ) // 0x78
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: FindSetLeftBitOp ( InterpreterContext * Context ) // 0x81
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: FindSetRightBitOp ( InterpreterContext * Context ) // 0x82
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: IncrementOp ( InterpreterContext * Context ) // 0x75
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: IndexOp ( InterpreterContext * Context ) // 0x88
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LAndOp ( InterpreterContext * Context ) // 0x90
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LEqualOp ( InterpreterContext * Context ) // 0x93
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LGreaterOp ( InterpreterContext * Context ) // 0x94
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LLessOp ( InterpreterContext * Context ) // 0x95
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LNotOp ( InterpreterContext * Context ) // 0x92
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LOrOp ( InterpreterContext * Context ) // 0x91
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: MatchOp ( InterpreterContext * Context ) // 0x89
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: MidOp ( InterpreterContext * Context ) // 0x9E
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ModOp ( InterpreterContext * Context ) // 0x85
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: MultiplyOp ( InterpreterContext * Context ) // 0x77
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: NandOp ( InterpreterContext * Context ) // 0x7C
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: NorOp ( InterpreterContext * Context ) // 0x7E
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: NotOp ( InterpreterContext * Context ) // 0x80
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ObjectTypeOp ( InterpreterContext * Context ) // 0x8E
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: OrOp ( InterpreterContext * Context ) // 0x7D
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: PackageOp ( InterpreterContext * Context ) // 0x12
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: VarPackageOp ( InterpreterContext * Context ) // 0x13
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: RefOfOp ( InterpreterContext * Context ) // 0x71
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ShiftLeftOp ( InterpreterContext * Context ) // 0x79
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ShiftRightOp ( InterpreterContext * Context ) // 0x7A
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: SizeOfOp ( InterpreterContext * Context ) // 0x87
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: StoreOp ( InterpreterContext * Context ) // 0x70
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: SubtractOp ( InterpreterContext * Context ) // 0x74
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToBufferOp ( InterpreterContext * Context ) // 0x96
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToDecimalStringOp ( InterpreterContext * Context ) // 0x97
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToHexStringOp ( InterpreterContext * Context ) // 0x98
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToIntegerOp ( InterpreterContext * Context ) // 0x99
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToStringOp ( InterpreterContext * Context ) // 0x9C
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: XorOp ( InterpreterContext * Context ) // 0x7F
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
@@ -739,49 +742,49 @@ void HW::ACPI::AML::Interpreter :: FatalOp ( InterpreterContext * Context ) // E
 void HW::ACPI::AML::Interpreter :: LoadOp ( InterpreterContext * Context ) // Ext 0x20
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ReleaseOp ( InterpreterContext * Context ) // Ext 0x27
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ResetOp ( InterpreterContext * Context ) // Ext 0x26
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: SignalOp ( InterpreterContext * Context ) // Ext 0x24
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: SleepOp ( InterpreterContext * Context ) // Ext 0x22
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: StallOp ( InterpreterContext * Context ) // Ext 0x21
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: UnloadOp ( InterpreterContext * Context ) // Ext 0x2A
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
@@ -791,7 +794,7 @@ void HW::ACPI::AML::Interpreter :: UnloadOp ( InterpreterContext * Context ) // 
 
 void HW::ACPI::AML::Interpreter :: AcquireOp ( InterpreterContext * Context ) // Ext 0x23
 {
-	
+	UNUSED ( Context );
 	
 	
 };
@@ -799,41 +802,41 @@ void HW::ACPI::AML::Interpreter :: AcquireOp ( InterpreterContext * Context ) //
 void HW::ACPI::AML::Interpreter :: CondRefOfOp ( InterpreterContext * Context ) // Ext 0x12
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: FromBCDOp ( InterpreterContext * Context ) // Ext 0x28
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: LoadTableOp ( InterpreterContext * Context ) // Ext 0x1F
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: TimerOp ( InterpreterContext * Context ) // Ext 0x33
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: ToBCDOp ( InterpreterContext * Context ) // Ext 0x29
 {
 	
-	
+	UNUSED ( Context );
 	
 };
 
 void HW::ACPI::AML::Interpreter :: WaitOp ( InterpreterContext * Context ) // Ext 0x25
 {
 	
-	
+	UNUSED ( Context );
 	
 };
