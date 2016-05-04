@@ -159,7 +159,7 @@ void HW::ACPI :: InitInterrupts ( uint32_t * Status )
 	if ( * Status == kACPIStatus_Success )
 	{
 		
-		HW::ACPI::PMTimer :: Init ( & SubStatus );
+		PMTimer :: Init ( & SubStatus );
 		
 	}
 	

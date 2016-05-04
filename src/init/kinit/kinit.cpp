@@ -20,6 +20,9 @@
 
 #include <mt/process/UserProcess.h>
 
+#include <mt/timing/TaskSleep.h>
+#include <mt/timing/HPET.h>
+
 #include <fs/FS.h>
 
 #include <system/System.h>
@@ -29,6 +32,8 @@
 
 ASM_LINKAGE void InitTask ();
 ASM_LINKAGE void UserModeTask ();
+
+void HPETInterrupt ();
 
 ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * MultibootInfo )
 {
@@ -61,7 +66,31 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT::Tasking :: Task * NewTask = MT::Tasking::Task :: CreateKernelTask ( "init", reinterpret_cast <void *> ( & InitTask ), 0x2000, MT::Tasking::Task :: kPriority_System_Max, MT::Tasking::Task :: kPriority_System_Min );
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
+	MT::Timing::HPET :: SetTimeoutCallback ( HPETInterrupt );
+	MT::Timing::HPET :: SetTimeoutNS ( 10000000000 );
+	
+	while ( true )
+	{
+		
+		MT::Timing::TaskSleep :: SleepCurrent ( 1000 );
+		system_func_kprintf ( "HPET Time: %d\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeNS () / 1000 ) );
+		
+	}
+	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
+	
+};
+
+uint32_t TDSCount = 0;
+
+void HPETInterrupt ()
+{
+	
+	TDSCount ++;
+	
+	system_func_kprintf ( "CALLBACK! HPET Time: %h\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeNS () ) );
+	
+	MT::Timing::HPET :: SetTimeoutNS ( 10000000000 );
 	
 };
 
@@ -85,6 +114,8 @@ void InitTask ()
 	MT::Tasking :: Task * UTask = MT::Tasking::Task :: CreateUserTask ( "userland task 1", UProcess, reinterpret_cast <void *> ( & UserModeTask ), 0x1000, 0x8000, MT::Tasking::Task :: kPriority_LowUser_Max, MT::Tasking::Task :: kPriority_LowUser_Min );
 	
 	MT::Tasking::Scheduler :: AddTask ( UTask );
+	
+	MT::Timing::TaskSleep :: SleepCurrent ( 100 );
 	
 	MT::Tasking::Scheduler :: KillCurrentTask ();
 	

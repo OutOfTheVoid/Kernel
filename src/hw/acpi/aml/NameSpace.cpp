@@ -35,6 +35,6 @@ HW::ACPI::AML::NameSpace :: TableHandle HW::ACPI::AML::NameSpace :: LoadTable ( 
 	UNUSED ( DefBlock );
 	UNUSED ( Status );
 	
-	return 0xFFFFFFFF;
+	return kTableHandle_Invalid;
 	
 };

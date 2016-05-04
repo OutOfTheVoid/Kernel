@@ -1,5 +1,6 @@
 #include <mt/timing/TaskSleep.h>
 #include <mt/timing/PIT.h>
+#include <mt/timing/HPET.h>
 
 #include <mt/tasking/Scheduler.h>
 
@@ -16,6 +17,7 @@
 #include <cpputil/Linkage.h>
 
 #include <system/func/Panic.h>
+#include <system/func/KPrintF.h>
 
 MT::Timing::TaskSleep :: SleepInfo * MT::Timing::TaskSleep :: TreeRoot = NULL;
 MT::Synchronization::Spinlock :: Spinlock_t MT::Timing::TaskSleep :: TreeLock = MT::Synchronization::Spinlock :: Initializer ();
@@ -41,6 +43,17 @@ void MT::Timing::TaskSleep :: Init ()
 		TimeSource = kTimingSource_TSC;
 	
 	IntSource = kInterruptSource_PIT;
+	
+	HPET :: Init ();
+	
+	if ( HPET :: CounterInitialized () )
+	{
+		
+		HPET :: Start ();
+		
+		// Switch to using HPET
+		
+	}
 	
 	PIT :: InitTimedIRQ ( & mt_timing_tasksleep_pitirqhandler );
 	PIT :: SetIRQEnabled ( true );

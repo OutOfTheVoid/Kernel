@@ -20,6 +20,8 @@ namespace HW
 				
 				typedef uint32_t TableHandle;
 				
+				static const TableHandle kTableHandle_Invalid = 0xFFFFFFFF;
+				
 				static void Init ( uint32_t * Status );
 				
 				static TableHandle LoadTable ( DefinitionBlock * DefBlock, uint32_t * Status );

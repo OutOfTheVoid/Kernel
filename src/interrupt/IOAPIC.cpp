@@ -88,8 +88,6 @@ bool Interrupt::IOAPIC :: TryAllocateGlobalSystemInterrupt ( uint32_t Interrupt 
 	
 	uint32_t I;
 	
-	void * BaseAddress = NULL;
-	
 	for ( I = 0; I < IOAPICs -> Length (); I ++ )
 	{
 		
@@ -114,9 +112,6 @@ bool Interrupt::IOAPIC :: TryAllocateGlobalSystemInterrupt ( uint32_t Interrupt 
 		}
 	
 	}
-	
-	if ( BaseAddress == NULL )
-		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
 
 	return false;
 
@@ -141,12 +136,14 @@ void Interrupt::IOAPIC :: FreeGlobalSystemInterrupt ( uint32_t Interrupt )
 
 			( * IOAPICs ) [ I ].AllocationBitmap &= ~ Bit;
 			
+			return;
+			
 		}
 		
 	}
 	
 	if ( BaseAddress == NULL )
-		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
 
 };
 
@@ -175,7 +172,7 @@ void Interrupt::IOAPIC :: DefineFixedRedirectionEntry ( uint32_t Interrupt, uint
 	}
 	
 	if ( BaseAddress == NULL )
-		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!" );
+		KPANIC ( "No I/O APIC found with matching global system interrupt range containing requested interrupt #%i!", Interrupt );
 	
 	uint32_t EntryLow = ( TargetVector & 0xFF ) | kRedirectionEntry_Low_Deliveryode_Fixed | kRedirectionEntry_Low_DestinationMode_Physical | ( ActiveHigh ? kRedirectionEntry_Low_PinPolarity_ActiveHigh : kRedirectionEntry_Low_PinPolarity_ActiveLow ) | ( EdgeTriggered ? kRedirectionEntry_Low_TriggerMode_Edge : kRedirectionEntry_Low_TriggerMode_Level ) | ( InitiallyMasked ? kRedirectionEntry_Low_Mask_Set : kRedirectionEntry_Low_Mask_Clear );
 	uint32_t EntryHigh = ( LAPICID << kRedirectionEntry_High_BitBase_PhysicalDestination ) | ( kRedirectionEntry_High_UnusedMask & ReadRegister ( BaseAddress, kRegister_BaseRedirectionEntry + 2 * ( Interrupt - IOAPICGSIBase ) + 1 ) );

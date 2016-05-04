@@ -68,6 +68,7 @@ void Interrupt :: APInit ()
 	
 	InterruptHandlers :: APInit ();
 	APIC :: APInit ();
+	APIC :: SetTaskPriority ( 0 );
 	
 };
 

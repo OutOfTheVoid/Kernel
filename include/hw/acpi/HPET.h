@@ -20,6 +20,7 @@ namespace HW
 		{
 		public:
 			
+			static const uint32_t kRequirement_None = 0x00000000;
 			static const uint32_t kRequirement_LegacyReplacement_PIT = 0x00000001;
 			static const uint32_t kRequirement_LegacyReplacement_RTC = 0x00000002;
 			static const uint32_t kRequirement_FSBDelivery = 0x00000004;
@@ -65,10 +66,23 @@ namespace HW
 			static void AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo * CounterInfo, uint32_t Requirements, uint32_t * Status );
 			static void FreeCounter ( HPETCounterInfo * CounterHandle, uint32_t * Status );
 			
-			static void SetCounter32Bits ( HPETCounterInfo * Counter, uint32_t * Status );
-			static void SetCounter64Bits ( HPETCounterInfo * Counter, uint32_t * Status );
+			static uint32_t GetHPETPeriodFemptoSeconds ( HPETInfo * Info );
 			
-			//static void 
+			static void GlobalEnableHPET ( HPETInfo * Info );
+			static void SetLegacyRoutingHPET ( HPETInfo * Info, bool Legacy );
+			
+			static uint32_t ReadMasterCounter32 ( HPETInfo * Info );
+			
+			static void ConfigureCounterWidth32BitForced ( HPETCounterInfo * Info, bool Forced );
+			static void SetupCounter ( HPETCounterInfo * Info, bool LevelTriggered = false, bool Periodic = false );
+			static void SetCounterEnabled ( HPETCounterInfo * Info, bool Enabled );
+			static void SetCounterComparratorWritable ( HPETCounterInfo * Info, bool Writeable );
+			
+			static uint32_t ReadCounterComparrator32 ( HPETCounterInfo * Info );
+			static void WriteCounterComparrator32 ( HPETCounterInfo * Info, uint32_t Value );
+			
+			static bool ReadCounterInterruptLevel ( HPETCounterInfo * Info );
+			static void ClearCounterInterruptLevel ( HPETCounterInfo * Info );
 			
 		private:
 			
@@ -168,6 +182,8 @@ namespace HW
 					* Low = * reinterpret_cast <volatile uint32_t *> ( Address + Register );
 					* High = * reinterpret_cast <volatile uint32_t *> ( Address + Register + 0x04 );
 					
+					__asm__ volatile ( "" ::: "memory" );
+					
 					break;
 					
 				case kACPIAddress_AddressSpaceID_SystemIO:
@@ -191,6 +207,8 @@ namespace HW
 				
 					* reinterpret_cast <volatile uint32_t *> ( Address + Register ) = Low;
 					* reinterpret_cast <volatile uint32_t *> ( Address + Register + 0x04 ) = High;
+					
+					__asm__ volatile ( "" ::: "memory" );
 					
 					break;
 					
