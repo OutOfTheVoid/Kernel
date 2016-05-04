@@ -1,16 +1,20 @@
 To do List
 ----------
 
-* User mode ?
-* System call interface ?
+* Permissions System - Partial
+* HPET - Partial
+* ACPICA - Maybe ?
+* ACPI Interpreter - Skeleton ?
+* User mode - Partial
+* System call interface - Partial
 * Shared memory ?
 * Process list
-* User system ?
+* User system - Partial
 * VFS - Partial
 * Init ramdisk - Partial
 * ATA PIO Driver ?
 * AHCI Driver ?
-* File I/O
+* File I/O - Partial
 * Driver Interface
 * FAT32 Driver
 * exFAT Driver
