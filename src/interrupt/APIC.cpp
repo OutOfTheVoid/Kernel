@@ -30,6 +30,8 @@ volatile uint32_t * Interrupt::APIC :: BaseVirtual = NULL;
 
 double Interrupt::APIC :: BusFrequencey = 0.0;
 
+bool Interrupt::APIC :: Initialized = false;
+
 void Interrupt::APIC :: Init ()
 {
 	
@@ -68,6 +70,15 @@ void Interrupt::APIC :: Init ()
 	Tick = HW::CPU::TSC :: Read () - Tick;
 	
 	BusFrequencey = Tick * 20;
+	
+	Initialized = true;
+	
+};
+
+bool Interrupt::APIC :: IsInitialized ()
+{
+	
+	return Initialized;
 	
 };
 

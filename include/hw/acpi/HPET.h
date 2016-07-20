@@ -73,10 +73,7 @@ namespace HW
 			
 			static uint32_t ReadMasterCounter32 ( HPETInfo * Info );
 			
-			static void ConfigureCounterWidth32BitForced ( HPETCounterInfo * Info, bool Forced );
-			static void SetupCounter ( HPETCounterInfo * Info, bool LevelTriggered = false, bool Periodic = false );
-			static void SetCounterEnabled ( HPETCounterInfo * Info, bool Enabled );
-			static void SetCounterComparratorWritable ( HPETCounterInfo * Info, bool Writeable );
+			static void SetupCounter ( HPETCounterInfo * Info, bool Enabled, bool LevelTriggered = true, bool Periodic = false, bool Forced32 = true, bool ComparratorWrite = false );
 			
 			static uint32_t ReadCounterComparrator32 ( HPETCounterInfo * Info );
 			static void WriteCounterComparrator32 ( HPETCounterInfo * Info, uint32_t Value );
@@ -155,7 +152,7 @@ namespace HW
 			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Mask = 0x0000001F;
 			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Shift = 9;
 			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableFSBDelivery = 0x00004000;
-			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableFSBDeliveryCapable = 0x00008000;
+			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_Low_FSBDeliveryCapable = 0x00008000;
 			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_High_InterruptCapableBitfield_Mask = 0xFFFFFFFF;
 			static const uint32_t kRegisterFlags_TimerNConfigurationCapabilities_High_InterruptCapableBitfield_Shift = 0;
 			

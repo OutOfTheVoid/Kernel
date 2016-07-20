@@ -16,7 +16,8 @@ void MT::Exception::MPException :: Trigger ()
 	
 	Triggered = true;
 	
-	Interrupt::APIC :: SendBroadNMI ();
+	if ( Interrupt::APIC :: IsInitialized () )
+		Interrupt::APIC :: SendBroadNMI ();
 	
 };
 

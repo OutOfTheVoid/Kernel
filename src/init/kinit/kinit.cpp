@@ -30,6 +30,8 @@
 
 #include <util/string/string.h>
 
+#include <hw/cpu/hang.h>
+
 ASM_LINKAGE void InitTask ();
 ASM_LINKAGE void UserModeTask ();
 
@@ -57,6 +59,7 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	
 	MT :: MPInit ();
 	Interrupt :: Init ();
+	
 	MT :: MTInit ();
 	
 	System :: Init ();
@@ -67,13 +70,14 @@ ASM_LINKAGE void init_kinit_kinit ( uint32_t Magic, multiboot_info_t * Multiboot
 	MT::Tasking::Scheduler :: AddTask ( NewTask );
 	
 	MT::Timing::HPET :: SetTimeoutCallback ( HPETInterrupt );
-	MT::Timing::HPET :: SetTimeoutNS ( 10000000000 );
+	MT::Timing::HPET :: SetTimeoutNS ( 100000000 );
 	
 	while ( true )
 	{
 		
 		MT::Timing::TaskSleep :: SleepCurrent ( 1000 );
-		system_func_kprintf ( "HPET Time: %d\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeNS () / 1000 ) );
+		
+		//system_func_kprintf ( "HPET Time: %h\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeRaw () ) );
 		
 	}
 	
@@ -88,9 +92,9 @@ void HPETInterrupt ()
 	
 	TDSCount ++;
 	
-	system_func_kprintf ( "CALLBACK! HPET Time: %h\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeNS () ) );
+	system_func_kprintf ( "CALLBACK! HPET Time: %h\n", static_cast <uint32_t> ( MT::Timing::HPET :: ReadTimeRaw () ) );
 	
-	MT::Timing::HPET :: SetTimeoutNS ( 10000000000 );
+	MT::Timing::HPET :: SetTimeoutNS ( 100000000 );
 	
 };
 

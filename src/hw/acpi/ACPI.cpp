@@ -79,6 +79,8 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	if ( SubStatus != kACPIStatus_Success )
 	{
 		
+		KPANIC ( "FADT Init Failure" );
+		
 		* Status = kACPIStatus_Failure_InvalidTable;
 		
 		return;
@@ -89,6 +91,8 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	
 	if ( SubStatus != kACPIStatus_Success )
 	{
+		
+		KPANIC ( "HPET Init Failure %s\n", GetErrorString ( SubStatus ) );
 		
 		* Status = kACPIStatus_Failure_InvalidTable;
 		
@@ -101,16 +105,20 @@ void HW::ACPI :: StaticInit ( uint32_t * Status )
 	if ( SubStatus != kACPIStatus_Success )
 	{
 		
+		KPANIC ( "DSDT Init Failure" );
+		
 		* Status = kACPIStatus_Failure_InvalidTable;
 		
 		return;
 		
 	}
 	
-	 AML :: Init ( & SubStatus );
+	AML :: Init ( & SubStatus );
 	
 	if ( SubStatus != kACPIStatus_Success )
 	{
+		
+		KPANIC ( "AML Init Failure" );
 		
 		* Status = kACPIStatus_Failure_AMLError;
 		

@@ -7,6 +7,11 @@
 #include <mm/KMalloc.h>
 #include <mm/KVMap.h>
 
+#include <system/func/Panic.h>
+#include <system/func/KPrintF.h>
+
+#include <hw/cpu/hang.h>
+
 const char * HW::ACPI::HPET :: kTableSignature = "HPET";
 
 bool HW::ACPI::HPET :: Validated = false;
@@ -211,7 +216,7 @@ void HW::ACPI::HPET :: Init ( uint32_t * Status )
 			
 		}
 		
-		 J ++;
+		J ++;
 		
 		while ( J < ACPIHPETCount )
 		{
@@ -328,7 +333,7 @@ void HW::ACPI::HPET :: AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo 
 	}
 	
 	uint32_t I;
-	uint32_t J;
+	int32_t J;
 	
 	for ( I = 0; I < HPETCount; I ++ )
 	{
@@ -336,7 +341,7 @@ void HW::ACPI::HPET :: AllocCounter ( uint32_t GlobalInterrupt, HPETCounterInfo 
 		if ( HPETs [ I ].AllocationBitmap != 0xFFFFFFFF )
 		{
 			
-			for ( J = 0; J < HPETs [ I ].ComparratorCount; J ++ )
+			for ( J = HPETs [ I ].ComparratorCount - 1; J > 0 ; J -- )
 			{
 				
 				if ( ( HPETs [ I ].AllocationBitmap & ( 1 << J ) ) == 0 )
@@ -455,55 +460,34 @@ uint32_t HW::ACPI::HPET :: GetHPETPeriodFemptoSeconds ( HPETInfo * Info )
 	
 };
 
-void HW::ACPI::HPET :: ConfigureCounterWidth32BitForced ( HPETCounterInfo * Info, bool Forced )
+void HW::ACPI::HPET :: SetupCounter ( HPETCounterInfo * Info, bool Enabled, bool LevelTriggered, bool Periodic, bool Forced32, bool ComparratorWrite )
 {
 	
-	ReadRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, & Info -> CapabilitiesLow, & Info -> CapabilitiesHigh );
+	uint32_t CapabilitiesLow = 0;
 	
-	if ( Forced )
-		Info -> CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_Force32Bit;
-	else
-		Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_Force32Bit;
+	CapabilitiesLow |= ( ( Info -> GlobalInterrupt & kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Mask ) << kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Shift );
 	
-	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, Info -> CapabilitiesLow, Info -> CapabilitiesHigh );
+	if ( ComparratorWrite )
+		CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableAccumulatorSet;
 	
-};
-
-void HW::ACPI::HPET :: SetupCounter ( HPETCounterInfo * Info, bool LevelTriggered, bool Periodic )
-{
-	
-	ReadRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, & Info -> CapabilitiesLow, & Info -> CapabilitiesHigh );
-	
-	Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableFSBDelivery;
-	
-	Info -> CapabilitiesLow &= ~ ( kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Mask << kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Shift );
-	Info -> CapabilitiesLow |= ( ( Info -> GlobalInterrupt & kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Mask ) << kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptRouting_Shift );
+	if ( Forced32 )
+		CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_Force32Bit;
 	
 	if ( Periodic )
-		Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_Periodic;
-	else
-		Info -> CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_Periodic;
+		CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_Periodic;
 	
 	if ( LevelTriggered )
-		Info -> CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptType_Level;
-	else
-		Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptType_Level;
-	
-	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, Info -> CapabilitiesLow, Info -> CapabilitiesHigh );
-	
-};
-
-void HW::ACPI::HPET :: SetCounterEnabled ( HPETCounterInfo * Info, bool Enabled )
-{
-	
-	ReadRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, & Info -> CapabilitiesLow, & Info -> CapabilitiesHigh );
+		CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptType_Level;
 	
 	if ( Enabled )
-		Info -> CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptEnable;
-	else
-		Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptEnable;
+		CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_InterruptEnable;
 	
-	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, Info -> CapabilitiesLow, Info -> CapabilitiesHigh );
+	system_func_kprintf ( "CapabilitiesLow Write: %h\n", CapabilitiesLow );
+	
+	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, CapabilitiesLow, 0 );
+	ReadRegister (  Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, & Info -> CapabilitiesLow, & Info -> CapabilitiesHigh );
+	
+	system_func_kprintf ( "CapabilitiesLow Read: %h\n", Info -> CapabilitiesLow );
 	
 };
 
@@ -552,20 +536,6 @@ void HW::ACPI::HPET :: WriteCounterComparrator32 ( HPETCounterInfo * Info, uint3
 {
 	
 	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNComparratorBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, Value, 0 );
-	
-};
-
-void HW::ACPI::HPET :: SetCounterComparratorWritable ( HPETCounterInfo * Info, bool Writeable )
-{
-	
-	ReadRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, & Info -> CapabilitiesLow, & Info -> CapabilitiesHigh );
-	
-	if ( Writeable )
-		Info -> CapabilitiesLow |= kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableAccumulatorSet;
-	else
-		Info -> CapabilitiesLow &= ~ kRegisterFlags_TimerNConfigurationCapabilities_Low_EnableAccumulatorSet;
-	
-	WriteRegister ( Info -> HPETInfoPointer -> Address, Info -> HPETInfoPointer -> AddressSpaceID, kRegister_TimerNConfigurationCapabilitiesBase + static_cast <uint32_t> ( Info -> Counter ) * kRegisterStride_TimerN, Info -> CapabilitiesLow, Info -> CapabilitiesHigh );
 	
 };
 

@@ -1,6 +1,7 @@
 #include <mt/timing/HPET.h>
 
 #include <hw/acpi/ACPI.h>
+#include <hw/acpi/MADT.h>
 
 #include <hw/cpu/Processor.h>
 
@@ -43,7 +44,7 @@ void MT::Timing::HPET :: Init ()
 	
 	// I fucking hate interrupt hardware detection.
 	// Look at this bullshit. I have to try allocating an interrupt so that I can try to find an HPET comparrator that supports delivery to it.
-	// That's two levels of "trying" to make something connect.
+	// That's two levels of "trying" to make something connect, and we haven't even gotten to interrupt routing
 	// Honestly what the hell were PC/ACPI designers thinking?????
 	
 	for ( I = kIRQ_Min; I <= kIRQ_Max; I ++ )
@@ -53,6 +54,8 @@ void MT::Timing::HPET :: Init ()
 		{
 			
 			::HW::ACPI::HPET :: AllocCounter ( I, & CounterInfo, ::HW::ACPI::HPET :: kRequirement_None, & ACPIStatus );
+			
+			GlobalSystemInterrupt = I;
 			
 			if ( ACPIStatus == ::HW::ACPI :: kACPIStatus_Success )
 				break;
@@ -66,19 +69,43 @@ void MT::Timing::HPET :: Init ()
 	if ( I > kIRQ_Max )
 		return;
 	
-	GlobalSystemInterrupt = I;
+	uint32_t GSIOverrideCount = ::HW::ACPI::MADT :: GetInterruptSourceOverrideCount ();
 	
-	// Active low, level triggered. Follows linux source code. Not entirely sure why?
-	Interrupt::IOAPIC :: DefineLowestPriorityRedirectionEntry ( I, kInterruptVector_TimerHPET, false, false, true );
+	bool LevelTriggered = true;
+	bool ActiveHigh = true;
+	
+	for ( I = 0; I < GSIOverrideCount; I ++ )
+	{
+		
+		if ( ::HW::ACPI::MADT :: GetInterruptSourceOverrideSourceIRQ ( I ) == GlobalSystemInterrupt )
+		{
+			
+			uint32_t Flags = ::HW::ACPI::MADT :: GetInterruptSourceOverrideFlags ( I );
+			
+			if ( ( Flags & ::HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_PolarityMask ) == ::HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_ActiveLow )
+				ActiveHigh = false;
+			
+			if ( ( Flags & ::HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_TriggerMask ) == ::HW::ACPI::MADT :: kInterruptSourceOverrideRecord_Flags_EdgeTriggered )
+				LevelTriggered = false;
+			
+			GlobalSystemInterrupt = ::HW::ACPI::MADT :: GetInterruptSourceOverrideInterrupt ( I );
+			
+			system_func_kprintf ( "HPET REROUTED\n" );
+			
+			break;
+			
+		}
+		
+	}
+	
+	system_func_kprintf ( "HPET Routed to: %h\n", GlobalSystemInterrupt );
+	
+	Interrupt::IOAPIC :: DefineLowestPriorityRedirectionEntry ( GlobalSystemInterrupt, kInterruptVector_TimerHPET, ActiveHigh, ! LevelTriggered, true );
 	Interrupt::InterruptHandlers :: SetInterruptHandler ( kInterruptVector_TimerHPET, TimeoutInterruptHandler );
 	
 	::HW::ACPI::HPET :: SetLegacyRoutingHPET ( CounterInfo.HPETInfoPointer, false );
 	
-	::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, false );
-	::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-	::HW::ACPI::HPET :: ConfigureCounterWidth32BitForced ( & CounterInfo, true );
-	
-	Interrupt::IOAPIC :: SetRedirectionEntryEnabled ( I, true );
+	Interrupt::IOAPIC :: SetRedirectionEntryEnabled ( GlobalSystemInterrupt, true );
 	
 	CounterPeriod = ::HW::ACPI::HPET :: GetHPETPeriodFemptoSeconds ( CounterInfo.HPETInfoPointer );
 	
@@ -108,12 +135,13 @@ void MT::Timing::HPET :: Start ()
 	NextInternalTimeout = static_cast <uint32_t> ( LastTimeValue ) + kInterruptDelta_TimekeepingDefault;
 	ScheduledTimeout = false;
 	
-	::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-	::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
-	::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
-	::HW::ACPI::HPET :: SetCounterEnabled ( & CounterInfo, true );
-	
 	::HW::ACPI::HPET :: GlobalEnableHPET ( CounterInfo.HPETInfoPointer );
+	
+	::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
+	::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, true, false, true, false );
+	::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
+	
+	system_func_kprintf ( "HPET: Interrupt scheduled (%h)\n", NextInternalTimeout );
 	
 	MT::Synchronization::Spinlock :: Release ( & TimeoutLock );
 	
@@ -128,9 +156,9 @@ void MT::Timing::HPET :: TimeoutInterruptHandler ( Interrupt::InterruptHandlers 
 	
 	void ( * TimeoutCallback ) () = NULL;
 	
-	system_func_kprintf ( "HPET: INTERRUPT! (LastTime: %h)\n", LastTimeValue );
+	system_func_kprintf ( "HPET: INTERRUPT! (LastTime: %h)\n", static_cast <uint32_t> ( LastTimeValue & 0x00000000FFFFFFFF ) );
 	
-	NextInternalTimeout = static_cast <uint32_t> ( LastTimeValue ) + kInterruptDelta_TimekeepingDefault;
+	NextInternalTimeout = static_cast <uint32_t> ( LastTimeValue & 0x00000000FFFFFFFF ) + kInterruptDelta_TimekeepingDefault;
 	
 	if ( ScheduledTimeout )
 	{
@@ -149,12 +177,11 @@ void MT::Timing::HPET :: TimeoutInterruptHandler ( Interrupt::InterruptHandlers 
 			
 			NextInternalTimeout = NextExternalTimout;
 			
-			system_func_kprintf ( "HPET: Interrupt scheduled (%h)\n", NextInternalTimeout );
+			system_func_kprintf ( "HPET: Interrupt scheduled @ G (%h)\n", NextInternalTimeout );
 			
-			::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-			::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
-			::HW::ACPI::HPET :: SetCounterEnabled ( & CounterInfo, true );
 			::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
+			::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, true, false, true, false );
+			::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
 			
 			UpdateAndRead ();
 			
@@ -184,12 +211,13 @@ void MT::Timing::HPET :: TimeoutInterruptHandler ( Interrupt::InterruptHandlers 
 		
 	}
 	
-	system_func_kprintf ( "HPET: Interrupt scheduled (%h)\n", NextInternalTimeout );
+	NextInternalTimeout = static_cast <uint32_t> ( LastTimeValue & 0x00000000FFFFFFFF ) + kInterruptDelta_TimekeepingDefault;
 	
-	::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-	::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
-	::HW::ACPI::HPET :: SetCounterEnabled ( & CounterInfo, true );
+	system_func_kprintf ( "HPET: Interrupt scheduled @ F (%h)\n", NextInternalTimeout );
+	
 	::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
+	::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, true, false, true, false );
+	::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
 	
 	MT::Synchronization::Spinlock :: Release ( & TimeoutLock );
 	
@@ -237,12 +265,11 @@ void MT::Timing::HPET :: SetTimeoutNS ( uint64_t NanoSeconds )
 			NextInternalTimeout = static_cast <uint32_t> ( NextExternalTimout );
 			ScheduledTimeout = true;
 			
-			system_func_kprintf ( "HPET: External interrupt scheduled (%h)\n", NextInternalTimeout );
+			system_func_kprintf ( "HPET: External interrupt scheduled @ P (%h)\n", NextInternalTimeout );
 			
-			::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-			::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
-			::HW::ACPI::HPET :: SetCounterEnabled ( & CounterInfo, true );
 			::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
+			::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, true, false, true, false );
+			::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
 			
 			UpdateAndRead ();
 			
@@ -251,17 +278,14 @@ void MT::Timing::HPET :: SetTimeoutNS ( uint64_t NanoSeconds )
 				
 				TimeoutCallback = HPET :: TimeoutCallback;
 				
-				UpdateAndRead ();
-				
 				NextInternalTimeout = static_cast <uint32_t> ( LastTimeValue ) + kInterruptDelta_TimekeepingDefault;
 				ScheduledTimeout = false;
 				
-				system_func_kprintf ( "HPET: ! Interrupt rescheduled (%h)\n", NextInternalTimeout );
+				system_func_kprintf ( "HPET: ! Interrupt rescheduled @ C (%h)\n", NextInternalTimeout );
 	
-				::HW::ACPI::HPET :: SetCounterComparratorWritable ( & CounterInfo, true );
-				::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
-				::HW::ACPI::HPET :: SetCounterEnabled ( & CounterInfo, true );
 				::HW::ACPI::HPET :: ClearCounterInterruptLevel ( & CounterInfo );
+				::HW::ACPI::HPET :: SetupCounter ( & CounterInfo, true, true, false, true, false );
+				::HW::ACPI::HPET :: WriteCounterComparrator32 ( & CounterInfo, NextInternalTimeout );
 	
 				Synchronization::Spinlock :: Release ( & TimeoutLock );
 	

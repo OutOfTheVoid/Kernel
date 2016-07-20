@@ -70,7 +70,7 @@ namespace MT
 				
 				volatile uint32_t CurrentTVal = ::HW::ACPI::HPET :: ReadMasterCounter32 ( CounterInfo.HPETInfoPointer );
 				
-				if ( static_cast <uint32_t> ( LastTimeValue ) > CurrentTVal )
+				if ( static_cast <uint32_t> ( LastTimeValue & 0x00000000FFFFFFFF ) > CurrentTVal )
 					LastTimeValue = ( ( LastTimeValue & 0xFFFFFFFF00000000 ) | static_cast <uint64_t> ( CurrentTVal ) ) + 0x100000000;
 				else
 					LastTimeValue = ( LastTimeValue & 0xFFFFFFFF00000000 ) | static_cast <uint64_t> ( CurrentTVal );

@@ -27,6 +27,8 @@ namespace Interrupt
 		static void Init ();
 		static void APInit ();
 		
+		static bool IsInitialized ();
+		
 		static void Enable ();
 		static void Disable ();
 		
@@ -76,6 +78,8 @@ namespace Interrupt
 		static void WriteRegister ( uint32_t Offset, volatile uint32_t * DataIn, uint8_t DwordLength );
 		
 		static bool Availible;
+		
+		static bool Initialized;
 		
 		static uint32_t Base;
 		static volatile uint32_t * BaseVirtual;

@@ -5,8 +5,6 @@
 #include <mm/KVMap.h>
 #include <mm/paging/PageTable.h>
 
-#include <system/func/KPrintf.h>
-
 bool HW::ACPI::XSDT :: Validated = false;
 uint32_t HW::ACPI::XSDT :: TableCount = 0;
 
@@ -179,21 +177,19 @@ uint32_t HW::ACPI::XSDT :: CountTables ( const char * Name )
 	{
 		
 		if ( Table -> SDTableBase [ I ] > 0xFFFFFFFF )
-		{
-			
 			continue;
 			
-		}
-		
 		SearchTable = reinterpret_cast <HW::ACPI::ACPITable :: ACPITableHeader *> ( mm_kvmap ( reinterpret_cast <void *> ( Table -> SDTableBase [ I ] ), 0x1000, MM::Paging::PageTable :: Flags_Writeable ) );
 		
-		if ( SearchTable == NULL )
-			return Count;
-		
-		if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
-			Count ++;
-		
-		mm_kvunmap ( SearchTable );
+		if ( SearchTable != NULL )
+		{
+			
+			if ( strncmp ( SearchTable -> Signature, Name, 4 ) == 0 )
+				Count ++;
+			
+			mm_kvunmap ( SearchTable );
+			
+		}
 		
 	}
 	
