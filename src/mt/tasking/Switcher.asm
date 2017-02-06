@@ -20,7 +20,7 @@ mt_tasking_switchTask:
 	push edi
 	
 	mov [ eax ], esp
-	mov esp, edx
+	mov esp, ecx
 	
 	mov eax, [ mt_tasking_switcher_TaskListLockRef ]
 	mov dword [ eax ], 0

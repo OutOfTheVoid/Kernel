@@ -20,6 +20,7 @@ namespace MT
 				MT::Synchronization::Mutex :: Mutex_t WLock;
 				
 				uint32_t ReadersAtomic;
+				bool ReaderAcquired;
 				
 			} RWLock_t;
 			
@@ -31,12 +32,13 @@ namespace MT
 				New.WLock = Mutex :: Initializer ();
 				
 				New.ReadersAtomic = 0;
+				New.ReaderAcquired = false;
 				
 				return New;
 				
 			};
 			
-			static void ReadAcquire ( RWLock_t * Lock );
+			static void ReadAcquire ( RWLock_t * Lock, bool Spin = false );
 			static void ReadRelease ( RWLock_t * Lock );
 			
 			static void WriteAcquire ( RWLock_t * Lock );
